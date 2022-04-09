@@ -1,0 +1,6 @@
+build/
+.vscode/
+cmake-*
+.idea/
+sdkconfig.old
+sdkconfig
