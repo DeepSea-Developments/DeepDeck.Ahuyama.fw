@@ -1,5 +1,8 @@
-# MK32 - Simple BLE keyboard for ESP32
+# DeepDeck Ahuyama
 
+Readme in progress
+
+---------------
 dungphan90's fork:
 - Updated to ESP-IDF v4.4.
 - Migrated to CMake build system.
