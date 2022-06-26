@@ -37,7 +37,7 @@
 
 #include "espnow_receive.h"
 #include "keyboard_config.h"
-#include "r_encoder.h"
+#include "rotary_encoder.h"
 #include "nvs_keymaps.h"
 
 QueueHandle_t espnow_receive_q;
@@ -91,7 +91,7 @@ static void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int dat
 	// currently for encoder reports
 	if(data_len==1){
 		memcpy(CURRENT_ENCODER, data, sizeof(CURRENT_ENCODER) );
-		r_encoder_command(CURRENT_ENCODER[0], slave_encoder_map[current_layout]);
+		encoder_command(CURRENT_ENCODER[0], slave_encoder_map[current_layout]);
 
 	}
 

@@ -15,8 +15,8 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define MODULE_ID "LOLIN 32"
-#define GATTS_TAG "DeepDeck" // The device's name
+#define MODULE_ID "ESP32"
+#define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
 
 #define MASTER  // undefine if you are not flashing the main controller
@@ -28,7 +28,7 @@
 //Define matrix
 #define KEYPADS 1 // intended in order to create a Multiple keypad split boards
 #define MATRIX_ROWS 4
-#define MATRIX_COLS 6 // For split keyboards, define columns for one side only.
+#define MATRIX_COLS 4 // For split keyboards, define columns for one side only.
 
 #define LAYERS 3 // number of layers defined
 
@@ -37,16 +37,23 @@
 //#define ROW2COL
 
 //Encoder definitions
-#define R_ENCODER // undefine if no rotary encoder is used
+#define R_ENCODER_1 // undefine if no rotary encoder is used
 //#define R_ENCODER_SLAVE // undefine if no rotary encoder is used on slave pad
-#define ENCODER_A_PIN GPIO_NUM_32 // encoder phase A pin
-#define ENCODER_B_PIN GPIO_NUM_33// encoder phase B pin
-#define ENCODER_S_PIN GPIO_NUM_27// encoder switch pin
+#define ENCODER1_A_PIN GPIO_NUM_33 // encoder phase A pin
+#define ENCODER1_B_PIN GPIO_NUM_32// encoder phase B pin
+#define ENCODER1_S_PIN GPIO_NUM_27// encoder switch pin
+
+
+#define R_ENCODER_2 // undefine if no rotary encoder is used
+#define ENCODER2_A_PIN GPIO_NUM_26// encoder phase A pin
+#define ENCODER2_B_PIN GPIO_NUM_25// encoder phase B pin
+#define ENCODER2_S_PIN GPIO_NUM_34// encoder switch pin
+
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used
 #define ROTATION LANDSCAPE
-#define OLED_SDA_PIN GPIO_NUM_23
+#define OLED_SDA_PIN GPIO_NUM_21
 #define OLED_SCL_PIN GPIO_NUM_22
 
 /*Battery monitoring
@@ -57,7 +64,7 @@
 #define BATT_PIN ADC1_CHANNEL_7 //gpio pin 35, refer to the esp32 before modifying
 
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
-#define SLEEP_MINS 5 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
+#define SLEEP_MINS 30 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
 /*
  *---------------------------- Everything below here should not be modified for standard usage----------------------
@@ -68,7 +75,7 @@
 
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
-#define MACRO_LEN 3 //keys for macros
+#define MACRO_LEN 5 //keys for macros
 #define KEYMAP_COLS MATRIX_COLS*KEYPADS  // used for a symmetrical split keyboard
 #define REPORT_LEN (MOD_LED_BYTES+MACRO_LEN+MATRIX_ROWS*KEYMAP_COLS) //size of hid reports with NKRO and room for 3 key macro
 #define REPORT_COUNT_BYTES (MATRIX_ROWS*KEYMAP_COLS+MACRO_LEN)
@@ -79,7 +86,8 @@
 #define MACRO_BASE_VAL 0x103
 #define LAYERS_BASE_VAL 0xFF
 
-#define ENCODER_SIZE 20
+#define ENCODER_SIZE 5
+// Todo Delete these classes
 #define MEDIA_ENCODER 0
 #define MOUSE_ENCODER 1
 #define KEY_ENCODER 2

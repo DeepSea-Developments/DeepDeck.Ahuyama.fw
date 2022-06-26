@@ -49,18 +49,25 @@
 #include "keyboard_config.h"
 #include "espnow_receive.h"
 #include "espnow_send.h"
-#include "r_encoder.h"
+//#include "r_encoder.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
 #include "nvs_keymaps.h"
+
+#include "esp_err.h"
+
+#include "rotary_encoder.h"
+
+#include "plugins.h"
 
 #define KEY_REPORT_TAG "KEY_REPORT"
 #define SYSTEM_REPORT_TAG "KEY_REPORT"
 #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
+
+
 //plugin functions
-#include "plugins.h"
 
 static config_data_t config;
 QueueHandle_t espnow_recieve_q;
@@ -184,36 +191,39 @@ extern "C" void key_reports(void *pvParameters) {
 
 }
 
+
+rotary_encoder_t *encoder_a = NULL;
+rotary_encoder_t *encoder_b = NULL;
 //Handling rotary encoder
-extern "C" void encoder_report(void *pvParameters) {
-	uint8_t encoder_state = 0;
+extern "C" void encoder1_report(void *pvParameters) {
+	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
 	while (1) {
-		encoder_state = r_encoder_state();
-		if (encoder_state != past_encoder_state) {
-			DEEP_SLEEP = false;
-			r_encoder_command(encoder_state, encoder_map[current_layout]);
-			past_encoder_state = encoder_state;
-		}
+		encoder_status = encoder_state(encoder_a);
+		//encoder_state_2 = encoder_state(encoder_a);
 
+		if (encoder_status != past_encoder_state) {
+			DEEP_SLEEP = false;
+			encoder_command(encoder_status, encoder_map[current_layout]);
+			past_encoder_state = encoder_status;
+		}
 	}
 }
 
-//Handling rotary encoder for slave pad
-extern "C" void slave_encoder_report(void *pvParameters) {
-	uint8_t encoder_state = 0;
+extern "C" void encoder2_report(void *pvParameters) {
+	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
 	while (1) {
-		encoder_state = r_encoder_state();
-		if (encoder_state != past_encoder_state) {
-			DEEP_SLEEP = false;
-			xQueueSend(espnow_encoder_send_q, (void*) &encoder_state,
-					(TickType_t) 0);
-			past_encoder_state = encoder_state;
-		}
+		encoder_status = encoder_state(encoder_b);
+		//encoder_state_2 = encoder_state(encoder_a);
 
+		if (encoder_status != past_encoder_state) {
+			DEEP_SLEEP = false; 
+			encoder_command(encoder_status, slave_encoder_map[current_layout]);
+			past_encoder_state = encoder_status;
+		}
 	}
 }
 
@@ -359,11 +369,44 @@ extern "C" void app_main() {
 #endif
 
 	//activate encoder functions
-#ifdef	R_ENCODER
-	r_encoder_setup();
-	xTaskCreatePinnedToCore(encoder_report, "encoder report", 4096, NULL,
+#ifdef	R_ENCODER_1
+	
+	// Rotary encoder underlying device is represented by a PCNT unit in this example
+    uint32_t pcnt_unit_a = 0;
+
+    // Create rotary encoder instance
+    rotary_encoder_config_t config_a = \
+		ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN);
+    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_a, &encoder_a));
+
+    // Filter out glitch (1us)
+    ESP_ERROR_CHECK(encoder_a->set_glitch_filter(encoder_a, 1));
+
+    // Start encoder
+    ESP_ERROR_CHECK(encoder_a->start(encoder_a));
+
+	xTaskCreatePinnedToCore(encoder1_report, "encoder report", 4096, NULL,
 			configMAX_PRIORITIES, NULL, 1);
-	ESP_LOGI("Encoder", "initializezd");
+	ESP_LOGI("Encoder 1", "initializezd");
+#endif
+#ifdef	R_ENCODER_2
+
+    uint32_t pcnt_unit_b = 1;
+
+    // Create rotary encoder instance
+    rotary_encoder_config_t config_b = \
+			ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN);
+    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_b, &encoder_b));
+
+    // Filter out glitch (1us)
+    ESP_ERROR_CHECK(encoder_b->set_glitch_filter(encoder_b, 1));
+
+    // Start encoder
+    ESP_ERROR_CHECK(encoder_b->start(encoder_b));
+
+	xTaskCreatePinnedToCore(encoder2_report, "encoder 2 report", 4096, NULL,
+			configMAX_PRIORITIES, NULL, 1);
+	ESP_LOGI("Encoder 2", "initializezd");
 #endif
 
 	// Start the keyboard Tasks
@@ -377,6 +420,11 @@ extern "C" void app_main() {
 	//activate oled
 #ifdef	OLED_ENABLE
 	init_oled(ROTATION);
+
+	
+	splashScreen();
+	vTaskDelay(pdMS_TO_TICKS(1800));
+
 	xTaskCreatePinnedToCore(oled_task, "oled task", 4096, NULL,
 			configMAX_PRIORITIES, &xOledTask, 1);
 	ESP_LOGI("Oled", "initializezd");
@@ -395,8 +443,21 @@ extern "C" void app_main() {
 	ESP_LOGI("Sleep", "initializezd");
 #endif
 
+//-------------------------------------------------------- Encoder test----------
+
+
+//  Report counter value
+    // while (1) {
+    //     ESP_LOGI("Encoder", "Encoder value: %d - %d", encoder_a->get_counter_value(encoder_a), encoder_b->get_counter_value(encoder_b) );
+    //     vTaskDelay(pdMS_TO_TICKS(300));
+	// 	//encoder_state_1 = encoder_state(encoder_a);
+	// 	encoder_state(encoder_a);
+	// 	encoder_state(encoder_b);
+    // }
+
 //This is for testing
 	//init_layout_server();
 	//input_string();
 }
+
 }

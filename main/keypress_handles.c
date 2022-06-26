@@ -227,12 +227,23 @@ uint8_t *check_key_state(uint16_t **keymap) {
 					// checking for macros
 					if ((keycode >= MACRO_BASE_VAL)
 							&& (keycode <= LAYER_HOLD_BASE_VAL)) {
-						for (uint8_t i = 0; i < 3; i++) {
-							uint16_t key = macros[MACRO_BASE_VAL - keycode][i];
-							current_report[REPORT_LEN - 1 - i] = key;
+						for (uint8_t i = 0; i < MACRO_LEN; i++) {
+							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							if (key == KC_NO)
+							{
+								//ESP_LOGI("BREAK", "BREAK");
+								break;
+							}
+							//ESP_LOGI("PressMacro", "macroid: %d", keycode - MACRO_BASE_VAL);
+							//current_report[REPORT_LEN - 1 - i] = key;
+							current_report[i+2] = key; //2 is an offset, as 0 and 1 are used for other reasons
+							//ESP_LOGI("PressMacro", "report_id: %d", i+2);
 							modifier |= check_modifier(key);
-							printf("\nmodifier:%d", modifier);
+							//ESP_LOGI("PressMacro", "Key: %d", key);
+							//printf("\nmodifier:%d", modifier);
 						}
+
+						//ESP_LOGI("MACRO", "Macro selected");
 						continue;
 					}
 
@@ -274,11 +285,17 @@ uint8_t *check_key_state(uint16_t **keymap) {
 					//checking if macro was released
 					if ((keycode >= MACRO_BASE_VAL)
 							&& (keycode <= LAYER_HOLD_BASE_VAL)) {
-						for (uint8_t i = 0; i < 3; i++) {
-							uint16_t key = macros[MACRO_BASE_VAL - keycode][i];
-							current_report[REPORT_LEN - 1 - i] = 0;
+						for (uint8_t i = 0; i < MACRO_LEN; i++) 
+						{
+							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							//ESP_LOGI("releaseMacro", "macroid: %d", keycode - MACRO_BASE_VAL);
+							current_report[i+2] = 0; //2 is an offset, as 0 and 1 are used for other reasons
+							//ESP_LOGI("releaseMacro", "report_id: %d", i+2);
 							modifier &= ~check_modifier(key);
+							//ESP_LOGI("releaseMacro", "Key: %d", key);
 						}
+							//ESP_LOGI("MACRO", "Macro selected. KEYCODE: %d", keycode);
+
 					}
 
 					if (current_report[report_index] != 0) {
@@ -296,13 +313,6 @@ uint8_t *check_key_state(uint16_t **keymap) {
 							media_control_release(keycode);
 						}
 					}
-
-					// checking for system control keycodes
-					//				if((keycode>=0XA8)&&(keycode<=0XA7)){
-					//					system_control_release(keycode);
-					//					continue;
-					//				}
-
 				}
 			}
 		}

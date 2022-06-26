@@ -12,7 +12,8 @@
 
 extern uint16_t (*default_layouts[])[MATRIX_ROWS][KEYMAP_COLS];
 
-extern uint16_t default_encoder_map[LAYERS][ENCODER_SIZE];
+extern uint16_t default_encoder1_map[LAYERS][ENCODER_SIZE];
+extern uint16_t default_encoder2_map[LAYERS][ENCODER_SIZE];
 extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 
 #endif /* MAIN_KEYMAP_H_ */

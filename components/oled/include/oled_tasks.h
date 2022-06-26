@@ -50,6 +50,10 @@ void ble_slave_oled(void);
  * */
 void update_oled(void);
 
+/** @brief Generate Splash Screen
+ * */
+void splashScreen(void);
+
 /** @brief Queue for sending layer to oled
  **/
 extern QueueHandle_t layer_recieve_q;
@@ -57,6 +61,16 @@ extern QueueHandle_t layer_recieve_q;
 /** @brief Queue for sending led status to oled
  **/
 extern QueueHandle_t led_recieve_q;
+
+/**
+ * Made with Marlin Bitmap Converter
+ * https://marlinfw.org/tools/u8glib/converter.html
+ *
+ * This bitmap from the file 'DeepDeck.png'
+ */
+
+
+#define SPLASH_BMPWIDTH  128
 
 #ifdef __cplusplus
 }

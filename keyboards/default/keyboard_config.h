@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define MODULE_ID "LOLIN 32"
+#define MODULE_ID "ESP 32"
 #define GATTS_TAG "MK32 V3.0" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
 

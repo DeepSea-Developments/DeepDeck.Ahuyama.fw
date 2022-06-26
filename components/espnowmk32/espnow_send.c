@@ -38,7 +38,7 @@
 #include "espnow_send.h"
 #include "keyboard_config.h"
 
-#include "r_encoder.h"
+#include "rotary_encoder.h"
 
 #define ESP_NOW_TAG "ESP-NOW"
 

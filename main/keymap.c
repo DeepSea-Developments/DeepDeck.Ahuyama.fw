@@ -31,35 +31,53 @@ char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
  * important - first macro must be initialized as MACRO_BASE_VAL
  * */
 
-#define MACROS_NUM 2
+#define MACROS_NUM 20
 enum custom_macros {
-	KC_CTRL_SFT_M = MACRO_BASE_VAL, KC_ALT_TAB,
+	KC_MACRO_COPY = MACRO_BASE_VAL, 
+	KC_MACRO_PASTE,
+	KC_MACRO_PASTEasd
 };
 
 /*define what the macros do
  * important- make sure you you put the macros in the same order as the their enumeration
  */
 uint16_t macros[MACROS_NUM][MACRO_LEN] = {
-		// CTRL+SHT+M  TO MUTE IN DISCORD
-		{ KC_LCTRL, KC_LSFT, KC_M },
-		//ALT + TAB
-		{ KC_RALT, KC_TAB, KC_NO } };
+		// KC_COPY
+		{ KC_A, KC_B, KC_C, KC_D, KC_E },
+		{ KC_A, KC_B, KC_NO },
+		//KC_PASTE
+		{ KC_LSHIFT, KC_A, KC_NO },
+		{ KC_LCTRL, KC_LALT, KC_MINS }, };
 
 /*Encoder keys for each layer by order, and for each pad
  * First variable states what usage the encoder has
  */
 
 uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = {
-		// |VOL + | VOL - | MUTE |
-		{ MEDIA_ENCODER, KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE },
+		// | CCW rotation | CW rotation | PUSH | LONG PUSH | DOUBLE PUSH |
+		// |VOL + | VOL - | MUTE | 
+		{ KC_MS_UP, KC_MS_DOWN, KC_MS_BTN1, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		//{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
 		// |Y+|Y-| LEFT CLICK|
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN1 },
+		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
 
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN1 } };
+		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } };
+
+uint16_t default_encoder2_map[LAYERS][ENCODER_SIZE] = {
+		// | CCW rotation | CW rotation | PUSH | LONG PUSH | DOUBLE PUSH |
+		// |VOL + | VOL - | MUTE | 
+		{ KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		//{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
+		// |Y+|Y-| LEFT CLICK|
+		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
+
+		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } };
 
 uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 		// |VOL + | VOL - | MUTE |
-		{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
+		{ KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
 		// |Y+|Y-| LEFT CLICK|
 		{ MOUSE_ENCODER, KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2 },
 		// |Y+|Y-| LEFT CLICK|
@@ -73,21 +91,22 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 	 uint16_t _QWERTY[MATRIX_ROWS][KEYMAP_COLS]={
 
 			/* MEDIA
-			 * ,------------------------------------------.
-			 * |CALC  |  <<  |  <<  |  |>   |  >>  |RAISE |
-			 * |------+------+------+-------+------+------|
-			 * | Tab  |   A  |   S  |   D   |   F  |LOWER |
-			 * |------+------+------+-------+------+------|
-			 * | Shift|   Z  |   X  |   C   |   V  |   B  |
-			 * |------+------+------+-------+------+------|
-			 * | Ctrl | GUI  |  Alt |Default|Lower |Space |
-			 * `------------------------------------------'
+			 * ,----------------------------.
+			 * |CALC  |  <<  |  <<  |  |>   |
+			 * |------+------+------+-------|
+			 * | Tab  |   A  |   S  |   D   |
+			 * |------+------+------+-------|
+			 * | Shift|   Z  |   X  |   C   |
+			 * |------+------+------+-------|
+			 * | Ctrl | GUI  |  Alt |Default|
+			 * `----------------------------'
 			 */
 
-			  {KC_Q,  KC_W,    KC_E,    KC_R,    KC_MNXT,    KC_CTRL_SFT_M },
-			  {KC_A,  KC_S,    KC_D,    KC_F,    KC_F,    KC_ALT_TAB },
-			  {KC_Z, KC_X,    KC_C,    KC_V,    KC_FN1,    PN_LAYOUT } ,
-			  {KC_R,KC_T, KC_F, KC_G, KC_V,   PN_CLOSE }
+			  {KC_MPRV,  KC_MPLY,    KC_MNXT,    RAISE },
+			  {KC_N,  KC_I,    KC_C,    KC_K },
+			  {KC_MACRO_PASTE,KC_MACRO_COPY, KC_MACRO_PASTEasd,    KC_D} ,
+			  {KC_MACRO_PASTE,KC_MACRO_COPY, KC_MACRO_PASTEasd, KC_4}
+
 	};
 
 	 uint16_t _NUM[MATRIX_ROWS][KEYMAP_COLS]={
@@ -104,10 +123,10 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 			 * `------------------------------------------'
 			 */
 
-			  {KC_Q,  KC_W,    KC_E,    KC_R,    KC_MNXT,    RAISE },
-			  {KC_A,  KC_S,    KC_D,    KC_F,    KC_F,    LOWER },
-			  {KC_Z, KC_X,    KC_C,    KC_V,    KC_FN1,    KC_FN2 } ,
-			  {KC_R,KC_T, KC_F, KC_G, KC_V,   KC_SPC }
+			  {KC_1,       KC_2,          KC_3,    RAISE  },
+			  {KC_4,       KC_5,          KC_6,    KC_KP_PLUS  },
+			  {KC_7,       KC_8,          KC_9,    KC_KP_ASTERISK },
+			  {KC_DOT,     KC_0,     KC_BSPACE,    KC_ENTER }
 
 	};
 
@@ -121,10 +140,10 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 				//   {KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G },
 				//   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B } ,
 				//   {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT, NUM_H,   KC_SPC }
-				{KC_CALC,  KC_Q,    KC_MPRV,    KC_MPLY,    KC_MNXT,    RAISE },
-			  {KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    LOWER },
-			  {KC_LSFT, KC_Z,    KC_X,    KC_FN0,    KC_FN1,    KC_FN2 } ,
-			  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT, NUM_H,   KC_SPC }
+				{KC_CALC,  KC_Q,    KC_MPRV,    RAISE },
+			  {KC_TAB,  KC_A,    KC_S,    KC_D},
+			  {KC_LSFT, KC_Z,    KC_X,    KC_FN0 } ,
+			  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }
 
 		};
  //Create an array that points to the various keymaps
