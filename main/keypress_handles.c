@@ -61,7 +61,6 @@ uint16_t check_modifier(uint16_t key) {
 		return cur_mod;
 	}
 	return 0;
-
 }
 
 // checking if a led status key was pressed, returning current led status

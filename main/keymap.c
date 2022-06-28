@@ -31,57 +31,97 @@ char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
  * important - first macro must be initialized as MACRO_BASE_VAL
  * */
 
-#define MACROS_NUM 20
+
 enum custom_macros {
-	KC_MACRO_COPY = MACRO_BASE_VAL, 
-	KC_MACRO_PASTE,
-	KC_MACRO_PASTEasd
+	KC_CTRLALT = MACRO_BASE_VAL,  //Ubuntu windows manager (change workspace)
+	KC_CTRLALTSHIFT,              //Ubuntu windows manager (move windows)
+	KC_APP_SHUTTER,               //Shutter
+	KC_APP_TERMINAL,             //Terminal
+	KC_ALT_TAB,                  //Alt Tab
+	KC_ALT_SHIFT_TAB,            //Alt Shift Tab
+	KC_APP_CHROME_NTAB,            //Chrome - Next tab
+	KC_APP_CHROME_PTAB,            //Chrome - Prev tab
+	KC_APP_CHROME_NEW_TAB,            //Chrome - New window
+	KC_APP_CHROME_NEW_WINDOW,            //Chrome - New window
+	KC_APP_CHROME_N_INC_WINDOW,       //Chrome - New incognito window
+	KC_APP_CHROME_CLOSE_TAB           //Chrome - Close tab
+
 };
 
 /*define what the macros do
  * important- make sure you you put the macros in the same order as the their enumeration
  */
 uint16_t macros[MACROS_NUM][MACRO_LEN] = {
-		// KC_COPY
-		{ KC_A, KC_B, KC_C, KC_D, KC_E },
-		{ KC_A, KC_B, KC_NO },
-		//KC_PASTE
-		{ KC_LSHIFT, KC_A, KC_NO },
-		{ KC_LCTRL, KC_LALT, KC_MINS }, };
+		// KC_CTR + ALT - //Ubuntu windows manager (change workspace)
+		{ KC_LCTRL, KC_LALT, KC_NO },
+		// KC_CTR + ALT + Shift - Ubuntu windows manager (move windows)
+		{ KC_LCTRL, KC_LALT, KC_LSHIFT, KC_NO },
+		//Shutter
+		{ KC_LALT, KC_LSHIFT, KC_S, KC_NO },
+		//Terminal
+		{ KC_LCTRL, KC_LALT, KC_T, KC_NO}, 
+		//alt + Tab
+		{ KC_LALT, KC_TAB, KC_NO}, 
+		//alt + Shift + Tab
+		{ KC_LALT, KC_LSHIFT, KC_TAB, KC_NO}, 
+		//Chrome - Next tab
+		{ KC_LCTRL, KC_TAB, KC_NO}, 
+		//Chrome - Prev tab
+		{ KC_LCTRL, KC_LSHIFT, KC_TAB, KC_NO},
+		//Chrome - New tab
+		{ KC_LCTRL, KC_T, KC_NO}, 
+		//Chrome - New Window
+		{ KC_LCTRL, KC_N, KC_NO}, 
+		//Chrome - New incognito window
+		{ KC_LCTRL, KC_LSHIFT, KC_N, KC_NO}, 
+		//Chrome - Close tab
+		{ KC_LCTRL, KC_W, KC_NO}, 
+	};
 
 /*Encoder keys for each layer by order, and for each pad
  * First variable states what usage the encoder has
  */
 
 uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = {
-		// | CCW rotation | CW rotation | PUSH | LONG PUSH | DOUBLE PUSH |
-		// |VOL + | VOL - | MUTE | 
-		{ KC_MS_UP, KC_MS_DOWN, KC_MS_BTN1, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		//{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		/* Encoder 1 layout
+			 * ,-----------------------------------------------------------------------------------------------------------.
+			 * |  ---Layers---   |  CCW rotation   |    CW rotation    |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L1   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L2   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L3   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * `-----------------------------------------------------------------------------------------------------------'
+			 */
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK }
 		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
 		// |Y+|Y-| LEFT CLICK|
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
-
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } };
-
-uint16_t default_encoder2_map[LAYERS][ENCODER_SIZE] = {
-		// | CCW rotation | CW rotation | PUSH | LONG PUSH | DOUBLE PUSH |
-		// |VOL + | VOL - | MUTE | 
-		{ KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		//{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
-		// |Y+|Y-| LEFT CLICK|
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
-
-		{ MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } };
+		// { MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
+		// { MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } 
+	};
 
 uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
+	/* Encoder 2 layout
+			 * ,-----------------------------------------------------------------------------------------------------------.
+			 * |  ---Layers---   |  CCW rotation   |    CW rotation    |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L1   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L2   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
+			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
+			 * |        L3   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
+			 * `-----------------------------------------------------------------------------------------------------------'
+			 */
 		// |VOL + | VOL - | MUTE |
-		{ KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
+		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
 		// |Y+|Y-| LEFT CLICK|
-		{ MOUSE_ENCODER, KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2 },
+		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_NEW_WINDOW, KC_APP_CHROME_N_INC_WINDOW },
 		// |Y+|Y-| LEFT CLICK|
-		{ MOUSE_ENCODER, KC_MS_RIGHT, KC_MS_LEFT, KC_MS_BTN2 } };
+		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_NEW_WINDOW, KC_APP_CHROME_N_INC_WINDOW }
+	 };
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
@@ -91,36 +131,36 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 	 uint16_t _QWERTY[MATRIX_ROWS][KEYMAP_COLS]={
 
 			/* MEDIA
-			 * ,----------------------------.
-			 * |CALC  |  <<  |  <<  |  |>   |
-			 * |------+------+------+-------|
-			 * | Tab  |   A  |   S  |   D   |
-			 * |------+------+------+-------|
-			 * | Shift|   Z  |   X  |   C   |
-			 * |------+------+------+-------|
-			 * | Ctrl | GUI  |  Alt |Default|
-			 * `----------------------------'
+			 * ,-----------------------------------------------------------------------.
+			 * |        <<       |        |>       |       >>        |  LAYER CHANGE   |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |   CHROME_PTAB   |    CHROME_NTAB  |    TERMINAL     |     SHUTTER     |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |    WINDOW_M     |    S_TAB        |       UP        |      TAB        |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |    WINDOW_W     |     LEFT        |      DOWN       |      RIGHT      |
+			 * `-----------------------------------------------------------------------'
 			 */
 
-			  {KC_MPRV,  KC_MPLY,    KC_MNXT,    RAISE },
-			  {KC_N,  KC_I,    KC_C,    KC_K },
-			  {KC_MACRO_PASTE,KC_MACRO_COPY, KC_MACRO_PASTEasd,    KC_D} ,
-			  {KC_MACRO_PASTE,KC_MACRO_COPY, KC_MACRO_PASTEasd, KC_4}
+			  {KC_MPRV,             KC_MPLY,            KC_MNXT,            RAISE },
+			  {KC_APP_CHROME_PTAB,  KC_APP_CHROME_NTAB, KC_APP_TERMINAL,    KC_APP_SHUTTER },
+			  {KC_CTRLALTSHIFT,     KC_ALT_SHIFT_TAB,   KC_UP,              KC_ALT_TAB} ,
+			  {KC_CTRLALT,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
 
 	};
 
 	 uint16_t _NUM[MATRIX_ROWS][KEYMAP_COLS]={
 
-		 	/* Nums
-			 * ,------------------------------------------.
-			 * |   1  |   2  |   3  |  |>   |  >>  |RAISE |
-			 * |------+------+------+-------+------+------|
-			 * |   4  |   5  |   6  |   +   |   -  |LOWER |
-			 * |------+------+------+-------+------+------|
-			 * |   7  |   8  |   9  |   *   |   /  | Vol+ |
-			 * |------+------+------+-------+------+------|
-			 * |   .  |   0  |  <-- | Enter |  GUI | Vol- |
-			 * `------------------------------------------'
+		 	/* MEDIA
+			 * ,-----------------------------------------------------------------------.
+			 * |        1        |         2       |       3         |  LAYER CHANGE   |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        4        |         5       |       6         |        +        |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        7        |         8       |       9         |        *        |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        .        |         0       |        <-       |      ENTER      |
+			 * `-----------------------------------------------------------------------'
 			 */
 
 			  {KC_1,       KC_2,          KC_3,    RAISE  },
