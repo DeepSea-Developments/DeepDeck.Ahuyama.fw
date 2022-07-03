@@ -49,6 +49,7 @@
 #define ENCODER2_B_PIN GPIO_NUM_25// encoder phase B pin
 #define ENCODER2_S_PIN GPIO_NUM_34// encoder switch pin
 
+#define RGB_LEDS
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used

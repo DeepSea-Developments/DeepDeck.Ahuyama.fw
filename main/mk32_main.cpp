@@ -49,7 +49,6 @@
 #include "keyboard_config.h"
 #include "espnow_receive.h"
 #include "espnow_send.h"
-//#include "r_encoder.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
 #include "nvs_keymaps.h"
@@ -57,6 +56,7 @@
 #include "esp_err.h"
 
 #include "rotary_encoder.h"
+#include "rgb_led.h"
 
 #include "plugins.h"
 
@@ -191,6 +191,16 @@ extern "C" void key_reports(void *pvParameters) {
 
 }
 
+
+//Handling rgb LEDs
+extern "C" void rgb_leds_task(void *pvParameters) {
+	
+	rgb_key_led_init();
+	rgb_notification_led_init();
+	while (1) {
+		test();
+	}
+}
 
 rotary_encoder_t *encoder_a = NULL;
 rotary_encoder_t *encoder_b = NULL;
@@ -406,8 +416,16 @@ extern "C" void app_main() {
 
 	xTaskCreatePinnedToCore(encoder2_report, "encoder 2 report", 4096, NULL,
 			configMAX_PRIORITIES, NULL, 1);
-	ESP_LOGI("Encoder 2", "initializezd");
+	ESP_LOGI("Encoder 2", "initialized");
 #endif
+
+#ifdef RGB_LEDS
+	xTaskCreatePinnedToCore(rgb_leds_task, "rgb_leds_task", 4096, NULL,
+			configMAX_PRIORITIES, NULL, 1);
+	ESP_LOGI("rgb_leds_task", "initialized");
+#endif
+
+
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
@@ -443,21 +461,8 @@ extern "C" void app_main() {
 	ESP_LOGI("Sleep", "initializezd");
 #endif
 
-//-------------------------------------------------------- Encoder test----------
 
 
-//  Report counter value
-    // while (1) {
-    //     ESP_LOGI("Encoder", "Encoder value: %d - %d", encoder_a->get_counter_value(encoder_a), encoder_b->get_counter_value(encoder_b) );
-    //     vTaskDelay(pdMS_TO_TICKS(300));
-	// 	//encoder_state_1 = encoder_state(encoder_a);
-	// 	encoder_state(encoder_a);
-	// 	encoder_state(encoder_b);
-    // }
-
-//This is for testing
-	//init_layout_server();
-	//input_string();
 }
 
 }
