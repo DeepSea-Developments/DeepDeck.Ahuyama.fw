@@ -28,6 +28,7 @@
 #include "oled_tasks.h"
 #include "nvs_keymaps.h"
 #include "plugin_manager.h"
+#include "rgb_led.h"
 
 #define KEY_PRESS_TAG "KEY_PRESS"
 
@@ -173,6 +174,10 @@ uint8_t *check_key_state(uint16_t **keymap) {
 				//if there are no changes on this matrix position, skip to next position
 				if(matrix_state[row][col] == matrix_prev_state[row][col])	
 					continue;
+				
+				#ifdef RGB_LEDS
+				rgb_key_led_press(row, col); //report the pressed key 
+				#endif
 
 				uint16_t report_index = (2 + col + row * KEYMAP_COLS);
 				keycode = keymap[row][col];

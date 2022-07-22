@@ -39,15 +39,15 @@
 //Encoder definitions
 #define R_ENCODER_1 // undefine if no rotary encoder is used
 //#define R_ENCODER_SLAVE // undefine if no rotary encoder is used on slave pad
-#define ENCODER1_A_PIN GPIO_NUM_33 // encoder phase A pin
-#define ENCODER1_B_PIN GPIO_NUM_32// encoder phase B pin
-#define ENCODER1_S_PIN GPIO_NUM_27// encoder switch pin
+#define ENCODER1_A_PIN GPIO_NUM_26 // encoder phase A pin
+#define ENCODER1_B_PIN GPIO_NUM_25// encoder phase B pin
+#define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
 
 
 #define R_ENCODER_2 // undefine if no rotary encoder is used
-#define ENCODER2_A_PIN GPIO_NUM_26// encoder phase A pin
-#define ENCODER2_B_PIN GPIO_NUM_25// encoder phase B pin
-#define ENCODER2_S_PIN GPIO_NUM_34// encoder switch pin
+#define ENCODER2_A_PIN GPIO_NUM_33// encoder phase A pin
+#define ENCODER2_B_PIN GPIO_NUM_32// encoder phase B pin
+#define ENCODER2_S_PIN GPIO_NUM_27// encoder switch pin
 
 #define RGB_LEDS
 
@@ -92,10 +92,6 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define LAYERS_BASE_VAL 0xFF
 
 #define ENCODER_SIZE 5
-// Todo Delete these classes
-#define MEDIA_ENCODER 0
-#define MOUSE_ENCODER 1
-#define KEY_ENCODER 2
 
 typedef struct config_data {
 	char bt_device_name[MAX_BT_DEVICENAME_LENGTH];

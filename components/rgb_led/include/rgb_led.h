@@ -39,8 +39,19 @@ extern "C" {
 void rgb_notification_led_init(void);
 void rgb_key_led_init(void);
 
+void rgb_key_led_press(uint8_t row, uint8_t col);
+
 void hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b);
 void test(void);
+
+typedef struct rbg_key {
+        uint16_t h;
+        int8_t s;
+        int8_t v;
+    }rbg_key; 
+
+//pulsating keys
+rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 static const char *TAG = "RGB_LEDs";
 

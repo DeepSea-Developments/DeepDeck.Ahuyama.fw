@@ -20,6 +20,8 @@
 led_strip_t *rgb_key;
 led_strip_t *rgb_notif;
 
+
+
 void hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b)
 {
     h %= 360; // h -> [0,360]
@@ -104,6 +106,20 @@ void rgb_key_led_init(void)
     }
     // Clear LED strip (turn off all LEDs)
     ESP_ERROR_CHECK(rgb_key->clear(rgb_key, 100));
+
+    // Init rgb_keystatus
+    for(uint8_t i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+    {
+        rgb_key_status[i].h = 180;
+        rgb_key_status[i].s = 100;
+        rgb_key_status[i].v = 0;
+    }
+}
+
+void rgb_key_led_press(uint8_t row, uint8_t col)
+{
+    uint8_t key = (row << 2) + col;
+    rgb_key_status[key].v = 100;
 }
 
 void test(void)
@@ -119,6 +135,51 @@ void test(void)
     uint16_t hue2 = 0;
     uint16_t start_rgb = 0;
 
+    uint8_t pulse_speed = 3;
+
+    // For now, pulsating will be only be on lux, not hue. a hue will be set to test.
+    uint16_t counter = 0;
+    uint16_t counter_top = 5;
+    uint8_t current_pulsating_key = 0;
+    
+    while(true)
+    {
+        hue += 1;
+        // counter++;
+        // if(counter == counter_top)
+        // {
+        //     counter = 0; // Reset counter
+        //     rgb_key_status[current_pulsating_key].v = 100;
+        //     current_pulsating_key++;
+        //     if (current_pulsating_key == RGB_LED_KEYBOARD_NUMBER)
+        //     {
+        //         current_pulsating_key = 0;
+        //     }
+        // }
+
+
+        // Check matrix to pulsate the leds
+        for(uint8_t i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+        {
+            rbg_key *rgb = &rgb_key_status[i];
+            if(rgb->v > 0)
+            {
+                rgb->v -= pulse_speed;
+                if(rgb->v < 0)
+                {
+                    rgb->v = 0;
+                }
+
+                hsv2rgb(hue, rgb->s, rgb->v, &red, &green, &blue);
+                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+            }
+        }
+        ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+        vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+
+    }
+
+    //Changing colors
     while (true) {
         hue += 1;
         hue2 += 12;
