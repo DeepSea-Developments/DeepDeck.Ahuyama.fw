@@ -44,7 +44,8 @@ enum custom_macros {
 	KC_APP_CHROME_NEW_TAB,            //Chrome - New window
 	KC_APP_CHROME_NEW_WINDOW,            //Chrome - New window
 	KC_APP_CHROME_N_INC_WINDOW,       //Chrome - New incognito window
-	KC_APP_CHROME_CLOSE_TAB           //Chrome - Close tab
+	KC_APP_CHROME_CLOSE_TAB,           //Chrome - Close tab
+	KC_APP_WINDOWPUT_LINUX_K		// Windows plugin call windowput to move windows to certain parts. use this plus arrows.
 
 };
 
@@ -76,6 +77,8 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		{ KC_LCTRL, KC_LSHIFT, KC_N, KC_NO}, 
 		//Chrome - Close tab
 		{ KC_LCTRL, KC_W, KC_NO}, 
+		//Linux - WindowPut plugin - MosaicWindow
+		{ KC_LGUI, KC_LALT, KC_NO}, 
 	};
 
 /*Encoder keys for each layer by order, and for each pad
@@ -136,7 +139,7 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 			 * |-----------------+-----------------+-----------------+-----------------|
 			 * |   CHROME_PTAB   |    CHROME_NTAB  |    TERMINAL     |     SHUTTER     |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |    WINDOW_M     |    S_TAB        |       UP        |      TAB        |
+			 * |    WINDOW_M     |  WINDOWS_KEY    |       UP        |    WINDOWPUT_K  |
 			 * |-----------------+-----------------+-----------------+-----------------|
 			 * |    WINDOW_W     |     LEFT        |      DOWN       |      RIGHT      |
 			 * `-----------------------------------------------------------------------'
@@ -144,7 +147,7 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 
 			  {KC_MPRV,             KC_MPLY,            KC_MNXT,            RAISE },
 			  {KC_APP_CHROME_PTAB,  KC_APP_CHROME_NTAB, KC_APP_TERMINAL,    KC_APP_SHUTTER },
-			  {KC_CTRLALTSHIFT,     KC_ALT_SHIFT_TAB,   KC_UP,              KC_ALT_TAB} ,
+			  {KC_CTRLALTSHIFT,     KC_LGUI,            KC_UP,              KC_APP_WINDOWPUT_LINUX_K} ,
 			  {KC_CTRLALT,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
 
 	};
