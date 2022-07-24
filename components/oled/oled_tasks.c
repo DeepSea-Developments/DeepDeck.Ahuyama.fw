@@ -383,7 +383,7 @@ const unsigned char bitmap_splash[]  = {
 
 void splashScreen(void)
 {
-	
+	u8g2_ClearDisplay(&u8g2);
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
 	// u8g2_DrawStr(&u8g2, 0, 6, "V1.1.2");
@@ -408,3 +408,6 @@ void splashScreen(void)
 
 	u8g2_SendBuffer(&u8g2);
 }
+
+
+

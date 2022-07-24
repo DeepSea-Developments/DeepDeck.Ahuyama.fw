@@ -199,6 +199,11 @@ err:
 }
 
 
+uint8_t encoder_push_state(rotary_encoder_t *encoder)
+{
+    return gpio_get_level(encoder->encoder_s_pin);
+}
+
 //Check encoder state, currently defined for Vol +/= and mute
 encoder_state_t encoder_state(rotary_encoder_t *encoder)
 {

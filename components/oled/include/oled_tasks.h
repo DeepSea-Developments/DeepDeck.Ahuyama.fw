@@ -24,6 +24,9 @@ extern "C" {
 #define DEG180 U8G2_R2
 #define DEG270 U8G2_R3
 
+
+extern u8g2_t u8g2; // a structure which will contain all the data for one display
+
 /** @brief Setup the oled screen
  * @param rotation - Set rotation
  * */
@@ -53,6 +56,7 @@ void update_oled(void);
 /** @brief Generate Splash Screen
  * */
 void splashScreen(void);
+
 
 /** @brief Queue for sending layer to oled
  **/

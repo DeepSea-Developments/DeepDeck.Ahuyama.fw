@@ -57,6 +57,7 @@
 
 #include "rotary_encoder.h"
 #include "rgb_led.h"
+#include "menu.h"
 
 #include "plugins.h"
 
@@ -65,8 +66,6 @@
 #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
-
-
 //plugin functions
 
 static config_data_t config;
@@ -79,34 +78,49 @@ TaskHandle_t xOledTask;
 #endif
 TaskHandle_t xKeyreportTask;
 
+
+
 //Task for continually updating the OLED
-extern "C" void oled_task(void *pvParameters) {
-#ifdef MASTER
+extern "C" void oled_task(void *pvParameters) 
+{
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
 	while (1) {
-		if (halBLEIsConnected() == 0) {
-			if (CON_LOG_FLAG == false) {
-				ESP_LOGI(KEY_REPORT_TAG,
-						"Not connected, waiting for connection ");
-			}
-			waiting_oled();
-			DEEP_SLEEP = false;
-			CON_LOG_FLAG = true;
-		} else {
-			if (CON_LOG_FLAG == true) {
+
+		switch(deepdeck_status)
+		{
+			case S_NORMAL:
+				if (halBLEIsConnected() == 0) {
+					if (CON_LOG_FLAG == false) {
+						ESP_LOGI(KEY_REPORT_TAG,
+								"Not connected, waiting for connection ");
+					}
+					waiting_oled();
+					DEEP_SLEEP = false;
+					CON_LOG_FLAG = true;
+				} else {
+					if (CON_LOG_FLAG == true) {
+						ble_connected_oled();
+					}
+					update_oled();
+					CON_LOG_FLAG = false;
+				}
+			break;
+			case S_SETTINGS:
+				
+				vTaskDelay(pdMS_TO_TICKS(200));
+
+				menu_screen();
+				splashScreen();
+				vTaskDelay(pdMS_TO_TICKS(1800));
 				ble_connected_oled();
-			}
-			update_oled();
-			CON_LOG_FLAG = false;
+
+				deepdeck_status = S_NORMAL;
+
+			break;
 		}
 	}
-#endif
-#ifdef SLAVE
-	while(1) {
-		ble_slave_oled();
-	}
-#endif
+
 }
 
 //handle battery reports over BLE
@@ -204,6 +218,7 @@ extern "C" void rgb_leds_task(void *pvParameters) {
 
 rotary_encoder_t *encoder_a = NULL;
 rotary_encoder_t *encoder_b = NULL;
+
 //Handling rotary encoder
 extern "C" void encoder1_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
@@ -211,11 +226,28 @@ extern "C" void encoder1_report(void *pvParameters) {
 
 	while (1) {
 		encoder_status = encoder_state(encoder_a);
-		//encoder_state_2 = encoder_state(encoder_a);
 
-		if (encoder_status != past_encoder_state) {
+		if (encoder_status != past_encoder_state) 
+		{
 			DEEP_SLEEP = false;
-			encoder_command(encoder_status, encoder_map[current_layout]);
+			// Check if both encoder are pushed, to enter settings mode.
+
+			if(deepdeck_status == S_SETTINGS)
+			{
+				menu_command((encoder_state_t)encoder_status);
+			}
+			else if( encoder_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_b) )
+			{
+				//Enter Setting mode.
+				deepdeck_status = S_SETTINGS;
+				ESP_LOGI("Encoder 1","setting mode");
+			}
+			else
+			{
+				encoder_command(encoder_status, encoder_map[current_layout]);
+			}
+
+			
 			past_encoder_state = encoder_status;
 		}
 	}
@@ -225,13 +257,27 @@ extern "C" void encoder2_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
-	while (1) {
+	while (1) 
+	{
 		encoder_status = encoder_state(encoder_b);
 		//encoder_state_2 = encoder_state(encoder_a);
 
 		if (encoder_status != past_encoder_state) {
 			DEEP_SLEEP = false; 
-			encoder_command(encoder_status, slave_encoder_map[current_layout]);
+
+			// Check if both encoder are pushed, to enter settings mode.
+			if( encoder_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_a) )
+			{
+				//Enter Setting mode.
+				deepdeck_status = S_SETTINGS;
+				ESP_LOGI("Encoder 2","setting mode");
+			}
+			else
+			{
+				encoder_command(encoder_status, slave_encoder_map[current_layout]);
+			}
+
+			
 			past_encoder_state = encoder_status;
 		}
 	}
@@ -439,7 +485,7 @@ extern "C" void app_main() {
 #ifdef	OLED_ENABLE
 	init_oled(ROTATION);
 
-	
+	deepdeck_status = S_NORMAL;
 	splashScreen();
 	vTaskDelay(pdMS_TO_TICKS(1800));
 

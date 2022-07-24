@@ -1,45 +1,29 @@
-/*
+// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#include <stdlib.h>
+#include <string.h>
+#include <sys/cdefs.h>
+#include "esp_compiler.h"
+#include "esp_log.h"
+#include "menu.h"
 
-  u8g2_selection_list.c
-  
-  selection list with scroll option
-  
-  Universal 8bit Graphics Library (https://github.com/olikraus/u8g2/)
-
-  Copyright (c) 2016, olikraus@gmail.com
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without modification, 
-  are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this list 
-    of conditions and the following disclaimer.
-    
-  * Redistributions in binary form must reproduce the above copyright notice, this 
-    list of conditions and the following disclaimer in the documentation and/or other 
-    materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
-  CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
-  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
-  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  
-  
-*/
-
-#include "u8g2.h"
 
 #define MY_BORDER_SIZE 1
-#define U8G2_REF_MAN_PIC
+//#define U8G2_REF_MAN_PIC
+static const char *TAG = "menu";
 
+volatile menu_event_t menu_event;
 
 /*
   Draw a string at x,y
@@ -126,7 +110,7 @@ void u8g2_DrawUTF8Line(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w
   if s == NULL nothing is drawn and 0 is returned
   returns the number of lines in s multiplied with line_height
 */
-u8g2_uint_t u8g2_DrawUTF8Lines(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t line_height, const char *s)
+u8g2_uint_t menu_DrawUTF8Lines(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t line_height, const char *s)
 {
   uint8_t i;
   uint8_t cnt;
@@ -148,8 +132,9 @@ u8g2_uint_t u8g2_DrawUTF8Lines(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_
   selection list with string line
   returns line height
 */
-static u8g2_uint_t u8g2_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s) U8G2_NOINLINE;
-static u8g2_uint_t u8g2_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s)
+// static u8g2_uint_t u8g2_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s) U8G2_NOINLINE;
+
+static u8g2_uint_t menu_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s)
 {
   u8g2_uint_t yy;
   uint8_t border_size = 0;
@@ -180,33 +165,20 @@ static u8g2_uint_t u8g2_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g
   return line_height;
 }
 
-void u8g2_DrawSelectionList(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, const char *s)
+void menu_DrawSelectionList(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, const char *s)
 {
   uint8_t i;
   for( i = 0; i < u8sl->visible; i++ )
   {
-    y += u8g2_draw_selection_list_line(u8g2, u8sl, y, i+u8sl->first_pos, s);
+    y += menu_draw_selection_list_line(u8g2, u8sl, y, i+u8sl->first_pos, s);
   }
 }
 
 
-/*
-  title: 		NULL for no title, valid str for title line. Can contain mutliple lines, separated by '\n'
-  start_pos: 	default position for the cursor, first line is 1.
-  sl:			string list (list of strings separated by \n)
-  returns 0 if user has pressed the home key
-  returns the selected line if user has pressed the select key
-  side effects:
-    u8g2_SetFontDirection(u8g2, 0);
-    u8g2_SetFontPosBaseline(u8g2);
-	
-*/
-uint8_t u8g2_UserInterfaceSelectionList(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl)
+uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl)
 {
   u8sl_t u8sl;
   u8g2_uint_t yy;
-
-  uint8_t event;
 
   u8g2_uint_t line_height = u8g2_GetAscent(u8g2) - u8g2_GetDescent(u8g2)+MY_BORDER_SIZE;
 
@@ -241,6 +213,7 @@ uint8_t u8g2_UserInterfaceSelectionList(u8g2_t *u8g2, const char *title, uint8_t
 
   u8g2_SetFontPosBaseline(u8g2);
   
+  menu_event = MENU_NONE;
   for(;;)
   {
       u8g2_FirstPage(u8g2);
@@ -249,37 +222,75 @@ uint8_t u8g2_UserInterfaceSelectionList(u8g2_t *u8g2, const char *title, uint8_t
         yy = u8g2_GetAscent(u8g2);
         if ( title_lines > 0 )
         {
-          yy += u8g2_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, title);
+          yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, title);
 		
 	  u8g2_DrawHLine(u8g2, 0, yy-line_height- u8g2_GetDescent(u8g2) + 1, u8g2_GetDisplayWidth(u8g2));
 		
 	  yy += 3;
         }
-        u8g2_DrawSelectionList(u8g2, &u8sl, yy, sl);
+        menu_DrawSelectionList(u8g2, &u8sl, yy, sl);
       } while( u8g2_NextPage(u8g2) );
+
       
-#ifdef U8G2_REF_MAN_PIC
-      return 0;
-#endif
-
-
       for(;;)
       {
-        event = u8x8_GetMenuEvent(u8g2_GetU8x8(u8g2));
-        if ( event == U8X8_MSG_GPIO_MENU_SELECT )
-          return u8sl.current_pos+1;		/* +1, issue 112 */
-        else if ( event == U8X8_MSG_GPIO_MENU_HOME )
-          return 0;				/* issue 112: return 0 instead of start_pos */
-        else if ( event == U8X8_MSG_GPIO_MENU_NEXT || event == U8X8_MSG_GPIO_MENU_DOWN )
+        if ( menu_event == MENU_SELECT )
         {
-          u8sl_Next(&u8sl);
-          break;
+            ESP_LOGI("MENU","select");
+            return u8sl.current_pos+1;
+
+        }		
+        else if ( menu_event == MENU_HOME )
+        {
+            ESP_LOGI("MENU","return");
+            return 0;	
+        }	
+        else if ( menu_event == MENU_NEXT || menu_event == MENU_DOWN )
+        {
+            ESP_LOGI("MENU","next");
+            u8sl_Next(&u8sl);
+            break;
         }
-        else if ( event == U8X8_MSG_GPIO_MENU_PREV || event == U8X8_MSG_GPIO_MENU_UP )
+        else if ( menu_event == MENU_PREV || menu_event == MENU_UP )
         {
-          u8sl_Prev(&u8sl);
-          break;
+            ESP_LOGI("MENU","Previous");
+            u8sl_Prev(&u8sl);
+            break;
         }
       }
+      menu_event = MENU_NONE;
   }
 }
+
+void menu_screen()
+{
+    uint8_t selection;
+
+	selection = menu_selection(&u8g2, "DeepDeck\nMainMenu", 1, "Bluetooth Options\nLED test mode\nSleep Mode\netc\netc1\netc2");
+
+}
+
+void menu_command(encoder_state_t encoder_action)
+{
+    ESP_LOGI("MENU_COMMAND","ENTER");
+    switch (encoder_action)
+    {
+    case ENC_UP:
+        menu_event = MENU_UP;
+        ESP_LOGI("MENU_COMMAND","UP");
+    break;
+    case ENC_DOWN:
+        menu_event = MENU_DOWN;
+    break;
+    case ENC_BUT_SHORT_PRESS:
+        menu_event = MENU_SELECT;
+    break;
+    case ENC_BUT_LONG_PRESS:
+        menu_event = MENU_HOME;
+    break;
+    
+    default:
+    break;
+    }
+}
+

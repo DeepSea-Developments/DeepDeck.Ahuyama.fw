@@ -36,11 +36,7 @@ typedef enum {
     ENC_DOWN,
     ENC_BUT_SHORT_PRESS,
     ENC_BUT_LONG_PRESS,
-    ENC_BUT_DOUBLE_PRESS,
-    /** Internally used states */
-    _ENC_BUT_PRESS,
-    _ENC_BUT_RELEASE
-	
+    ENC_BUT_DOUBLE_PRESS,	
 } encoder_state_t;
 
 /** 
@@ -181,6 +177,16 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder);
  *      - encoder_state_t: TODO
  */
 void encoder_command(uint8_t command, uint16_t encoder_commands[4]);
+
+
+/**
+ * @brief Return the state of the encoder push button.
+ *
+ * @param 
+ * @return
+ *      State of te button, 0 or 1.
+ */
+uint8_t encoder_push_state(rotary_encoder_t *encoder);
 
 
 #ifdef __cplusplus
