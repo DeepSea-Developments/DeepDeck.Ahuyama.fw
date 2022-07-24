@@ -43,6 +43,32 @@ typedef enum {
 	
 } menu_event_t;
 
+#define MENU_CHAR_NUM 23
+
+
+
+typedef enum {
+    MENU,
+    FUNCTION
+} menu_item_action;
+
+struct menu_str_t;
+typedef struct menu_str_t menu_t;
+
+typedef struct menu_item_str_t{
+    char * description; //String of the menu item
+    menu_item_action action;        //Action if the item. It can take to a new menu or run a function
+    menu_t * next_menu;               // Pointer of the next menu
+    void (*function_pointer)(void); // Pointer of a function
+	
+} menu_item_t;
+
+struct menu_str_t{
+    char * title;
+    char * subtitle;
+	menu_item_t * menu_item_array;
+};
+
 
 
 deepdeck_status_t deepdeck_status;
@@ -56,6 +82,17 @@ menu_event_t menu_get_event(void);
 /** @brief Generate Splash Screen
  * */
 void menu_screen(void);
+
+void menu_init(void);
+
+menu_t menu_main; 
+extern menu_item_t m_main_array[];
+
+extern menu_t menu_bluetooth; 
+extern menu_item_t m_bluetooth_array[];
+
+
+
 
 #ifdef __cplusplus
 }

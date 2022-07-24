@@ -107,7 +107,7 @@ extern "C" void oled_task(void *pvParameters)
 				}
 			break;
 			case S_SETTINGS:
-				
+				menu_init();
 				vTaskDelay(pdMS_TO_TICKS(200));
 
 				menu_screen();

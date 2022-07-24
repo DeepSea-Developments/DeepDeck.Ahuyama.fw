@@ -25,6 +25,89 @@ static const char *TAG = "menu";
 
 volatile menu_event_t menu_event;
 
+
+
+
+
+
+
+// typedef struct menu_item_str_t{
+//     char * description; //String of the menu item
+//     menu_item_action action;        //Action if the item. It can take to a new menu or run a function
+//     menu_t * next_menu;               // Pointer of the next menu
+//     void (*function_pointer)(void); // Pointer of a function
+	
+// } menu_item_t;
+
+// struct menu_str_t{
+//     char * title;
+//     char * subtitle;
+// 	menu_item_t * menu_item_array;
+// };
+
+
+
+enum {
+    NONE = -1,
+    MAIN_MENU = 0,
+    BLUETOOTH_MENU,
+    menu_num
+	
+} menu_list;
+
+// Titles array
+
+char menu_titles[menu_num][MENU_CHAR_NUM] =
+{
+    "Main Menu",
+    "Bluetooth"
+};
+
+char menu_subtitles[menu_num][MENU_CHAR_NUM] =
+{
+    "DeepSea",
+    "DeepDeck"
+};
+
+// Main Menu!
+char menu_main_description[2][MENU_CHAR_NUM] =
+{
+    "Opcion 1",
+    "Opcion 2"
+};
+menu_item_t m_main_array[] =
+{
+    //Descripción                 //Acción             //Siguiente menu      ó     //Función
+    {menu_main_description[0],    MENU,                BLUETOOTH_MENU,             0},
+    {menu_main_description[1],    FUNCTION,            NONE,                       &splashScreen}
+};
+ // Bluetooth Menu
+char menu_bt_description[2][MENU_CHAR_NUM] =
+{
+    "Bluetooth 1",
+    "Bluetooth 2"
+};
+menu_item_t m_bluetooth_array[] = 
+{
+    //Descripción                 //Acción             //Siguiente menu      ó     //Función
+    {menu_bt_description[0],      FUNCTION,            NONE,                       &splashScreen},
+    {menu_bt_description[1],      FUNCTION,            NONE,                       &splashScreen}
+};
+
+menu_t menu_array[menu_num] = 
+ {
+    // Title                      //Subtitle                      //Item array
+    {menu_titles[MAIN_MENU],      menu_subtitles[MAIN_MENU],      m_main_array},
+    {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], m_bluetooth_array},
+ };
+
+
+menu_t menu_bluetooth; 
+
+
+
+
+
 /*
   Draw a string at x,y
   Center string within w (left adjust if w < pixel len of s)
@@ -101,7 +184,6 @@ void u8g2_DrawUTF8Line(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w
   u8g2_SetDrawColor(u8g2, 1);
 
 }
-
 
 /*
   draw several lines at position x,y.
@@ -266,7 +348,9 @@ void menu_screen()
 {
     uint8_t selection;
 
-	selection = menu_selection(&u8g2, "DeepDeck\nMainMenu", 1, "Bluetooth Options\nLED test mode\nSleep Mode\netc\netc1\netc2");
+    // ESP_LOGI("MENU","%s",menu_main.title);
+    // ESP_LOGI("MENU","%s",menu_main.subtitle);
+	selection = menu_selection(&u8g2, menu_main.title, 1, menu_main.subtitle);
 
 }
 
@@ -294,3 +378,15 @@ void menu_command(encoder_state_t encoder_action)
     }
 }
 
+
+void menu_init(void)
+{
+    char titles[5][110] = {"DeepDeck\nMainMenu", "Bluetooth Options\nLED test mode\nSleep Mode\netc\netc1\netc2"};
+    ESP_LOGI("MENU", "%s",titles[0]);
+    ESP_LOGI("MENU", "%s",titles[1]);
+    menu_main.title = titles[0]; 
+    menu_main.subtitle = titles[1]; 
+    menu_main.menu_item_array = &menu_bluetooth; 
+
+
+}
