@@ -69,19 +69,24 @@ char menu_subtitles[menu_num][MENU_CHAR_NUM] =
     "DeepDeck"
 };
 
-// Main Menu!
-char menu_main_description[2][MENU_CHAR_NUM] =
+// --------------------Main Menu!-------------------------------
+char menu_main_description[4][MENU_CHAR_NUM] =
 {
-    "Opcion 1",
-    "Opcion 2"
+    "Bluetooth",
+    "LED configuration",
+    "DeepDeck Configuration",
+    "Exit"
 };
 menu_item_t m_main_array[] =
 {
     //Descripción                 //Acción             //Siguiente menu      ó     //Función
-    {menu_main_description[0],    MENU,                BLUETOOTH_MENU,             0},
-    {menu_main_description[1],    FUNCTION,            NONE,                       &splashScreen}
+    {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
+    {menu_main_description[1],    MA_FUNCTION,            NONE,                       &splashScreen},
+    {menu_main_description[2],    MA_FUNCTION,            NONE,                       &splashScreen},
+    {menu_main_description[3],    MA_FUNCTION,            NONE,                       &splashScreen},
+    {0,                           MA_END,                 0,                          0}
 };
- // Bluetooth Menu
+ // ------------------Bluetooth Menu-------------------------------
 char menu_bt_description[2][MENU_CHAR_NUM] =
 {
     "Bluetooth 1",
@@ -90,22 +95,19 @@ char menu_bt_description[2][MENU_CHAR_NUM] =
 menu_item_t m_bluetooth_array[] = 
 {
     //Descripción                 //Acción             //Siguiente menu      ó     //Función
-    {menu_bt_description[0],      FUNCTION,            NONE,                       &splashScreen},
-    {menu_bt_description[1],      FUNCTION,            NONE,                       &splashScreen}
+    {menu_bt_description[0],      MA_FUNCTION,            NONE,                       &splashScreen},
+    {menu_bt_description[1],      MA_FUNCTION,            NONE,                       &splashScreen},
+    {0,                           MA_END,                 0,                          0}
 };
+
+// ----------------------------------- Menu Array ------------------------------------------
 
 menu_t menu_array[menu_num] = 
  {
     // Title                      //Subtitle                      //Item array
-    {menu_titles[MAIN_MENU],      menu_subtitles[MAIN_MENU],      m_main_array},
-    {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], m_bluetooth_array},
+    {menu_titles[MAIN_MENU],      menu_subtitles[MAIN_MENU],      &m_main_array},
+    {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
  };
-
-
-menu_t menu_bluetooth; 
-
-
-
 
 
 /*
@@ -216,7 +218,7 @@ u8g2_uint_t menu_DrawUTF8Lines(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_
 */
 // static u8g2_uint_t u8g2_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s) U8G2_NOINLINE;
 
-static u8g2_uint_t menu_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, const char *s)
+static u8g2_uint_t menu_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, uint8_t idx, menu_t current_menu)
 {
   u8g2_uint_t yy;
   uint8_t border_size = 0;
@@ -238,7 +240,8 @@ static u8g2_uint_t menu_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g
   }
 
   /* get the line from the array */
-  s = u8x8_GetStringLineStart(idx, s);
+  //s = u8x8_GetStringLineStart(idx, s);
+  char * s = current_menu.menu_item_array[idx].description;
 
   /* draw the line */
   if ( s == NULL )
@@ -247,29 +250,119 @@ static u8g2_uint_t menu_draw_selection_list_line(u8g2_t *u8g2, u8sl_t *u8sl, u8g
   return line_height;
 }
 
-void menu_DrawSelectionList(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, const char *s)
+void menu_DrawSelectionList(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, menu_t current_menu)
 {
   uint8_t i;
   for( i = 0; i < u8sl->visible; i++ )
   {
-    y += menu_draw_selection_list_line(u8g2, u8sl, y, i+u8sl->first_pos, s);
+    y += menu_draw_selection_list_line(u8g2, u8sl, y, i+u8sl->first_pos, current_menu);
   }
 }
 
 
-uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl)
+// uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl)
+// {
+//   u8sl_t u8sl;
+//   u8g2_uint_t yy;
+
+//   u8g2_uint_t line_height = u8g2_GetAscent(u8g2) - u8g2_GetDescent(u8g2)+MY_BORDER_SIZE;
+
+//   uint8_t title_lines = u8x8_GetStringLineCnt(title);
+//   uint8_t display_lines;
+
+  
+//   if ( start_pos > 0 )	/* issue 112 */
+//     start_pos--;		/* issue 112 */
+
+
+//   if ( title_lines > 0 )
+//   {
+// 	display_lines = (u8g2_GetDisplayHeight(u8g2)-3) / line_height;
+// 	u8sl.visible = display_lines;
+// 	u8sl.visible -= title_lines;
+//   }
+//   else
+//   {
+// 	display_lines = u8g2_GetDisplayHeight(u8g2) / line_height;
+// 	u8sl.visible = display_lines;
+//   }
+
+//   u8sl.total = u8x8_GetStringLineCnt(sl);
+//   u8sl.first_pos = 0;
+//   u8sl.current_pos = start_pos;
+
+//   if ( u8sl.current_pos >= u8sl.total )
+//     u8sl.current_pos = u8sl.total-1;
+//   if ( u8sl.first_pos+u8sl.visible <= u8sl.current_pos )
+//     u8sl.first_pos = u8sl.current_pos-u8sl.visible+1;
+
+//   u8g2_SetFontPosBaseline(u8g2);
+  
+//   menu_event = MENU_NONE;
+//   for(;;)
+//   {
+//       u8g2_FirstPage(u8g2);
+//       do
+//       {
+//         yy = u8g2_GetAscent(u8g2);
+//         if ( title_lines > 0 )
+//         {
+//           yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, title);
+		
+// 	  u8g2_DrawHLine(u8g2, 0, yy-line_height- u8g2_GetDescent(u8g2) + 1, u8g2_GetDisplayWidth(u8g2));
+		
+// 	  yy += 3;
+//         }
+//         menu_DrawSelectionList(u8g2, &u8sl, yy, sl);
+//       } while( u8g2_NextPage(u8g2) );
+
+      
+//       for(;;)
+//       {
+//         if ( menu_event == MENU_SELECT )
+//         {
+//             ESP_LOGI("MENU","select");
+//             return u8sl.current_pos+1;
+
+//         }		
+//         else if ( menu_event == MENU_HOME )
+//         {
+//             ESP_LOGI("MENU","return");
+//             return 0;	
+//         }	
+//         else if ( menu_event == MENU_NEXT || menu_event == MENU_DOWN )
+//         {
+//             ESP_LOGI("MENU","next");
+//             u8sl_Next(&u8sl);
+//             break;
+//         }
+//         else if ( menu_event == MENU_PREV || menu_event == MENU_UP )
+//         {
+//             ESP_LOGI("MENU","Previous");
+//             u8sl_Prev(&u8sl);
+//             break;
+//         }
+//       }
+//       menu_event = MENU_NONE;
+//   }
+// }
+
+
+
+uint8_t menu_selection2(u8g2_t *u8g2, menu_t current_menu )
 {
   u8sl_t u8sl;
   u8g2_uint_t yy;
+  uint8_t start_pos = 0;
 
   u8g2_uint_t line_height = u8g2_GetAscent(u8g2) - u8g2_GetDescent(u8g2)+MY_BORDER_SIZE;
 
-  uint8_t title_lines = u8x8_GetStringLineCnt(title);
+  uint8_t title_lines = 2;
   uint8_t display_lines;
 
   
-  if ( start_pos > 0 )	/* issue 112 */
-    start_pos--;		/* issue 112 */
+  if ( start_pos > 0 )	
+    start_pos--;		
 
 
   if ( title_lines > 0 )
@@ -284,7 +377,14 @@ uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const
 	u8sl.visible = display_lines;
   }
 
-  u8sl.total = u8x8_GetStringLineCnt(sl);
+  uint8_t num_items = 0;
+  while(current_menu.menu_item_array[num_items].action != MA_END)
+  {
+    num_items++;
+  }
+  ESP_LOGI("MENU_SELECTION2", "%d", num_items);
+
+  u8sl.total = num_items;
   u8sl.first_pos = 0;
   u8sl.current_pos = start_pos;
 
@@ -304,16 +404,17 @@ uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const
         yy = u8g2_GetAscent(u8g2);
         if ( title_lines > 0 )
         {
-          yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, title);
+          yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, current_menu.title);
+          yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, current_menu.subtitle);
 		
 	  u8g2_DrawHLine(u8g2, 0, yy-line_height- u8g2_GetDescent(u8g2) + 1, u8g2_GetDisplayWidth(u8g2));
 		
 	  yy += 3;
         }
-        menu_DrawSelectionList(u8g2, &u8sl, yy, sl);
+        
+        menu_DrawSelectionList(u8g2, &u8sl, yy, current_menu);
       } while( u8g2_NextPage(u8g2) );
 
-      
       for(;;)
       {
         if ( menu_event == MENU_SELECT )
@@ -344,19 +445,52 @@ uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const
   }
 }
 
+
+
+
 void menu_screen()
 {
+    uint8_t current_menu = MAIN_MENU;
+    uint8_t prev_menu = MAIN_MENU;
     uint8_t selection;
 
-    // ESP_LOGI("MENU","%s",menu_main.title);
-    // ESP_LOGI("MENU","%s",menu_main.subtitle);
-	selection = menu_selection(&u8g2, menu_main.title, 1, menu_main.subtitle);
+	//selection = menu_selection(&u8g2, menu_main.title, 1, menu_main.subtitle);
+
+    ESP_LOGI("MENU_SCREEN", "Enter");
+
+    while(true)
+    {
+        selection = menu_selection2(&u8g2, menu_array[current_menu]);
+        if(selection == 0)
+        {
+            current_menu = prev_menu;
+        }
+        else
+        {
+            selection--;
+            ESP_LOGI("MENU_SCREEN", "selection %d", selection );
+        
+            switch( menu_array[current_menu].menu_item_array[selection].action )
+            {
+                case MA_MENU:
+                    prev_menu = current_menu;
+                    current_menu = menu_array[current_menu].menu_item_array[selection].next_menu;
+                    ESP_LOGI("MENU_SCREEN", "Next menu %d", current_menu );
+                break;
+                case MA_FUNCTION:
+                    menu_array[current_menu].menu_item_array[selection].function_pointer();
+                break;
+                default:
+                break;
+            }
+        }
+    }
+    ESP_LOGI("MENU_SCREEN", "Exit");
 
 }
 
 void menu_command(encoder_state_t encoder_action)
 {
-    ESP_LOGI("MENU_COMMAND","ENTER");
     switch (encoder_action)
     {
     case ENC_UP:
@@ -365,12 +499,15 @@ void menu_command(encoder_state_t encoder_action)
     break;
     case ENC_DOWN:
         menu_event = MENU_DOWN;
+        ESP_LOGI("MENU_COMMAND","DOWN");
     break;
     case ENC_BUT_SHORT_PRESS:
         menu_event = MENU_SELECT;
+        ESP_LOGI("MENU_COMMAND","SELECT");
     break;
     case ENC_BUT_LONG_PRESS:
         menu_event = MENU_HOME;
+        ESP_LOGI("MENU_COMMAND","HOME");
     break;
     
     default:
@@ -381,12 +518,12 @@ void menu_command(encoder_state_t encoder_action)
 
 void menu_init(void)
 {
-    char titles[5][110] = {"DeepDeck\nMainMenu", "Bluetooth Options\nLED test mode\nSleep Mode\netc\netc1\netc2"};
-    ESP_LOGI("MENU", "%s",titles[0]);
-    ESP_LOGI("MENU", "%s",titles[1]);
-    menu_main.title = titles[0]; 
-    menu_main.subtitle = titles[1]; 
-    menu_main.menu_item_array = &menu_bluetooth; 
+    // char titles[5][110] = {"DeepDeck\nMainMenu", "Bluetooth Options\nLED test mode\nSleep Mode\netc\netc1\netc2"};
+    // ESP_LOGI("MENU", "%s",titles[0]);
+    // ESP_LOGI("MENU", "%s",titles[1]);
+    // menu_main.title = titles[0]; 
+    // menu_main.subtitle = titles[1]; 
+    // menu_main.menu_item_array = &menu_bluetooth; 
 
 
 }

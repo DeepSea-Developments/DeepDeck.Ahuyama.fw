@@ -111,7 +111,7 @@ extern "C" void oled_task(void *pvParameters)
 				vTaskDelay(pdMS_TO_TICKS(200));
 
 				menu_screen();
-				splashScreen();
+				//splashScreen();
 				vTaskDelay(pdMS_TO_TICKS(1800));
 				ble_connected_oled();
 

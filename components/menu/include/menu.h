@@ -48,8 +48,9 @@ typedef enum {
 
 
 typedef enum {
-    MENU,
-    FUNCTION
+    MA_MENU,
+    MA_FUNCTION,
+    MA_END
 } menu_item_action;
 
 struct menu_str_t;
@@ -58,7 +59,7 @@ typedef struct menu_str_t menu_t;
 typedef struct menu_item_str_t{
     char * description; //String of the menu item
     menu_item_action action;        //Action if the item. It can take to a new menu or run a function
-    menu_t * next_menu;               // Pointer of the next menu
+    uint8_t next_menu;               // Pointer of the next menu
     void (*function_pointer)(void); // Pointer of a function
 	
 } menu_item_t;
