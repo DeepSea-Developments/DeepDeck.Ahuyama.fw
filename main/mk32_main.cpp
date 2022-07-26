@@ -111,8 +111,6 @@ extern "C" void oled_task(void *pvParameters)
 				vTaskDelay(pdMS_TO_TICKS(200));
 
 				menu_screen();
-				//splashScreen();
-				vTaskDelay(pdMS_TO_TICKS(1800));
 				ble_connected_oled();
 
 				deepdeck_status = S_NORMAL;
@@ -324,6 +322,7 @@ extern "C" void espnow_update_matrix(void *pvParameters) {
 extern "C" void deep_sleep(void *pvParameters) {
 	uint64_t initial_time = esp_timer_get_time(); // notice that timer returns time passed in microseconds!
 	uint64_t current_time_passed = 0;
+	uint8_t force_sleep = false;
 	while (1) {
 
 		current_time_passed = (esp_timer_get_time() - initial_time);
@@ -333,9 +332,17 @@ extern "C" void deep_sleep(void *pvParameters) {
 			initial_time = esp_timer_get_time();
 			DEEP_SLEEP = true;
 		}
+		if (menu_get_goto_sleep())
+		{
+			force_sleep = true;
+			DEEP_SLEEP = true;
+		}
+		
 
-		if (((double)current_time_passed/USEC_TO_SEC) >= (double)  (SEC_TO_MIN * SLEEP_MINS)) {
-			if (DEEP_SLEEP == true) {
+		if ( ( ((double)current_time_passed/USEC_TO_SEC) >= (double)  (SEC_TO_MIN * SLEEP_MINS)) || force_sleep ) {
+			if (DEEP_SLEEP == true) 
+			{
+				force_sleep = false;
 				ESP_LOGE(SYSTEM_REPORT_TAG, "going to sleep!");
 #ifdef OLED_ENABLE
 				vTaskDelay(20 / portTICK_PERIOD_MS);

@@ -45,7 +45,13 @@ typedef enum {
 
 #define MENU_CHAR_NUM 23
 
-
+// List of return items that can be obtained in the menu functions
+typedef enum 
+{ 
+    mret_none = -1,
+    mret_exit = 0, 
+    mret_goto_main_menu
+} menu_ret;
 
 typedef enum {
     MA_MENU,
@@ -60,7 +66,7 @@ typedef struct menu_item_str_t{
     char * description; //String of the menu item
     menu_item_action action;        //Action if the item. It can take to a new menu or run a function
     uint8_t next_menu;               // Pointer of the next menu
-    void (*function_pointer)(void); // Pointer of a function
+    menu_ret (*function_pointer)(void); // Pointer of a function
 	
 } menu_item_t;
 
@@ -85,6 +91,13 @@ menu_event_t menu_get_event(void);
 void menu_screen(void);
 
 void menu_init(void);
+
+
+
+menu_ret menu_goto_sleep(void);
+menu_ret menu_exit(void);
+
+uint8_t menu_get_goto_sleep(void);
 
 menu_t menu_main; 
 extern menu_item_t m_main_array[];

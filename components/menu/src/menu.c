@@ -70,11 +70,12 @@ char menu_subtitles[menu_num][MENU_CHAR_NUM] =
 };
 
 // --------------------Main Menu!-------------------------------
-char menu_main_description[4][MENU_CHAR_NUM] =
+char menu_main_description[5][MENU_CHAR_NUM] =
 {
     "Bluetooth",
     "LED configuration",
     "DeepDeck Configuration",
+    "Go to Sleep",
     "Exit"
 };
 menu_item_t m_main_array[] =
@@ -83,7 +84,8 @@ menu_item_t m_main_array[] =
     {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
     {menu_main_description[1],    MA_FUNCTION,            NONE,                       &splashScreen},
     {menu_main_description[2],    MA_FUNCTION,            NONE,                       &splashScreen},
-    {menu_main_description[3],    MA_FUNCTION,            NONE,                       &splashScreen},
+    {menu_main_description[3],    MA_FUNCTION,            NONE,                       &menu_goto_sleep},
+    {menu_main_description[4],    MA_FUNCTION,            NONE,                       &menu_exit},
     {0,                           MA_END,                 0,                          0}
 };
  // ------------------Bluetooth Menu-------------------------------
@@ -260,92 +262,6 @@ void menu_DrawSelectionList(u8g2_t *u8g2, u8sl_t *u8sl, u8g2_uint_t y, menu_t cu
 }
 
 
-// uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl)
-// {
-//   u8sl_t u8sl;
-//   u8g2_uint_t yy;
-
-//   u8g2_uint_t line_height = u8g2_GetAscent(u8g2) - u8g2_GetDescent(u8g2)+MY_BORDER_SIZE;
-
-//   uint8_t title_lines = u8x8_GetStringLineCnt(title);
-//   uint8_t display_lines;
-
-  
-//   if ( start_pos > 0 )	/* issue 112 */
-//     start_pos--;		/* issue 112 */
-
-
-//   if ( title_lines > 0 )
-//   {
-// 	display_lines = (u8g2_GetDisplayHeight(u8g2)-3) / line_height;
-// 	u8sl.visible = display_lines;
-// 	u8sl.visible -= title_lines;
-//   }
-//   else
-//   {
-// 	display_lines = u8g2_GetDisplayHeight(u8g2) / line_height;
-// 	u8sl.visible = display_lines;
-//   }
-
-//   u8sl.total = u8x8_GetStringLineCnt(sl);
-//   u8sl.first_pos = 0;
-//   u8sl.current_pos = start_pos;
-
-//   if ( u8sl.current_pos >= u8sl.total )
-//     u8sl.current_pos = u8sl.total-1;
-//   if ( u8sl.first_pos+u8sl.visible <= u8sl.current_pos )
-//     u8sl.first_pos = u8sl.current_pos-u8sl.visible+1;
-
-//   u8g2_SetFontPosBaseline(u8g2);
-  
-//   menu_event = MENU_NONE;
-//   for(;;)
-//   {
-//       u8g2_FirstPage(u8g2);
-//       do
-//       {
-//         yy = u8g2_GetAscent(u8g2);
-//         if ( title_lines > 0 )
-//         {
-//           yy += menu_DrawUTF8Lines(u8g2, 0, yy, u8g2_GetDisplayWidth(u8g2), line_height, title);
-		
-// 	  u8g2_DrawHLine(u8g2, 0, yy-line_height- u8g2_GetDescent(u8g2) + 1, u8g2_GetDisplayWidth(u8g2));
-		
-// 	  yy += 3;
-//         }
-//         menu_DrawSelectionList(u8g2, &u8sl, yy, sl);
-//       } while( u8g2_NextPage(u8g2) );
-
-      
-//       for(;;)
-//       {
-//         if ( menu_event == MENU_SELECT )
-//         {
-//             ESP_LOGI("MENU","select");
-//             return u8sl.current_pos+1;
-
-//         }		
-//         else if ( menu_event == MENU_HOME )
-//         {
-//             ESP_LOGI("MENU","return");
-//             return 0;	
-//         }	
-//         else if ( menu_event == MENU_NEXT || menu_event == MENU_DOWN )
-//         {
-//             ESP_LOGI("MENU","next");
-//             u8sl_Next(&u8sl);
-//             break;
-//         }
-//         else if ( menu_event == MENU_PREV || menu_event == MENU_UP )
-//         {
-//             ESP_LOGI("MENU","Previous");
-//             u8sl_Prev(&u8sl);
-//             break;
-//         }
-//       }
-//       menu_event = MENU_NONE;
-//   }
-// }
 
 
 
@@ -367,14 +283,14 @@ uint8_t menu_selection2(u8g2_t *u8g2, menu_t current_menu )
 
   if ( title_lines > 0 )
   {
-	display_lines = (u8g2_GetDisplayHeight(u8g2)-3) / line_height;
-	u8sl.visible = display_lines;
-	u8sl.visible -= title_lines;
+    display_lines = (u8g2_GetDisplayHeight(u8g2)-3) / line_height;
+    u8sl.visible = display_lines;
+    u8sl.visible -= title_lines;
   }
   else
   {
-	display_lines = u8g2_GetDisplayHeight(u8g2) / line_height;
-	u8sl.visible = display_lines;
+    display_lines = u8g2_GetDisplayHeight(u8g2) / line_height;
+    u8sl.visible = display_lines;
   }
 
   uint8_t num_items = 0;
@@ -457,6 +373,7 @@ void menu_screen()
 	//selection = menu_selection(&u8g2, menu_main.title, 1, menu_main.subtitle);
 
     ESP_LOGI("MENU_SCREEN", "Enter");
+    menu_ret ret;
 
     while(true)
     {
@@ -478,7 +395,19 @@ void menu_screen()
                     ESP_LOGI("MENU_SCREEN", "Next menu %d", current_menu );
                 break;
                 case MA_FUNCTION:
-                    menu_array[current_menu].menu_item_array[selection].function_pointer();
+                    ret = menu_array[current_menu].menu_item_array[selection].function_pointer();
+                    switch(ret)
+                    {
+                      case mret_exit:
+                        return;
+                      break;
+                      case mret_goto_main_menu:
+                        current_menu = MAIN_MENU;
+                        prev_menu = MAIN_MENU;
+                      break;
+                      default:
+                      break;
+                    }
                 break;
                 default:
                 break;
@@ -526,4 +455,29 @@ void menu_init(void)
     // menu_main.menu_item_array = &menu_bluetooth; 
 
 
+}
+
+uint8_t goto_sleep = false;
+menu_ret menu_goto_sleep(void)
+{
+  ESP_LOGI("menu_goto_sleep","True!");
+  goto_sleep = true;
+  while(true); // To avoid the function to try to render anything on the screen. it works. believe me. If you dont, write me to nick@dsd.dev :)
+  return mret_none;
+}
+
+menu_ret menu_exit(void)
+{
+  return mret_exit;
+}
+
+uint8_t menu_get_goto_sleep(void)
+{
+  if (goto_sleep)
+  {
+    goto_sleep = false;
+    ESP_LOGI("menu_get_goto_sleep","True!");
+    return true;
+  }
+  return goto_sleep;
 }
