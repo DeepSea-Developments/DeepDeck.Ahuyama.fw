@@ -96,7 +96,7 @@ extern "C" void oled_task(void *pvParameters)
 								"Not connected, waiting for connection ");
 					}
 					waiting_oled();
-					DEEP_SLEEP = false;
+					//DEEP_SLEEP = false;
 					CON_LOG_FLAG = true;
 				} else {
 					if (CON_LOG_FLAG == true) {
