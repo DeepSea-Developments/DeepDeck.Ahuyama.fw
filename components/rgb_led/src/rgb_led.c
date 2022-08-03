@@ -142,42 +142,42 @@ void test(void)
     uint16_t counter_top = 5;
     uint8_t current_pulsating_key = 0;
     
-    while(true)
-    {
-        hue += 1;
-        // counter++;
-        // if(counter == counter_top)
-        // {
-        //     counter = 0; // Reset counter
-        //     rgb_key_status[current_pulsating_key].v = 100;
-        //     current_pulsating_key++;
-        //     if (current_pulsating_key == RGB_LED_KEYBOARD_NUMBER)
-        //     {
-        //         current_pulsating_key = 0;
-        //     }
-        // }
+    // while(true)
+    // {
+    //     hue += 1;
+    //     // counter++;
+    //     // if(counter == counter_top)
+    //     // {
+    //     //     counter = 0; // Reset counter
+    //     //     rgb_key_status[current_pulsating_key].v = 100;
+    //     //     current_pulsating_key++;
+    //     //     if (current_pulsating_key == RGB_LED_KEYBOARD_NUMBER)
+    //     //     {
+    //     //         current_pulsating_key = 0;
+    //     //     }
+    //     // }
 
 
-        // Check matrix to pulsate the leds
-        for(uint8_t i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-        {
-            rbg_key *rgb = &rgb_key_status[i];
-            if(rgb->v > 0)
-            {
-                rgb->v -= pulse_speed;
-                if(rgb->v < 0)
-                {
-                    rgb->v = 0;
-                }
+    //     // Check matrix to pulsate the leds
+    //     for(uint8_t i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+    //     {
+    //         rbg_key *rgb = &rgb_key_status[i];
+    //         if(rgb->v > 0)
+    //         {
+    //             rgb->v -= pulse_speed;
+    //             if(rgb->v < 0)
+    //             {
+    //                 rgb->v = 0;
+    //             }
 
-                hsv2rgb(hue, rgb->s, rgb->v, &red, &green, &blue);
-                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
-            }
-        }
-        ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-        vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+    //             hsv2rgb(hue, rgb->s, rgb->v, &red, &green, &blue);
+    //             ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+    //         }
+    //     }
+    //     ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+    //     vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
 
-    }
+    // }
 
     //Changing colors
     while (true) {
@@ -192,7 +192,7 @@ void test(void)
             // Write RGB values to strip driver
             ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
         }
-        ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red2, green2, blue2));
+        ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
         ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
 
         // Flush RGB values to LEDs

@@ -52,7 +52,7 @@
 #define RGB_LEDS
 
 //OLED Parameters
-#define OLED_ENABLE //undefine if no oled is used
+#define OLED_ENABLE //undefine if no oled is used.
 #define ROTATION LANDSCAPE
 #define OLED_SDA_PIN GPIO_NUM_21
 #define OLED_SCL_PIN GPIO_NUM_22
