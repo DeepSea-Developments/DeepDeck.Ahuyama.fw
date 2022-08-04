@@ -1,0 +1,179 @@
+{% extends "overrides/main-styles.html" %}
+
+<!-- Render hero under tabs -->
+{% block tabs %}
+{{ super() }}
+
+<!-- Hero for landing page -->
+<!-- 1st Section -->
+<section class="tx-container">
+    <div class="tx-hero-main-title">
+        <h1 style="font-family: 'Dead Stock  Demo'; font-weight: normal; font-style: normal; font-size: 8em" 
+                    id="leverage-architecture">DeepDeck Ahuyama</h1>
+    </div>
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+
+            <!-- Hero image -->
+            <div class="tx-hero__image">
+                <img
+                        src="assets/images/illustrations/DeepDeck2.png"
+                        alt="DeepDeck"
+                        width="1000"
+                        draggable="false"
+                >
+            </div>
+
+            <!-- Hero content -->
+            <div class="tx-hero__content">
+                <p style="font-size: 1.5em">
+                    An opensource, 4x4 macro pad that enables you to get more productive using your work/hobby/leisure programs.
+                    
+                    
+                    <br><br>
+
+                    With DeepDeck you can do things like: 
+                </p><br>
+
+                <p style="font-size: 1.3em">
+                    👩‍🎨 <strong>
+                    Become a Photoshop / Inscape / .. / ninja
+                </strong> <br>
+                    🧑‍💻 <strong>
+                    Have all your shorcuts for your hacking (?) programs
+                </strong> <br>
+                    👩‍🔧 <strong>
+                    Master Freecad / Solidworks / ... / and become a 3d Pro!
+                </strong> <br>
+                    🕵 <strong>
+                    Debug better your code in VScode using shortcuts to navigate the code
+                </strong> <br>
+                    🧙 <strong>
+                    Become a game wizard: having all the shortcuts at hand feels like magic
+                </strong> <br>
+                    🧞‍♀‍ <strong>
+                    Become an editor genie: either audio or video, edit it like a wish come true
+                </strong> <br><br>
+
+                <a
+                        href="{{ page.next_page.url | url }}"
+                        title="{{ page.next_page.title | e }}"
+                        class="md-button md-button--primary"
+                >
+                    Get started
+                </a><br>
+                
+                <a
+                href="https://discord.gg/9cMr75TA8k"
+                target="_blank"
+                title="{{ page.next_page.title | e }}"
+                class="md-button md-button--primary">
+                Join to our discord
+                <img
+                        class = icon
+                        src="assets/images/logos/discord.png"
+                        alt=""
+                        width="22"
+                        draggable="false"
+                >
+            </a>
+
+
+                <a
+                    href="https:deepseadev.com/en"
+                    target="_blank"
+                    title="{{ lang.t('source.link.title') }}"
+                    class="md-button">
+                    Meet the team behind DeepDeck
+                </a><br>
+
+                
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 2nd Section -->
+<!-- WHAT IS LEVERAGE? -->
+<section class="tx-container-2">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero__image-2" style="margin-top: 50px">
+            <img
+                    src="assets/images/illustrations/home-section-2.png"
+                    alt=""
+                    width="800"
+                    draggable="false"
+                    align="left"
+            >
+        </div>
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-2">
+                <h1 id="what-is-leverage">What is Leverage?</h1><br>
+
+                <p>
+                    Our focus is on creating reusable, high quality AWS Cloud Infrastructure code, through our core components:<br>
+                    ▶️
+                    <strong>
+                        <a href="https://www.binbash.com.ar/leverage">Reference Architecture for AWS</a>
+                    </strong><br>
+                    ▶️
+                    <strong>
+                        <a href="https://www.binbash.com.ar/leverage">Infrastructure
+                            as Code (IaC) Library</a>
+                    </strong><br>
+                    ▶️
+                    <strong>
+                        <a href="https://www.binbash.com.ar/leverage">Leverage CLI</a>
+                    </strong><br><br>
+                    Because all the code and modules are already built, we can get your project up and running on AWS
+                    <strong> at least 2x faster </strong> 🚀 than a consulting company (✅ typically in just a few weeks!).<br><br>
+
+                    On top of code that is
+                    thoroughly documented, tested, and has been proven in production at dozens of other project
+                    deployments by our
+                    <strong>
+                        <a href="https://www.binbash.com.ar/team">Engineering Support Team.</a>
+                    </strong>
+
+                </p><br>
+
+                <a
+                        href="https://www.binbash.com.ar/leverage"
+                        title="{{ page.next_page.title | e }}"
+                        class="md-button md-button"
+                >
+                    Product Features
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer Section -->
+<section class="tx-footer">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-footer">
+                <p style="text-align:center;">
+                    © 2022
+                    <strong>
+                        <a href="https://www.deepseadev.com" target="_blank">DeepSea Developments, Inc</a>
+                    </strong>. All lefts reserved
+
+                    || Contact us 📧
+                    <strong>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=deepdeck@dsd.dev" 
+                        target="_blank">
+                            deepdeck@dsd.dev
+                        </a>
+                    </strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

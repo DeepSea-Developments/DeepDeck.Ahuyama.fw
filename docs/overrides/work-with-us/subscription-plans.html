@@ -1,0 +1,185 @@
+{% extends "overrides/main-styles.html" %}
+
+<!-- Render hero under tabs -->
+{% block tabs %}
+{{ super() }}
+
+<!-- BRAINTRUST AGENCY -->
+<!--<section class="tx-container-2">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero__image-2">
+            <img
+                    src="../../assets/images/logos/binbash-braintrust.png"
+                    alt=""
+                    width="800"
+                    draggable="false"
+                    align="left"
+            >
+        </div>
+        <div class="tx-hero">
+            &lt;!&ndash; Hero content &ndash;&gt;
+            <div class="tx-hero__content-2">
+                <h1 id="braintrust-agency">Braintrust Agency</h1>
+                <p><br>
+                    Find us at <b>Braintrust</b> talent platform<br>
+                    <i>"Creating the future of work, to benefit enterprise and talent alike".</i>
+                </p>
+                <a
+                        href="https://app.usebraintrust.com/agency/432/"
+                        title="{{ page.next_page.title | e }}"
+                        class="md-button md-button"
+                >
+                    Hire us at Braintrust
+                </a>
+            </div>
+        </div>
+    </div>
+</section>-->
+
+<!--     7th Section    -->
+<!-- SUBSCRIPTION PLANS -->
+<section>
+    <!-- Contenedor -->
+    <div class="pricing-wrapper clearfix">
+        <!-- Titulo -->
+        <h1 class="pricing-table-title" id="leverage-subscription" style="text-align: left">
+            Subscription Plans
+        </h1>
+
+        <div class="pricing-table">
+            <h3 class="pricing-title">Community (Free)</h3>
+            <div class="price">$0<sup>/ month</sup></div>
+            <!-- Lista de Caracteristicas / Propiedades -->
+            <ul class="table-list">
+                <li>AWS Reference Architecture <span>access</span></li>
+                <li>+120 Open Source modules <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Documentation <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Public Slack Channel <span>access</span></li>
+                <li>Community <span>support</span></li>
+            </ul>
+            <!-- Contratar / Contact Us -->
+            <div class="table-buy">
+                <p><sup> Open Source ❤️</sup></p>
+                <a href="https://github.com/binbashar"
+                   class="pricing-action">Free</a>
+            </div>
+        </div>
+
+        <div class="pricing-table">
+            <h3 class="pricing-title">Basic</h3>
+            <div class="price">$3400<sup>/ month</sup></div>
+            <!-- Lista de Caracteristicas / Propiedades -->
+            <ul class="table-list">
+                <li>AWS Reference Architecture <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>+120 Open Source modules <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Documentation <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Public Slack Channel <span>access</span></li>
+                <li>Basic <span>support</span> <span  class="unlimited">limited</span> <br>
+                    <p data-tooltip="SLAs: 96hs (response time). Best effort delivery (prime time hours). Support tasks should not exceed an estimated effort > 40 hs / month."
+                       style="text-align: left">
+                        <small>
+                            ✅ 1 x repos feature request<br>
+                            ✅ 1 x bug fix request<br>
+                            ✅ 2 x imple support request<br>
+                            ✅ Notif (sec, updates, eol, releases) <br>
+                            📒 Annual contract (Billed monthly or annually)
+                        </small>
+                    </p>
+                </li>
+            </ul>
+
+            <!-- Contratar / Contact Us -->
+            <div class="table-buy">
+                <p>$3400<sup>/ month (40hs)</sup></p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScgYmguLk5lDgrDa7HEt8hZFsRKncCf0XMezbDRsXt4mixg4Q/viewform?usp=sf_link"
+                   class="pricing-action">Contact Us</a>
+            </div>
+        </div>
+
+        <div class="pricing-table recommended">
+            <h3 class="pricing-title">Premium</h3>
+            <div class="price">$6400<sup>/ month</sup></div>
+            <!-- Lista de Caracteristicas / Propiedades -->
+            <ul class="table-list">
+                <li>AWS Reference Architecture <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>+120 Open Source modules <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Documentation <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Private & Public Slack Channel <span>access</span></li>
+                <li>Premium <span>support</span> <span  class="unlimited">limited</span> <br>
+                    <p data-tooltip="SLAs: 96hs (response time). Best effort delivery (prime time hours). Support tasks should not exceed an estimated effort > 80 hs / month. If more hours are needed it could be reviewed."
+                       style="text-align: left">
+                        <small>
+                            ✅ 2 x repos feature requests <br>
+                            ✅ 2 x bug fix requests<br>
+                            ✅ 4 x imple support requests<br>
+                            ✅ Notif (sec, updates, eol, releases) <br>
+                            📒 Annual contract (Billed monthly or annually)
+                        </small>
+                    </p>
+                </li>
+            </ul>
+
+            <!-- Contratar / Contact Us -->
+            <div class="table-buy">
+                <p>$6400<sup>/ month (80hs)</sup></p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScgYmguLk5lDgrDa7HEt8hZFsRKncCf0XMezbDRsXt4mixg4Q/viewform?usp=sf_link"
+                   class="pricing-action">Contact Us</a>
+            </div>
+        </div>
+
+        <div class="pricing-table">
+            <h3 class="pricing-title">Business</h3>
+            <div class="price">$90<sup>/ hour</sup></div>
+            <!-- Lista de Caracteristicas / Propiedades -->
+            <ul class="table-list">
+                <li>AWS Reference Architecture <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>+120 Open Source modules <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Documentation <span>access</span> <span class="unlimited">unlimited</span></li>
+                <li>Public & Private Slack Channel <span>access</span></li>
+                <li>Business <span>support</span> <span  class="unlimited">on-demand</span> <br>
+                    <p data-tooltip="SLAs: 72hs (response time). Best effort delivery (prime time hours). Support tasks estimated effort should be between 80 and 120 hs / month."
+                       style="text-align: left">
+                        <small>
+                            ✅ on-demand custom modules reqs<br>
+                            ✅ on-demand repos feature reqs<br>
+                            ✅ on-demand bug fix requests<br>
+                            ✅ on-demand imple support reqs<br>
+                            ✅ Notif (sec, updates, eol, releases) <br>
+                            📒 Annual contract (Billed monthly or annually)
+                        </small>
+                    </p>
+                </li>
+            </ul>
+            <!-- Contratar / Contact Us -->
+            <div class="table-buy">
+                <p>$10800<sup>/ month (120hs)</sup></p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScgYmguLk5lDgrDa7HEt8hZFsRKncCf0XMezbDRsXt4mixg4Q/viewform?usp=sf_link"
+                   class="pricing-action">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer Section -->
+<section class="tx-footer">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-footer">
+                <p style="text-align:center;">
+                    © 2021
+                    <strong>
+                        <a href="https://www.binbash.com.ar">Binbashar, Inc</a>
+                    </strong>. All rights reserved
+
+                    || Contact us 📧
+                    <strong>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=info@binbash.com.ar&su=Leverage Contact
+                                &body=Dear Leverage Team,">info@binbash.com.ar</a>
+                    </strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

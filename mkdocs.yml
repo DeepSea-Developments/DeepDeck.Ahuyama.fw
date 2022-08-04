@@ -1,6 +1,7 @@
 site_name: DeepDeck
 theme:
   name: material
+  custom_dir: docs
   icon:
     repo: material/github
   # Default values, taken from mkdocs_theme.yml
@@ -26,10 +27,26 @@ theme:
     - toc.follow
     # - toc.integrate
 
+  palette: 
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/weather-sunny 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
 
 repo_url: https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw
 repo_name: DeepDeck
 edit_uri: edit/master/docs/
+
+extra_css:
+  - stylesheets/extra.css
+
 
 markdown_extensions:
 

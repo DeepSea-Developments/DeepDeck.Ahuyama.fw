@@ -1,0 +1,479 @@
+{% extends "overrides/main-styles.html" %}
+
+<!-- Render hero under tabs -->
+{% block tabs %}
+{{ super() }}
+
+<!-- Team Section Style -->
+<style>
+    *{
+        box-sizing: border-box
+    }
+    body{
+        margin: 0;
+        padding: 0;
+        font-family: Helvetica;
+        font-weight: 100;
+        color: #777;
+    }
+    .container-testimonial{
+        background: rgb(237, 239, 240);
+        height: 30vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 40px;
+        margin-left: 150px;
+        margin-right: 150px;
+    }
+
+    .testimonial-header{
+        margin-top: 50px;
+        margin-bottom: 30px;
+        border-radius: 10px;
+        position: center;
+        justify-content:center;
+        font-size: 42px;
+        color: #2a978d;
+    }
+
+    .testimonial-card{
+        min-height: 300px;
+        width: 350px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,.3);
+        display: flex;
+        flex-flow: column;
+        justify-content:space-between;
+        margin-left: 10px;
+    }
+
+    .text{
+        padding: 2em;
+        line-height: 1.7em;
+        position: relative;
+        font-size: 14px;
+        color: #0a192f;
+        margin-bottom: 50px;
+    }
+    .image{
+        background-color:tomato;
+        height: 140px;
+        width: 140px;
+        border-radius: 50%;
+        border: 5px solid white;
+        position: absolute;
+        top: -50%;
+        left: 50%;
+        transform: translateX(-50%);
+        display:flex;
+        justify-content:center;
+    }
+
+    .footer{
+        background: linear-gradient(90deg, #0a192f 0%, #2a978d 100%);
+        height: 185px;
+        border-radius: 0 0 10px 10px;
+        position:relative;
+    }
+
+    .quote{
+        font-size: 400%;
+        float: right;
+        opacity: .1;
+        transform: rotate(10deg) translate(-10px, -40px);
+        color:#4D3FA3;
+    }
+
+    .person{
+        color:white;
+        position: absolute;
+        margin-top: 0px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -100%);
+        font-size: 0.9rem;
+        font-weight: 550;
+    }
+
+    .person-title{
+        color:white;
+        position: absolute;
+        margin-top: 10px;
+        top: 90%;
+        left: 50%;
+        transform: translate(-50%, -100%);
+        font-size:0.65rem;
+        font-weight: 300;
+    }
+
+    @media screen and (max-width: 30em) {
+        .container-testimonial{
+            background: rgb(237, 239, 240);
+            height: 50vh;
+            display: table;
+            align-items: center;
+            justify-content: left;
+            margin-bottom: 30px;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .testimonial-card {
+            min-height: 250px;
+            width: 350px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgb(0 0 0 / 30%);
+            display: flex;
+            flex-flow: column;
+            justify-content: space-between;
+            margin-left: 10px;
+            margin-bottom: 5px;
+        }
+        .testimonial-header{
+            margin-top: 50px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            position: center;
+            justify-content:center;
+            font-size: 24px;
+            color: #2a978d;
+        }
+
+        .footer{
+            background: linear-gradient(90deg, #0a192f 0%, #2a978d 100%);
+            height: 165px;
+            border-radius: 0 0 10px 10px;
+            position:relative;
+        }
+    }
+
+    @media only screen and (min-width: 481px) and (max-width: 1600px) {
+        .container-testimonial{
+            background: rgb(237, 239, 240);
+            height: 30vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 80px;
+            margin-left: 150px;
+            margin-right: 150px;
+        }
+    }
+
+</style>
+
+<!--  1st Section  -->
+<!-- BRAINTRUST AGENCY -->
+<section class="tx-container-2">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero__image-2">
+            <img
+                    src="../../assets/images/logos/binbash-braintrust.png"
+                    alt=""
+                    width="800"
+                    draggable="false"
+                    align="left"
+            >
+        </div>
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-2">
+                <h1 id="braintrust-agency">Braintrust Agency</h1>
+                <p><br>
+                    Find us at <b>Braintrust</b> talent platform<br>
+                    <i>"Creating the future of work, to benefit enterprise and talent alike".</i>
+                </p>
+                <a
+                        href="https://app.usebraintrust.com/agency/432/"
+                        title="{{ page.next_page.title | e }}"
+                        class="md-button md-button"
+                >
+                    Hire us at Braintrust
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!--  2nd Section  -->
+<!--  TEAM -->
+<section class="tx-container-testimonial">
+
+    <div>
+        <!-- Titulo -->
+        <h1 class=testimonial-header id="testimonials" style="text-align: center">
+            Meet our Team
+        </h1>
+    </div>
+
+    <div class="container-testimonial">
+        <div class="testimonial-card">
+            <div>
+
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/marcos.pagnucco.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Marcos Pagnucco
+                    </h3>
+
+                <h5 class='person-title' style="text-align:center;">Co-Founder & DevOps Cloud Engineer<br>
+                    <a href="https://www.linkedin.com/in/pagnucco/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/exequiel.barrirero.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Exequiel Barrirero
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Co-Founder & DevOps Cloud Engineer<br>
+                    <a href="https://www.linkedin.com/in/barrireroexequiel/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/diego.ojeda.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Diego A. Ojeda
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">DevOps Cloud Solutions Consultant<br>
+                    <a href="https://www.linkedin.com/in/diegoaojeda/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/carolina.rey.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Carolina Rey
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Emotional Intelligence Coach<br>
+                    <a href="https://www.linkedin.com/in/caroreyp/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-testimonial">
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/marcelo.beresvil.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Marcelo Beresvil
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">CFO & BizDev Manager<br>
+                    <a href="https://www.linkedin.com/in/marceloberesvil/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/luis.gallardo.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Luis Gallardo
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Cloud Solutions Architect<br>
+                    <a href="https://www.linkedin.com/in/lgallard/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/angelo.fenoglio.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Angelo Fenoglio
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Software Engineer / DevOps Engineer<br>
+                    <a href="https://www.linkedin.com/in/angelofenoglio/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/patricia.charlier.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Patricia Charlier
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Project Manager<br>
+                    <a href="https://www.linkedin.com/in/patricia-charlier-653bb23b/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-testimonial">
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/matias.rodriguez.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Matías Rodriguez
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">OSS Developer<br>
+                    <a href="https://www.linkedin.com/in/rodriguezmatias/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+
+        <div class="testimonial-card">
+            <div>
+            </div>
+            <div class="footer">
+                <div class="image" style=" background:no-repeat center/cover url(../../assets/images/team/alejandro.parise.bwc.png);">
+                </div>
+                <h3 class='person'>
+                    Alejandro Parise
+                </h3>
+
+                <h5 class='person-title' style="text-align:center;">Business Advisor<br>
+                    <a href="https://www.linkedin.com/in/aleparise/" style="color: aquamarine">
+                        <img
+                                class = icon
+                                src="../../assets/images/logos/linkedin.png"
+                                alt=""
+                                width="20"
+                                draggable="false"
+                        >
+                        LinkedIn</a><br>
+                </h5>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- CERTS & APN -->
+<section class="tx-container-3">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+
+            <!-- Hero image -->
+            <div class="tx-hero__image-4">
+                <img
+                        src="../../assets/images/illustrations/home-section-7.png"
+                        alt=""
+                        width="800"
+                        draggable="false"
+                >
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
