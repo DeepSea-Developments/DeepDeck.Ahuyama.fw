@@ -49,6 +49,9 @@ extra_css:
 
 extra:
   alternate:
+    - name: English
+      link: / 
+      lang: en
     - name: Español
       link: /es/ 
       lang: es
