@@ -125,9 +125,6 @@ markdown_extensions:
 
 
 
-
-
-
   # Page tree
 nav:
   - Home: index.md

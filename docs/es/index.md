@@ -1,4 +1,4 @@
 ---
 title: DeepDeck
-template: overrides/home.html
+template: overrides/home-es.html
 ---
