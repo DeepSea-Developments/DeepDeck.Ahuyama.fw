@@ -108,6 +108,11 @@ markdown_extensions:
       emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.smartsymbols
@@ -127,6 +132,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting started:
+    - Connecting DeepDeck: connection.md
     - Installation: vscode-setup.md
     - Configuration: 
       - deepdeck-configuration.md
