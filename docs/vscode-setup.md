@@ -14,7 +14,7 @@ Copy or clone the main branch of the repository. This branch contains the latest
 ## Program DeepDeck
 
 1. Open VSCode
-1. Open the repository holder
+1. Open the repository folder
     <figure markdown>
         ![Open Folder](https://i.imgur.com/PEAewNy.png){ width="400" }
     <figcaption></figcaption>
@@ -40,7 +40,7 @@ Copy or clone the main branch of the repository. This branch contains the latest
         <figcaption></figcaption>
         </figure>
             If this happens and you have the DeepDeck connected, try connecting the USB C port the other way around. (Yes, USB C should not have a direction, we are working to solve this :clown_face:  
-  When is working, it should look like this:
+  When it is working, it should look like this:
     <figure markdown>
         ![Port detected](https://i.imgur.com/MfoCZIy.png){ width="700" }
     <figcaption></figcaption>

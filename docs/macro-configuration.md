@@ -40,7 +40,7 @@ If the macro length is less than `MACRO_LEN`, you have to use the definition `KC
 
 ``` c
 /*define what the macros do
- * important- make sure you you put the macros in the same order as the their enumeration
+ * important- make sure you put the macros in the same order as their enumeration
  */
 uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		// KC_CTR + ALT - //Ubuntu windows manager (change workspace)
