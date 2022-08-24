@@ -1,13 +1,13 @@
 # Layer configurations
 
-DeepDeck consists of 4x4 mechanical keys. A specific configuration of those 16 keys is called a layer. By default there are 3 layers, but you can have more.
+DeepDeck consists of 4x4 mechanical keys. A specific configuration of those 16 keys is called a layer. By default, there are 3 layers, but you can have more.
 
 The configuration of the layers is in `keymap.c`
 
 Here is an example of the layer configuration
 
 ``` c
-// Each keymap is represented by an array, with an array that points to all the keymaps  by order
+// Each keymap is represented by an array, with an array that points to all the keymaps  in order
 	 uint16_t _QWERTY[MATRIX_ROWS][KEYMAP_COLS]={
 
 			/* MEDIA

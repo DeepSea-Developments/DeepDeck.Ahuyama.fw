@@ -183,7 +183,7 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 				//   {KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G },
 				//   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B } ,
 				//   {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT, NUM_H,   KC_SPC }
-				{KC_CALC,  KC_Q,    KC_MPRV,    RAISE },
+				{PN_CLOSE,  PN_LAYOUT,    PN_TEST,    RAISE },
 			  {KC_TAB,  KC_A,    KC_S,    KC_D},
 			  {KC_LSFT, KC_Z,    KC_X,    KC_FN0 } ,
 			  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }

@@ -14,8 +14,8 @@ extern "C" {
 #include "plugin_manager.h"
 
 
-#define DEFAULT_SSID "SSID" //default SSID for WiFi access point
-#define DEFAULT_PASSWORD "PASS" //default password for WiFi access point
+#define DEFAULT_SSID "DeepPeace" //default SSID for WiFi access point
+#define DEFAULT_PASSWORD "sitbreath" //default password for WiFi access point
 
 /*
  *@brief Add the headers for your plugins here, make sure the
