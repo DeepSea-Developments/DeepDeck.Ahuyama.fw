@@ -29,3 +29,9 @@ uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = {
 	{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK }
 };
 ```
+
+If you use other than the default rotary encoders which have an active low switch, you can adjust the behavior of the switch in the `keyboard_config.h` file.
+
+```c
+ #define ENCODER1_S_ACTIVE_LOW 1	   // encoder switch is active_low=1 active_high=0
+```

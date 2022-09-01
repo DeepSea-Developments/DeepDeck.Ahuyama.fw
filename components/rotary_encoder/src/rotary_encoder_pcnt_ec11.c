@@ -174,6 +174,7 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     ec11->parent.set_glitch_filter = ec11_set_glitch_filter;
     ec11->parent.get_counter_value = ec11_get_counter_value;
     ec11->parent.encoder_s_pin = config->button_gpio_num;
+    ec11->parent.encoder_s_active_low = config->button_active_low;
     ec11->parent.last_encoder_count = 0;
     ec11->parent.fsm_state = S_IDLE;
     ec11->parent.fsm_timer = 0;
@@ -181,12 +182,12 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     ec11->parent.short_pressed_time = 60000;
 
     //Configure Encoder button
-	if(config->button_gpio_num != GPIO_NUM_NC)
-	{
-		gpio_pad_select_gpio(config->button_gpio_num);
-		gpio_set_direction(config->button_gpio_num, GPIO_MODE_INPUT);
-		gpio_set_pull_mode(config->button_gpio_num,GPIO_PULLDOWN_ONLY);
-	}
+    if(config->button_gpio_num != GPIO_NUM_NC)
+    {
+        gpio_pad_select_gpio(config->button_gpio_num);
+        gpio_set_direction(config->button_gpio_num, GPIO_MODE_INPUT);
+        gpio_set_pull_mode(config->button_gpio_num,GPIO_PULLDOWN_ONLY);
+    }
 
     *ret_encoder = &(ec11->parent);
 
@@ -201,34 +202,34 @@ err:
 
 uint8_t encoder_push_state(rotary_encoder_t *encoder)
 {
-    return gpio_get_level(encoder->encoder_s_pin);
+    return gpio_get_level(encoder->encoder_s_pin) ^ encoder->encoder_s_active_low;
 }
 
 //Check encoder state, currently defined for Vol +/= and mute
 encoder_state_t encoder_state(rotary_encoder_t *encoder)
 {
-	uint8_t EncoderState = 0x00;
-	int16_t EncoderCount = ENC_IDLE;
-    int16_t PastEncoderCount=encoder->last_encoder_count;
+    uint8_t EncoderState = 0x00;
+    int16_t EncoderCount = ENC_IDLE;
+    int16_t PastEncoderCount = encoder->last_encoder_count;
     
     EncoderCount = encoder->get_counter_value(encoder);
 
-	if(EncoderCount > PastEncoderCount){
-		EncoderState = ENC_UP;
-		//ESP_LOGI("Encoder","up");
-	}
-	if(EncoderCount < PastEncoderCount){
-		EncoderState = ENC_DOWN;
-		//ESP_LOGI("Encoder","down");
-	}
-	if(encoder->encoder_s_pin != GPIO_NUM_NC)
-	{
+    if(EncoderCount > PastEncoderCount){
+        EncoderState = ENC_UP;
+        //ESP_LOGI("Encoder","up");
+    }
+    if(EncoderCount < PastEncoderCount){
+        EncoderState = ENC_DOWN;
+        //ESP_LOGI("Encoder","down");
+    }
+    if (encoder->encoder_s_pin != GPIO_NUM_NC)
+    {
         //FSM for the button state
         switch(encoder->fsm_state)
         {
             case S_IDLE:
                 //Button Pressed
-                if(gpio_get_level(encoder->encoder_s_pin)==1)
+                if(encoder_push_state(encoder) == 1)
                 {
                     encoder->fsm_state=S_BUTTON_PRESSED;
                     encoder->fsm_timer=0;
@@ -237,11 +238,11 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             break;
             case S_BUTTON_PRESSED:
                 //Button Released
-                if(gpio_get_level(encoder->encoder_s_pin)==0)
+                if(encoder_push_state(encoder) == 0)
                 {
                     encoder->fsm_state=S_BUTTON_RELEASED;
                     encoder->fsm_timer=0;
-                    //ESP_LOGI("Encoder FSM","PRESSED->RELEASED");
+                    //ESP_LOGI("Encoder FSM", "PRESSED->RELEASED");
                 }
                 else
                 {
@@ -260,7 +261,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             break;
             case S_BUTTON_RELEASED:
                 //Button Pressed
-                if(gpio_get_level(encoder->encoder_s_pin)==1)
+                if(encoder_push_state(encoder) == 1)
                 {
                     encoder->fsm_state=S_DOUBLE_PRESSED;
                     encoder->fsm_timer=0;
@@ -281,11 +282,11 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                         //ESP_LOGI("Encoder FSM","RELEASED->IDLE");
                     }
                 }
-            break;
+                break;
 
             case S_LONG_PRESSED:
                 //Button Released
-                if(gpio_get_level(encoder->encoder_s_pin)==0)
+                if(encoder_push_state(encoder) == 0)
                 {
                     encoder->fsm_state=S_IDLE;
                     encoder->fsm_timer=0;
@@ -295,7 +296,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
 
             case S_DOUBLE_PRESSED:
                 //Button Released
-                if(gpio_get_level(encoder->encoder_s_pin)==0)
+                if(encoder_push_state(encoder) == 0)
                 {
                     encoder->fsm_state=S_IDLE;
                     encoder->fsm_timer=0;
@@ -303,32 +304,32 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                 }
             break;
         }
-	}
+    }
 
-	encoder->last_encoder_count = EncoderCount;
-	return EncoderState;
+    encoder->last_encoder_count = EncoderCount;
+    return EncoderState;
 }
 
 // checking if a modifier key was pressed
 uint16_t check_key_modifier(uint16_t key) {
 
-	uint8_t cur_mod = 0;
-	// these are the modifier keys
-	if ((KC_LCTRL <= key) && (key <= KC_RGUI)) {
-		cur_mod = (1 << (key - KC_LCTRL));
-		return cur_mod;
-	}
-	return 0;
+    uint8_t cur_mod = 0;
+    // these are the modifier keys
+    if ((KC_LCTRL <= key) && (key <= KC_RGUI)) {
+        cur_mod = (1 << (key - KC_LCTRL));
+        return cur_mod;
+    }
+    return 0;
 }
 
 
 //How to process encoder activity
 void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
-	uint8_t type = encoder_commands[0];
+    uint8_t type = encoder_commands[0];
     uint16_t action;
-	uint8_t media_state[2] = {0,0};
-	uint8_t mouse_state[5] = {0,0,0,0,0};
-	uint8_t key_state[REPORT_LEN] = {0};
+    uint8_t media_state[2] = {0,0};
+    uint8_t mouse_state[5] = {0,0,0,0,0};
+    uint8_t key_state[REPORT_LEN] = {0};
     uint8_t modifier = 0;
 
     if(command != ENC_IDLE)
@@ -353,7 +354,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
                 break;
 
                 case KC_MEDIA_PLAY_PAUSE:
-                     media_state[1] = 5;
+                    media_state[1] = 5;
                 break;
 
                 case KC_AUDIO_MUTE:
@@ -379,42 +380,42 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
         {
             switch(action)
             {
-				case KC_MS_UP :
-					mouse_state[2] = 15;
-					break;
+                case KC_MS_UP:
+                    mouse_state[2] = 15;
+                    break;
 
-				case KC_MS_DOWN:
-					mouse_state[2] = -15;
-					break;
+                case KC_MS_DOWN:
+                    mouse_state[2] = -15;
+                    break;
 
-				case KC_MS_LEFT:
-					mouse_state[1] = -15;
-					break;
+                case KC_MS_LEFT:
+                    mouse_state[1] = -15;
+                    break;
 
-				case KC_MS_RIGHT:
-					mouse_state[1] = 15;
-					break;
+                case KC_MS_RIGHT:
+                    mouse_state[1] = 15;
+                    break;
 
-				case KC_MS_BTN1:
-					mouse_state[0] = 1;
-					break;
+                case KC_MS_BTN1:
+                    mouse_state[0] = 1;
+                    break;
 
-				case KC_MS_BTN2:
-					mouse_state[0] = 2;
-					break;
+                case KC_MS_BTN2:
+                    mouse_state[0] = 2;
+                    break;
 
-				case KC_MS_WH_UP:
-					mouse_state[3] = 1;
-					break;
-				case KC_MS_WH_DOWN:
-					mouse_state[3] = -1;
-					break;
-			}
+                case KC_MS_WH_UP:
+                    mouse_state[3] = 1;
+                    break;
+                case KC_MS_WH_DOWN:
+                    mouse_state[3] = -1;
+                    break;
+            }
             xQueueSend(mouse_q,(void*)&mouse_state, (TickType_t) 0);
             mouse_state[0] = 0;
-    		mouse_state[1] = 0;
-    		mouse_state[2] = 0;
-    		mouse_state[3] = 0;
+            mouse_state[1] = 0;
+            mouse_state[2] = 0;
+            mouse_state[3] = 0;
             xQueueSend(mouse_q,(void*)&mouse_state, (TickType_t) 0);
         }
         //Review Macro actions
@@ -430,7 +431,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
                 }
                 key_state[2+i] = key;
                 modifier |= check_key_modifier(key);
-	     	    
+           
                 //ESP_LOGI("KEY sent", "macroid: %d", key);
             }
             key_state[0] = modifier;
@@ -452,11 +453,11 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
         {
             ESP_LOGI("Encoder","Regular key detected: %d", action);
             key_state[2] = action;
-	     	xQueueSend(keyboard_q,(void*)&key_state, (TickType_t) 0);
+            xQueueSend(keyboard_q,(void*)&key_state, (TickType_t) 0);
             key_state[2] = 0;
             xQueueSend(keyboard_q,(void*)&key_state, (TickType_t) 0);
         }
     } 
     
-	vTaskDelay(5 / portTICK_PERIOD_MS);
+    vTaskDelay(5 / portTICK_PERIOD_MS);
 }
