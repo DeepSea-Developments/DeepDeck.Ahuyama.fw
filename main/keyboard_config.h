@@ -42,7 +42,7 @@
 #define ENCODER1_A_PIN GPIO_NUM_26 // encoder phase A pin
 #define ENCODER1_B_PIN GPIO_NUM_25// encoder phase B pin
 #define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
-#define ENCODER1_S_ACTIVE_LOW 1	  // encoder switch is active_low=1 active_high=0
+#define ENCODER1_S_ACTIVE_LOW 0	  // encoder switch is active_low=1 active_high=0
 
 
 #define R_ENCODER_2 // undefine if no rotary encoder is used
