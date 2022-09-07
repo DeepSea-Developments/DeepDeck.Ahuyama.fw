@@ -30,13 +30,13 @@ typedef void *rotary_encoder_dev_t;
  * 
  */
 typedef enum {
-	/** Press event issued */
-	ENC_IDLE = 0,
+    /** Press event issued */
+    ENC_IDLE = 0,
     ENC_UP,
     ENC_DOWN,
     ENC_BUT_SHORT_PRESS,
     ENC_BUT_LONG_PRESS,
-    ENC_BUT_DOUBLE_PRESS,	
+    ENC_BUT_DOUBLE_PRESS, 
 } encoder_state_t;
 
 /** 
@@ -44,12 +44,12 @@ typedef enum {
  * 
  */
 typedef enum {
-	S_IDLE = 0,
+    S_IDLE = 0,
     S_BUTTON_PRESSED,
     S_BUTTON_RELEASED,
     S_LONG_PRESSED,
     S_DOUBLE_PRESSED
-	
+ 
 } encoder_fsm_t;
 
 /**
@@ -61,6 +61,7 @@ typedef struct {
     int phase_a_gpio_num;     /*!< Phase A GPIO number */
     int phase_b_gpio_num;     /*!< Phase B GPIO number */
     int button_gpio_num;      /*!< Button GPIO number  */
+    int button_active_low;    /*!< Button ActiveLow=1 ActiveHigh=0=default */
     int flags;                /*!< Extra flags */
 } rotary_encoder_config_t;
 
@@ -68,13 +69,14 @@ typedef struct {
  * @brief Default rotary encoder configuration
  *
  */
-#define ROTARY_ENCODER_DEFAULT_CONFIG(dev_hdl, gpio_a, gpio_b, gpio_pin) \
-    {                                                          \
-        .dev = dev_hdl,                                        \
-        .phase_a_gpio_num = gpio_a,                            \
-        .phase_b_gpio_num = gpio_b,                            \
-        .button_gpio_num = gpio_pin,                            \
-        .flags = 0,                                            \
+#define ROTARY_ENCODER_DEFAULT_CONFIG(dev_hdl, gpio_a, gpio_b, gpio_pin, button_al) \
+    {                                                                               \
+        .dev = dev_hdl,                                                             \
+        .phase_a_gpio_num = gpio_a,                                                 \
+        .phase_b_gpio_num = gpio_b,                                                 \
+        .button_gpio_num = gpio_pin,                                                \
+        .button_active_low = button_al,                                             \
+        .flags = 0,                                                                 \
     }
 
 /**
@@ -137,6 +139,7 @@ struct rotary_encoder_t {
      */
     int (*get_counter_value)(rotary_encoder_t *encoder);
     int32_t encoder_s_pin;
+    int8_t encoder_s_active_low;
     int16_t last_encoder_count;
     encoder_fsm_t fsm_state;
     uint32_t fsm_timer;

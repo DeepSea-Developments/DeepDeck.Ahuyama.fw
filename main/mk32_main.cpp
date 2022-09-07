@@ -439,7 +439,7 @@ extern "C" void app_main() {
 
     // Create rotary encoder instance
     rotary_encoder_config_t config_a = \
-		ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN);
+		ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN, ENCODER1_S_ACTIVE_LOW);
     ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_a, &encoder_a));
 
     // Filter out glitch (1us)
@@ -458,7 +458,7 @@ extern "C" void app_main() {
 
     // Create rotary encoder instance
     rotary_encoder_config_t config_b = \
-			ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN);
+			ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN, ENCODER2_S_ACTIVE_LOW);
     ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_b, &encoder_b));
 
     // Filter out glitch (1us)
