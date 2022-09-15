@@ -21,10 +21,9 @@
 
 #define MY_BORDER_SIZE 1
 //#define U8G2_REF_MAN_PIC
-static const char *TAG = "menu";
+//static const char *TAG = "menu";
 
 volatile menu_event_t menu_event;
-
 
 
 
@@ -51,6 +50,7 @@ enum {
     NONE = -1,
     MAIN_MENU = 0,
     BLUETOOTH_MENU,
+    LED_MODE_MENU,
     menu_num
 	
 } menu_list;
@@ -60,12 +60,14 @@ enum {
 char menu_titles[menu_num][MENU_CHAR_NUM] =
 {
     "Main Menu",
-    "Bluetooth"
+    "Bluetooth",
+    "LED modes"
 };
 
 char menu_subtitles[menu_num][MENU_CHAR_NUM] =
 {
     "DeepSea",
+    "DeepDeck",
     "DeepDeck"
 };
 
@@ -82,13 +84,13 @@ menu_item_t m_main_array[] =
 {
     //Descripción                 //Acción             //Siguiente menu      ó     //Función
     {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
-    {menu_main_description[1],    MA_FUNCTION,            NONE,                       &splashScreen},
+    {menu_main_description[1],    MA_MENU,                LED_MODE_MENU,              0},
     {menu_main_description[2],    MA_FUNCTION,            NONE,                       &splashScreen},
     {menu_main_description[3],    MA_FUNCTION,            NONE,                       &menu_goto_sleep},
     {menu_main_description[4],    MA_FUNCTION,            NONE,                       &menu_exit},
     {0,                           MA_END,                 0,                          0}
 };
- // ------------------Bluetooth Menu-------------------------------
+// ------------------Bluetooth Menu-------------------------------
 char menu_bt_description[2][MENU_CHAR_NUM] =
 {
     "Bluetooth 1",
@@ -102,6 +104,26 @@ menu_item_t m_bluetooth_array[] =
     {0,                           MA_END,                 0,                          0}
 };
 
+// ------------------LED modes -------------------------------
+char menu_led_mode[5][MENU_CHAR_NUM] =
+{
+    "Off",
+    "Pulsating",
+    "Progressive",
+    "Rainbow",
+    "Solid"
+};
+menu_item_t m_led_array[] = 
+{
+    //Descripción                 //Acción             //Siguiente menu      ó     //Función
+    {menu_led_mode[0],      MA_FUNCTION,               NONE,                       &menu_rgb_mode_0},
+    {menu_led_mode[1],      MA_FUNCTION,               NONE,                       &menu_rgb_mode_1},
+    {menu_led_mode[2],      MA_FUNCTION,               NONE,                       &menu_rgb_mode_2},
+    {menu_led_mode[3],      MA_FUNCTION,               NONE,                       &menu_rgb_mode_3},
+    {menu_led_mode[4],      MA_FUNCTION,               NONE,                       &menu_rgb_mode_4},
+    {0,                           MA_END,                 0,                          0}
+};
+
 // ----------------------------------- Menu Array ------------------------------------------
 
 menu_t menu_array[menu_num] = 
@@ -109,6 +131,7 @@ menu_t menu_array[menu_num] =
     // Title                      //Subtitle                      //Item array
     {menu_titles[MAIN_MENU],      menu_subtitles[MAIN_MENU],      &m_main_array},
     {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
+    {menu_titles[LED_MODE_MENU],  menu_subtitles[LED_MODE_MENU],  &m_led_array},
  };
 
 
@@ -480,4 +503,39 @@ uint8_t menu_get_goto_sleep(void)
     return true;
   }
   return goto_sleep;
+}
+
+
+uint8_t menu_send_rgb_mode(uint8_t mode)
+{
+  int mode_t = mode;
+  xQueueSend(keyled_q, &mode_t, 0);
+
+  return mret_none; 
+}
+
+// ToDo: Optimize this
+uint8_t menu_rgb_mode_0(void)
+{
+  return menu_send_rgb_mode(0);
+}
+
+uint8_t menu_rgb_mode_1(void)
+{
+  return menu_send_rgb_mode(1);
+}
+
+uint8_t menu_rgb_mode_2(void)
+{
+  return menu_send_rgb_mode(2);
+}
+
+uint8_t menu_rgb_mode_3(void)
+{
+  return menu_send_rgb_mode(3);
+}
+
+uint8_t menu_rgb_mode_4(void)
+{
+  return menu_send_rgb_mode(4);
 }
