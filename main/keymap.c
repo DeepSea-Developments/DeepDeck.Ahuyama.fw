@@ -24,7 +24,7 @@ enum layer_holds {
 
 // array to hold names of layouts for oled
 char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
-		  "Plugins",
+		  "GIMP",
 		};
 
 /* select a keycode for your macro
@@ -45,7 +45,10 @@ enum custom_macros {
 	KC_APP_CHROME_NEW_WINDOW,            //Chrome - New window
 	KC_APP_CHROME_N_INC_WINDOW,       //Chrome - New incognito window
 	KC_APP_CHROME_CLOSE_TAB,           //Chrome - Close tab
-	KC_APP_WINDOWPUT_LINUX_K		// Windows plugin call windowput to move windows to certain parts. use this plus arrows.
+	KC_APP_WINDOWPUT_LINUX_K,		// Windows plugin call windowput to move windows to certain parts. use this plus arrows.
+	KC_APP_GIMP_DESELECT,		// Gimp shortcut to deselect all.
+	KC_APP_GIMP_INVERT,		// Gimp shortcut to invert selection.
+	KC_APP_GIMP_FIT_IMAGE		// Gimp shortcut to fir image to window.
 
 };
 
@@ -79,6 +82,12 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		{ KC_LCTRL, KC_W, KC_NO}, 
 		//Linux - WindowPut plugin - MosaicWindow
 		{ KC_LGUI, KC_LALT, KC_NO}, 
+		// GIMP - Select none
+		{ KC_LCTRL, KC_LSHIFT, KC_A ,KC_NO}, 
+		// GIMP - Invert Selection
+		{ KC_LCTRL, KC_I ,KC_NO},
+		// GIMP - Fit image
+		{ KC_LCTRL, KC_LSHIFT, KC_J ,KC_NO}, 
 	};
 
 /*Encoder keys for each layer by order, and for each pad
@@ -94,12 +103,12 @@ uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = {
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
 			 * |        L2   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L3   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * |      GIMP   --> |  MOUSE WHEEL UP | MOUSE WHEEL DOWN  |   100% ZOOM   |       PLAY      |    NEXT SONG    |
 			 * `-----------------------------------------------------------------------------------------------------------'
 			 */
 		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
 		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK }
+		{ KC_MS_WH_DOWN,        KC_MS_WH_UP,        KC_1,    KC_APP_GIMP_FIT_IMAGE, KC_APP_GIMP_FIT_IMAGE }
 		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
 		// |Y+|Y-| LEFT CLICK|
 		// { MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
@@ -173,22 +182,43 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 
 	};
 
-	 uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
 
-				/* PLUGINS
-				 * -----------------------------------------------------------------------------------------'
-				 */
+	uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
 
-				//   {PN_CLOSE,PN_LAYOUT,PN_TEST,    KC_E,    KC_R,    KC_T },
-				//   {KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G },
-				//   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B } ,
-				//   {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT, NUM_H,   KC_SPC }
-				{PN_CLOSE,  PN_LAYOUT,    PN_TEST,    RAISE },
-			  {KC_TAB,  KC_A,    KC_S,    KC_D},
-			  {KC_LSFT, KC_Z,    KC_X,    KC_FN0 } ,
+				/* GIMP
+			 * ,-----------------------------------------------------------------------.
+			 * |        SHIFT     |        CTRL       |       3         |  LAYER CHANGE   |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        4        |         5       |       6         |        +        |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        7        |         8       |       9         |        *        |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |        .        |         0       |        <-       |      ENTER      |
+			 * `-----------------------------------------------------------------------'
+			 */
+				{KC_LSHIFT,  KC_LCTRL,    PN_TEST,    RAISE },
+			  {KC_M,  KC_N,    KC_R,    KC_B},
+			  {KC_APP_GIMP_DESELECT, KC_APP_GIMP_INVERT,    KC_X,    KC_FN0 } ,
 			  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }
 
 		};
+
+	//  uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
+
+	// 			/* PLUGINS
+	// 			 * -----------------------------------------------------------------------------------------'
+	// 			 */
+
+	// 			//   {PN_CLOSE,PN_LAYOUT,PN_TEST,    KC_E,    KC_R,    KC_T },
+	// 			//   {KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G },
+	// 			//   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B } ,
+	// 			//   {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT, NUM_H,   KC_SPC }
+	// 			{PN_CLOSE,  PN_LAYOUT,    PN_TEST,    RAISE },
+	// 		  {KC_TAB,  KC_A,    KC_S,    KC_D},
+	// 		  {KC_LSFT, KC_Z,    KC_X,    KC_FN0 } ,
+	// 		  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }
+
+	// 	};
  //Create an array that points to the various keymaps
 uint16_t (*default_layouts[])[MATRIX_ROWS][KEYMAP_COLS] = { &_QWERTY, &_NUM,
 			&_PLUGINS

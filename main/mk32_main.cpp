@@ -210,7 +210,7 @@ extern "C" void rgb_leds_task(void *pvParameters) {
 	rgb_key_led_init();
 	rgb_notification_led_init();
 	while (1) {
-		test();
+		key_led_modes();
 	}
 }
 

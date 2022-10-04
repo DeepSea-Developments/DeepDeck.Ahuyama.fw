@@ -21,6 +21,7 @@ extern "C" {
 #include "u8g2.h"
 #include "oled_tasks.h"
 #include "rotary_encoder.h"
+#include "rgb_led.h"
 
 /** 
  * @brief DeepDeck Status 
@@ -98,6 +99,12 @@ menu_ret menu_goto_sleep(void);
 menu_ret menu_exit(void);
 
 uint8_t menu_get_goto_sleep(void);
+uint8_t menu_send_rgb_mode(uint8_t mode);
+uint8_t menu_rgb_mode_0(void);
+uint8_t menu_rgb_mode_1(void);
+uint8_t menu_rgb_mode_2(void);
+uint8_t menu_rgb_mode_3(void);
+uint8_t menu_rgb_mode_4(void);
 
 menu_t menu_main; 
 extern menu_item_t m_main_array[];
