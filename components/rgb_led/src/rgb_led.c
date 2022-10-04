@@ -153,7 +153,7 @@ void key_led_modes(void)
     uint16_t counter_top = 5;
     uint8_t current_pulsating_key = 0;
     
-    uint8_t modes=1;
+    uint8_t modes=2;
     uint8_t new_mode;
 
     while(true)
@@ -208,8 +208,8 @@ void key_led_modes(void)
                     
                     // Build RGB values
                     
-                    hsv2rgb(hue, 100, 100, &red, &green, &blue);
-                    hsv2rgb(hue2, 100, 100, &red2, &green2, &blue2);
+                    hsv2rgb(hue, 100, 5, &red, &green, &blue);
+                    hsv2rgb(hue2, 100, 5, &red2, &green2, &blue2);
                     // Write RGB values to strip driver
                     ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
                 }
