@@ -79,7 +79,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 20 //Available macro lenght
+#define MACROS_NUM 40 //Available macro lenght
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 

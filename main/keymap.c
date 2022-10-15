@@ -24,7 +24,7 @@ enum layer_holds {
 
 // array to hold names of layouts for oled
 char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
-		  "GIMP",
+		  "VSCODE",
 		};
 
 /* select a keycode for your macro
@@ -48,9 +48,22 @@ enum custom_macros {
 	KC_APP_WINDOWPUT_LINUX_K,		// Windows plugin call windowput to move windows to certain parts. use this plus arrows.
 	KC_APP_GIMP_DESELECT,		// Gimp shortcut to deselect all.
 	KC_APP_GIMP_INVERT,		// Gimp shortcut to invert selection.
-	KC_APP_GIMP_FIT_IMAGE		// Gimp shortcut to fir image to window.
+	KC_APP_GIMP_FIT_IMAGE,		// Gimp shortcut to fir image to window.
+	KC_APP_VSCODE_TOGGLE_SIDEBAR,		// VSCode: Toggle sidebar.
+	KC_APP_VSCODE_COMMENT_LINE,		// VSCode: Toggle line comment.
+	KC_APP_VSCODE_COMMENT_SELECTION,		// VSCode: Toggle selection comment.
+	KC_APP_VSCODE_MULT_SELECTION,		// VSCode: Multiple selection
+	KC_APP_VSCODE_FORWARD,		// VSCode: Go forward
+	KC_APP_VSCODE_BACKWARD,		// VSCode: Go Backward
+	KC_APP_VSCODE_FIND,		// VSCode: Find
+	KC_APP_VSCODE_FIND_ALL,		// VSCode: Find all
+	KC_APP_VSCODE_UNDO,		// VSCode: undo
+	KC_APP_VSCODE_REDO,		// VSCode: redo
 
+	KC_APP_COPY, //Copy
+	KC_APP_PASTE, //Paste
 };
+
 
 /*define what the macros do
  * important- make sure you you put the macros in the same order as the their enumeration
@@ -68,6 +81,7 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		{ KC_LALT, KC_TAB, KC_NO}, 
 		//alt + Shift + Tab
 		{ KC_LALT, KC_LSHIFT, KC_TAB, KC_NO}, 
+
 		//Chrome - Next tab
 		{ KC_LCTRL, KC_TAB, KC_NO}, 
 		//Chrome - Prev tab
@@ -80,60 +94,90 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		{ KC_LCTRL, KC_LSHIFT, KC_N, KC_NO}, 
 		//Chrome - Close tab
 		{ KC_LCTRL, KC_W, KC_NO}, 
+
 		//Linux - WindowPut plugin - MosaicWindow
 		{ KC_LGUI, KC_LALT, KC_NO}, 
+
 		// GIMP - Select none
 		{ KC_LCTRL, KC_LSHIFT, KC_A ,KC_NO}, 
 		// GIMP - Invert Selection
 		{ KC_LCTRL, KC_I ,KC_NO},
 		// GIMP - Fit image
 		{ KC_LCTRL, KC_LSHIFT, KC_J ,KC_NO}, 
+
+		// VSCode: Toggle sidebar
+		{ KC_LCTRL, KC_B ,KC_NO}, 
+		// VSCode: Toggle line comment.
+		{ KC_LCTRL, KC_SLASH ,KC_NO},
+		// VSCode: Toggle selection comment.
+		{ KC_LCTRL, KC_LSHIFT, KC_A ,KC_NO}, 
+		// VSCode: Multiple selection
+		{ KC_LCTRL, KC_D ,KC_NO}, 
+		// VSCode: Go forward
+		{ KC_LCTRL, KC_LALT, KC_MINUS ,KC_NO}, 
+		// VSCode: Go Backward
+		{ KC_LCTRL, KC_LSHIFT, KC_MINUS ,KC_NO},
+		// VSCode: Find
+		{ KC_LCTRL, KC_F ,KC_NO}, 
+		// VSCode: Find all
+		{ KC_LCTRL, KC_LSHIFT, KC_F ,KC_NO}, 
+		
+		// VSCode: undo
+		{ KC_LCTRL, KC_Z ,KC_NO}, 
+		// VSCode: redo
+		{ KC_LCTRL, KC_Y ,KC_NO}, 
+
+		//  Copy
+		{ KC_LCTRL, KC_C ,KC_NO}, 
+		//  Paste
+		{ KC_LCTRL, KC_V ,KC_NO}, 
+
 	};
 
 /*Encoder keys for each layer by order, and for each pad
  * First variable states what usage the encoder has
  */
 
-uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = {
+uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = { 
 		/* Encoder 1 layout
 			 * ,-----------------------------------------------------------------------------------------------------------.
-			 * |  ---Layers---   |  CCW rotation   |    CW rotation    |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
+			 * |  ---Layers---   |  CW rotation    |    CCW rotation   |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L1   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * |        L1   --> |    VOL UP       |    VOL DOWN       |      PLAY     |      MUTE       |    NEXT SONG    |
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L2   --> |    VOL UP       |    VOL DOWN       |      MUTE     |       PLAY      |    NEXT SONG    |
+			 * |        L2   --> |    VOL UP       |    VOL DOWN       |      PLAY     |       MUTE      |    NEXT SONG    |
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |      GIMP   --> |  MOUSE WHEEL UP | MOUSE WHEEL DOWN  |   100% ZOOM   |       PLAY      |    NEXT SONG    |
+			 * |    VSCODE   --> |    VOL UP       |    VOL DOWN       |      UNDO     |       PLAY      |    NEXT SONG    |
+			 * |-----------------------------------------------------------------------------------------------------------|
+			 * |   x  GIMP   --> |  MOUSE WHEEL UP | MOUSE WHEEL DOWN  |   100% ZOOM   |       PLAY      |    NEXT SONG    |
 			 * `-----------------------------------------------------------------------------------------------------------'
 			 */
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK },
-		{ KC_MS_WH_DOWN,        KC_MS_WH_UP,        KC_1,    KC_APP_GIMP_FIT_IMAGE, KC_APP_GIMP_FIT_IMAGE }
-		//{ MEDIA_ENCODER, KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_AUDIO_MUTE },
-		// |Y+|Y-| LEFT CLICK|
-		// { MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 },
-		// { MOUSE_ENCODER, KC_MS_UP, KC_MS_DOWN, KC_MS_BTN2 } 
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE,  KC_MEDIA_NEXT_TRACK }
+		/* { KC_MS_WH_DOWN,        KC_MS_WH_UP,        KC_1,    KC_APP_GIMP_FIT_IMAGE, KC_APP_GIMP_FIT_IMAGE } */
+		
 	};
 
 uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 	/* Encoder 2 layout
 			 * ,-----------------------------------------------------------------------------------------------------------.
-			 * |  ---Layers---   |  CCW rotation   |    CW rotation    |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
+			 * |  ---Layers---   |  CW rotation    |    CCW rotation   |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
 			 * |        L1   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
 			 * |        L2   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
 			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L3   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
+			 * |    VSCODE   --> |    FORWARD      |    BACKWARD       |      REDO     |       FIND      |    FIND ALL     |
+			 * |-----------------------------------------------------------------------------------------------------------|		
+			 * |    X   L3   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
 			 * `-----------------------------------------------------------------------------------------------------------'
 			 */
-		// |VOL + | VOL - | MUTE |
 		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
-		// |Y+|Y-| LEFT CLICK|
 		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
-		// |Y+|Y-| LEFT CLICK|
-		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW }
+		{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND }
 	 };
+	 
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
@@ -185,23 +229,45 @@ uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
 
 	uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
 
-				/* GIMP
+				/* VSCODE
 			 * ,-----------------------------------------------------------------------.
-			 * |        SHIFT     |        CTRL       |       3         |  LAYER CHANGE   |
+			 * |      COPY       |      PASTE      |       SIDEBAR   |  LAYER CHANGE   |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        4        |         5       |       6         |        +        |
+			 * |    COMMENT      |    S_COMMENT    |     PALLET      |     M_SELECT    |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        7        |         8       |       9         |        *        |
+			 * |       ALT       |       HOME      |       UP        |       END       |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        .        |         0       |        <-       |      ENTER      |
+			 * |       CTRL      |     LEFT        |      DOWN       |      RIGHT      |
 			 * `-----------------------------------------------------------------------'
 			 */
-				{KC_LSHIFT,  KC_LCTRL,    PN_TEST,    RAISE },
-			  {KC_M,  KC_N,    KC_R,    KC_B},
-			  {KC_APP_GIMP_DESELECT, KC_APP_GIMP_INVERT,    KC_X,    KC_FN0 } ,
-			  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }
+			  {KC_APP_COPY,  KC_APP_PASTE,    KC_APP_VSCODE_TOGGLE_SIDEBAR,    RAISE },
+			  {KC_APP_VSCODE_COMMENT_LINE,  KC_APP_VSCODE_COMMENT_SELECTION,    KC_F1,    KC_APP_VSCODE_MULT_SELECTION},
+			  {KC_LALT,     KC_HOME,            KC_UP,              KC_END} ,
+			  {KC_LCTRL,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
+			  
 
 		};
+
+
+	// uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
+
+	// 			/* GIMP
+	// 		 * ,-----------------------------------------------------------------------.
+	// 		 * |        SHIFT     |        CTRL       |       3         |  LAYER CHANGE   |
+	// 		 * |-----------------+-----------------+-----------------+-----------------|
+	// 		 * |        4        |         5       |       6         |        +        |
+	// 		 * |-----------------+-----------------+-----------------+-----------------|
+	// 		 * |        7        |         8       |       9         |        *        |
+	// 		 * |-----------------+-----------------+-----------------+-----------------|
+	// 		 * |        .        |         0       |        <-       |      ENTER      |
+	// 		 * `-----------------------------------------------------------------------'
+	// 		 */
+	// 			{KC_LSHIFT,  KC_LCTRL,    PN_TEST,    RAISE },
+	// 		  {KC_M,  KC_N,    KC_R,    KC_B},
+	// 		  {KC_APP_GIMP_DESELECT, KC_APP_GIMP_INVERT,    KC_X,    KC_FN0 } ,
+	// 		  {KC_LCTRL,KC_LGUI, KC_LALT, DEFAULT }
+
+	// 	};
 
 	//  uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
 
