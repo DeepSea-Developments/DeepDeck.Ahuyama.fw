@@ -16,10 +16,6 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_AP_SSID_LEN 32
 #define MAX_AP_PASS_LEN 64
 #define MAX_AP_BSSID_LEN 6
@@ -75,10 +71,10 @@ void wifi_store_ap(wifi_sta_config_t ap_config);
  */
 void wifi_connection_deinit(void);
 
-
-#ifdef __cplusplus
-}
-#endif
-
+/**
+ * @brief get ip address
+ * 
+ */
+void get_ip(void);
 
 #endif /* WIFI_MANAGER_WIFI_MANAGER_H_ */

@@ -1,3 +1,3 @@
-idf_component_register(SRCS "mk32_main.cpp" "keymap.c" "matrix.c" "keypress_handles.c"
+idf_component_register(SRCS "main.c" "keymap.c" "matrix.c" "keypress_handles.c"
                     INCLUDE_DIRS "."
-                    REQUIRES "battery" "ble" "oled" "nvsfuncs" "plugins" "espnowmk32" "rotary_encoder" "rgb_led" "menu")
+                    REQUIRES "mqtt_dd" "battery" "ble" "oled" "nvsfuncs" "plugins" "espnowmk32" "rotary_encoder" "rgb_led" "menu")

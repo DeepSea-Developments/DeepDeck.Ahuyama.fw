@@ -11,11 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#ifndef MENU_H
+#define MENU_H
 
 #include "esp_err.h"
 #include "u8g2.h"
@@ -112,9 +111,4 @@ extern menu_item_t m_main_array[];
 extern menu_t menu_bluetooth; 
 extern menu_item_t m_bluetooth_array[];
 
-
-
-
-#ifdef __cplusplus
-}
 #endif

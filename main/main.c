@@ -25,6 +25,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
+#include "freertos/semphr.h"
+#include "freertos/queue.h"
+
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -52,6 +55,7 @@
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
 #include "nvs_keymaps.h"
+#include "mqtt.h"
 
 #include "esp_err.h"
 
@@ -61,13 +65,14 @@
 
 #include "plugins.h"
 
+
 #define KEY_REPORT_TAG "KEY_REPORT"
 #define SYSTEM_REPORT_TAG "KEY_REPORT"
 #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
-//plugin functions
 
+//plugin functions
 static config_data_t config;
 QueueHandle_t espnow_recieve_q;
 
@@ -81,7 +86,7 @@ TaskHandle_t xKeyreportTask;
 
 
 //Task for continually updating the OLED
-extern "C" void oled_task(void *pvParameters) 
+void oled_task(void *pvParameters) 
 {
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
@@ -122,7 +127,7 @@ extern "C" void oled_task(void *pvParameters)
 }
 
 //handle battery reports over BLE
-extern "C" void battery_reports(void *pvParameters) {
+void battery_reports(void *pvParameters) {
 	//uint8_t past_battery_report[1] = { 0 };
 
 	while(1){
@@ -148,7 +153,7 @@ extern "C" void battery_reports(void *pvParameters) {
 
 
 //How to handle key reports
-extern "C" void key_reports(void *pvParameters) {
+void key_reports(void *pvParameters) {
 	// Arrays for holding the report at various stages
 	uint8_t past_report[REPORT_LEN] = { 0 };
 	uint8_t report_state[REPORT_LEN];
@@ -205,7 +210,7 @@ extern "C" void key_reports(void *pvParameters) {
 
 
 //Handling rgb LEDs
-extern "C" void rgb_leds_task(void *pvParameters) {
+void rgb_leds_task(void *pvParameters) {
 	
 	rgb_key_led_init();
 	rgb_notification_led_init();
@@ -218,7 +223,7 @@ rotary_encoder_t *encoder_a = NULL;
 rotary_encoder_t *encoder_b = NULL;
 
 //Handling rotary encoder
-extern "C" void encoder1_report(void *pvParameters) {
+void encoder1_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
@@ -251,7 +256,7 @@ extern "C" void encoder1_report(void *pvParameters) {
 	}
 }
 
-extern "C" void encoder2_report(void *pvParameters) {
+void encoder2_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
@@ -282,7 +287,7 @@ extern "C" void encoder2_report(void *pvParameters) {
 }
 
 //Function for sending out the modified matrix
-extern "C" void slave_scan(void *pvParameters) {
+void slave_scan(void *pvParameters) {
 
 	uint8_t PAST_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
 
@@ -299,7 +304,7 @@ extern "C" void slave_scan(void *pvParameters) {
 }
 
 //Update the matrix state via reports recieved by espnow
-extern "C" void espnow_update_matrix(void *pvParameters) {
+void espnow_update_matrix(void *pvParameters) {
 
 	uint8_t CURRENT_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
 	while (1) {
@@ -310,7 +315,7 @@ extern "C" void espnow_update_matrix(void *pvParameters) {
 	}
 }
 //what to do after waking from deep sleep, doesn't seem to work after updating esp-idf
-//extern "C" void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
+//void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
 //    rtc_matrix_deinit();;
 //    SLEEP_WAKE=true;
 //}
@@ -319,7 +324,7 @@ extern "C" void espnow_update_matrix(void *pvParameters) {
  *  wake up on touch on GPIO pin 2
  *  */
 #ifdef SLEEP_MINS
-extern "C" void deep_sleep(void *pvParameters) {
+void deep_sleep(void *pvParameters) {
 	uint64_t initial_time = esp_timer_get_time(); // notice that timer returns time passed in microseconds!
 	uint64_t current_time_passed = 0;
 	uint8_t force_sleep = false;
@@ -368,7 +373,34 @@ extern "C" void deep_sleep(void *pvParameters) {
 }
 #endif
 
-extern "C" void app_main() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void app_main() 
+{
 	//Reset the rtc GPIOS
 	rtc_matrix_deinit();
 
@@ -513,9 +545,32 @@ extern "C" void app_main() {
 			configMAX_PRIORITIES, NULL, 1);
 	ESP_LOGI("Sleep", "initializezd");
 #endif
+	wifi_connection_init();
 
+	vTaskDelay(5000 / portTICK_PERIOD_MS);
 
+	//char * test;
+	get_ip();
+	mqtt_app_start();
+
+	char data_char[10];
+	uint16_t value = 0;
+
+	while(1)
+	{
+		
+		sprintf(data_char,"%d",value);
+		mqtt_pub("SynthRio/all/config/p1", data_char);		
+		vTaskDelay(50 / portTICK_PERIOD_MS);
+
+		value++;
+		if(value>1022)
+		{
+			value = 0;
+		}
+	}
 
 }
 
-}
+
+
