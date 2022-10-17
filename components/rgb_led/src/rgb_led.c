@@ -17,6 +17,8 @@
 #include "led_strip.h"
 #include "rgb_led.h"
 
+static const char *TAG = "RGB_LEDs";
+
 led_strip_t *rgb_key;
 led_strip_t *rgb_notif;
 

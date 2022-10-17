@@ -4,21 +4,18 @@
  *  Created on: 13 Sep 2018
  *      Author: gal
  */
+
+#ifndef NVS_FUNCS_H_
+#define NVS_FUNCS_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <keyboard_config.h>
 
-#ifndef NVS_FUNCS_H_
-#define NVS_FUNCS_H_
-
 #define NVS_CONFIG_OK 1
 #define NVS_CONFIG_ERR 0
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * @load the layouts from nvs
@@ -45,10 +42,5 @@ void nvs_read_keymap_cfg(void);
  */
 void nvs_write_keymap_cfg(uint8_t layers, char (*layer_names)[MAX_LAYOUT_NAME_LENGTH]);
 
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* NVS_FUNCS_H_ */

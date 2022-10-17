@@ -14,10 +14,6 @@
 #include <esp_log.h>
 #include "u8g2.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //rotation defines
 #define LANDSCAPE U8G2_R0
 #define DEG90 U8G2_R1
@@ -73,11 +69,6 @@ extern QueueHandle_t led_recieve_q;
  * This bitmap from the file 'DeepDeck.png'
  */
 
-
 #define SPLASH_BMPWIDTH  128
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* OLED_TASKS_H_ */

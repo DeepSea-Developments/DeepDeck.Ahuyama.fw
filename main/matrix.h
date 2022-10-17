@@ -15,9 +15,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include "keyboard_config.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
 extern uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
@@ -43,7 +40,4 @@ void matrix_setup(void);
  */
 void scan_matrix(void);
 
-#ifdef __cplusplus
-}
-#endif
 #endif /* MATRIX_H_ */

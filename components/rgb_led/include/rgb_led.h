@@ -11,11 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef RGB_LED_H_
+#define RGB_LED_H_
 
 #include "led_strip.h"
 #include "esp_err.h"
@@ -67,9 +65,5 @@ typedef struct rbg_key {
 //pulsating keys
 rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
-static const char *TAG = "RGB_LEDs";
 
-
-#ifdef __cplusplus
-}
-#endif
+#endif /* RGB_LED_H_ */

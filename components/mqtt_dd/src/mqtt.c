@@ -94,18 +94,6 @@ void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 }
 
-void app_main_2(void)
-{
-    mqtt_app_start();
-    while(1)
-    {
-
-        esp_mqtt_client_publish(client, "SynthRio/all/config/p1", "300", 0, 1, 0);
-        ESP_LOGI(TAG, "lala");
-        vTaskDelay(200 / portTICK_PERIOD_MS);
-    }
-}
-
 int mqtt_pub(char * topic, char * message)
 {
     return esp_mqtt_client_publish(client, topic, message, 0, 1, 0);

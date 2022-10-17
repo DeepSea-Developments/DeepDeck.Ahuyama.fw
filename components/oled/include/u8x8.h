@@ -115,15 +115,6 @@
 #include <avr/pgmspace.h>
 #endif 
 
-/*==========================================*/
-/* C++ compatible */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-/*==========================================*/
 /* U8G2 internal defines */
 
 /* the following macro returns the first value for the normal mode */
@@ -1040,11 +1031,6 @@ extern const uint8_t u8x8_font_pxplustandynewtv_n[] U8X8_FONT_SECTION("u8x8_font
 extern const uint8_t u8x8_font_pxplustandynewtv_u[] U8X8_FONT_SECTION("u8x8_font_pxplustandynewtv_u");
 
 /* end font list */
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif  /* _U8X8_H */

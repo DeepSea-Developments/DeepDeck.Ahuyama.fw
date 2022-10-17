@@ -17,9 +17,6 @@
 
 #include "hidd_le_prf_int.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "keyboard_config.h"
 
 /* HID Report type */

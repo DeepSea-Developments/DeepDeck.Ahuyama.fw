@@ -14,4 +14,3 @@ void mqtt_app_start(void);
 int mqtt_pub(char * topic, char * message);
 
 #endif
-

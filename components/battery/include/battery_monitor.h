@@ -8,10 +8,6 @@
 #ifndef BATTERY_MONITOR_BATTERY_MONITOR_H_
 #define BATTERY_MONITOR_BATTERY_MONITOR_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  *Please make sure you understand what is a voltage divider before modifying
  * */
@@ -33,9 +29,5 @@ uint32_t get_battery_level(void);
 
 //initialize battery monitor pin
 void init_batt_monitor(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* BATTERY_MONITOR_BATTERY_MONITOR_H_ */
