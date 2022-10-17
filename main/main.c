@@ -227,6 +227,12 @@ void encoder1_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
+	//SynthRio
+	int16_t p1=0;
+	int16_t p3=0;
+	int flag = 0;
+	char data_char[8];
+
 	while (1) {
 		encoder_status = encoder_state(encoder_a);
 
@@ -247,7 +253,63 @@ void encoder1_report(void *pvParameters) {
 			}
 			else
 			{
-				encoder_command(encoder_status, encoder_map[current_layout]);
+
+				//SynthRio
+				if(encoder_status == ENC_BUT_SHORT_PRESS)
+				{
+					flag = !flag;
+				}
+				if(encoder_status == ENC_UP)
+				{
+					if(flag)
+					{
+						p1+=10;
+						if(p1>1023)
+						{
+							p1 = 1023;
+						}
+					}
+					else
+					{
+						p3+=10;
+						if(p3>1023)
+						{
+							p3 = 1023;
+						}
+					}
+				}
+				else if(encoder_status == ENC_DOWN)
+				{
+					if(flag)
+					{
+						p1-=10;
+						if(p1<0)
+						{ 
+							p1=0;
+						}
+					}
+					else
+					{
+						p3-=10;
+						if(p3<0)
+						{ 
+							p3=0;
+						}
+					}
+					
+				}
+				if(flag)
+				{
+					sprintf(data_char,"%d",p1);
+					mqtt_pub("SynthRio/all/config/p1", data_char);
+				}
+				else
+				{
+					sprintf(data_char,"%d",p3);
+					mqtt_pub("SynthRio/all/config/p3", data_char);
+				}
+				
+				//encoder_command(encoder_status, encoder_map[current_layout]);
 			}
 
 			
@@ -259,6 +321,10 @@ void encoder1_report(void *pvParameters) {
 void encoder2_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
+
+	//SynthRio
+	int16_t p2=0;
+	char data_char[8];
 
 	while (1) 
 	{
@@ -277,6 +343,26 @@ void encoder2_report(void *pvParameters) {
 			}
 			else
 			{
+
+				//SynthRio
+				if(encoder_status == ENC_UP)
+				{
+					p2+=10;
+					if(p2>1023)
+					{
+						p2 = 1023;
+					}
+				}
+				else if(encoder_status == ENC_DOWN)
+				{
+					p2-=10;
+					if(p2<0)
+					{ 
+						p2=0;
+					}
+				}
+				sprintf(data_char,"%d",p2);
+				mqtt_pub("SynthRio/all/config/p2", data_char);
 				encoder_command(encoder_status, slave_encoder_map[current_layout]);
 			}
 
@@ -556,19 +642,19 @@ void app_main()
 	char data_char[10];
 	uint16_t value = 0;
 
-	while(1)
-	{
+	// while(1)
+	// {
 		
-		sprintf(data_char,"%d",value);
-		mqtt_pub("SynthRio/all/config/p1", data_char);		
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+	// 	sprintf(data_char,"%d",value);
+	// 	mqtt_pub("SynthRio/all/config/p1", data_char);		
+	// 	vTaskDelay(50 / portTICK_PERIOD_MS);
 
-		value++;
-		if(value>1022)
-		{
-			value = 0;
-		}
-	}
+	// 	value++;
+	// 	if(value>1022)
+	// 	{
+	// 		value = 0;
+	// 	}
+	// }
 
 }
 
