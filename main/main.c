@@ -65,6 +65,12 @@
 
 #include "plugins.h"
 
+#include "portal.h"
+#include "wifi.h"
+#include "internet.h"
+#include "spiffs.h"
+
+static char *TAG = "main";
 
 #define KEY_REPORT_TAG "KEY_REPORT"
 #define SYSTEM_REPORT_TAG "KEY_REPORT"
@@ -376,16 +382,54 @@ void deep_sleep(void *pvParameters) {
 
 
 
+/* Function: void get_mac_addr(uint8_t *derived_mac_addr)
+Get mac address and return it in input pointer.
 
+Parameters:
 
+    derived_mac_addr - pointer to return the mac address.
+*/
+void get_mac_addr(uint8_t *derived_mac_addr)
+{
+    // Get MAC address for WiFi Station interface
+    ESP_ERROR_CHECK(esp_read_mac(derived_mac_addr, ESP_MAC_WIFI_STA));
+    ESP_LOGI(TAG, "Wifi STA MAC = %02X:%02X:%02X:%02X:%02X:%02X",
+             derived_mac_addr[0], derived_mac_addr[1], derived_mac_addr[2],
+             derived_mac_addr[3], derived_mac_addr[4], derived_mac_addr[5]);
+}
+/* Function: void AP_mode(bool clean_init)
+Config the retail device in AP mode for launch the rest server.
 
+Parameters:
 
-
-
-
-
-
-
+    clean_init - flag that determines if the devices had configured the wifi for switch off.
+*/
+void AP_mode(bool clean_init)
+{
+    if (clean_init)
+    {
+        SetInternetInterface(IOT_CLIENT_WIFI);
+        InternetInterfaceInit();
+    }
+    else
+    {
+        InternetInterfaceDisconnect();
+    }
+    uint8_t derived_mac_addr[6] = {0};
+    get_mac_addr(&derived_mac_addr[0]);
+    char wifi_ap_ssid[100];
+    sprintf(wifi_ap_ssid, "DeepG_%02X%02X", derived_mac_addr[4], derived_mac_addr[5]);
+    start_wifi_ap(wifi_ap_ssid, "Deep123456789");
+    start_portal();
+    uint32_t sec_until_reset = (5 * 60);
+    while (sec_until_reset--)
+    {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+    stop_wifi_ap();
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    //reset_DeepG(0);
+}
 
 
 
@@ -545,6 +589,8 @@ void app_main()
 			configMAX_PRIORITIES, NULL, 1);
 	ESP_LOGI("Sleep", "initializezd");
 #endif
+	
+	
 	wifi_connection_init();
 
 	vTaskDelay(5000 / portTICK_PERIOD_MS);
