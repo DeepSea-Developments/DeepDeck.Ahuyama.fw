@@ -449,10 +449,10 @@ void app_main()
 	rtc_matrix_deinit();
 
 	//Underclocking for better current draw (not really effective)
-	//	esp_pm_config_esp32_t pm_config;
-	//	pm_config.max_freq_mhz = 10;
-	//	pm_config.min_freq_mhz = 10;
-	//	esp_pm_configure(&pm_config);
+		// esp_pm_config_esp32_t pm_config;
+		// pm_config.max_freq_mhz = 240;
+		// pm_config.min_freq_mhz = 240;
+		// esp_pm_configure(&pm_config);
 	matrix_setup();
 	esp_err_t ret;
 
@@ -462,6 +462,8 @@ void app_main()
 		ESP_ERROR_CHECK (nvs_flash_erase());ret = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK(ret);
+
+	
 
 	// Read config
 	nvs_handle my_handle;
@@ -480,6 +482,7 @@ void app_main()
 
 	esp_log_level_set("*", ESP_LOG_INFO);
 
+
 	//Loading layouts from nvs (if found)
 #ifdef MASTER
 	nvs_load_layouts();
@@ -490,9 +493,9 @@ void app_main()
 
 	//If the device is a slave initialize sending reports to master
 #ifdef SLAVE
-	xTaskCreatePinnedToCore(slave_scan, "Scan matrix changes for slave", 4096, xKeyreportTask, configMAX_PRIORITIES, NULL,1);
+	xTaskCreatePinnedToCore(slave_scan, "Scan matrix changes for slave", 4096, xKeyreportTask, tskIDLE_PRIORITY+4, NULL,1);
 #ifdef R_ENCODER_SLAVE
-	xTaskCreatePinnedToCore(slave_encoder_report, "Scan encoder changes for slave", 4096, NULL, configMAX_PRIORITIES, NULL,1);
+	xTaskCreatePinnedToCore(slave_encoder_report, "Scan encoder changes for slave", 4096, NULL, tskIDLE_PRIORITY+4, NULL,1);
 #endif
 	espnow_send();
 #endif
@@ -502,7 +505,7 @@ void app_main()
 	espnow_receive_q = xQueueCreate(32, REPORT_LEN * sizeof(uint8_t));
 	espnow_receive();
 	xTaskCreatePinnedToCore(espnow_update_matrix, "ESP-NOW slave matrix state",
-			4096, NULL, configMAX_PRIORITIES, NULL, 1);
+			4096, NULL, tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("ESPNOW", "initializezd");
 
 #endif
@@ -525,7 +528,7 @@ void app_main()
     ESP_ERROR_CHECK(encoder_a->start(encoder_a));
 
 	xTaskCreatePinnedToCore(encoder1_report, "encoder report", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+			tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("Encoder 1", "initializezd");
 #endif
 #ifdef	R_ENCODER_2
@@ -544,24 +547,22 @@ void app_main()
     ESP_ERROR_CHECK(encoder_b->start(encoder_b));
 
 	xTaskCreatePinnedToCore(encoder2_report, "encoder 2 report", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+			tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("Encoder 2", "initialized");
 #endif
 
 #ifdef RGB_LEDS
 	xTaskCreatePinnedToCore(rgb_leds_task, "rgb_leds_task", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+			tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("rgb_leds_task", "initialized");
 #endif
-
-
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
 #ifdef MASTER
 	BLE_EN = 1;
 	xTaskCreatePinnedToCore(key_reports, "key report task", 8192,
-			xKeyreportTask, configMAX_PRIORITIES, NULL, 1);
+			xKeyreportTask, tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("Keyboard task", "initializezd");
 #endif
 	//activate oled
@@ -573,48 +574,83 @@ void app_main()
 	vTaskDelay(pdMS_TO_TICKS(1800));
 
 	xTaskCreatePinnedToCore(oled_task, "oled task", 4096, NULL,
-			configMAX_PRIORITIES, &xOledTask, 1);
+			tskIDLE_PRIORITY+4, &xOledTask, 1);
 	ESP_LOGI("Oled", "initializezd");
 #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
 		xTaskCreatePinnedToCore(battery_reports, "battery reporst", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+			tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("Battery monitor", "initializezd");
 #endif
 
 #ifdef SLEEP_MINS
 	xTaskCreatePinnedToCore(deep_sleep, "deep sleep task", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+			tskIDLE_PRIORITY+4, NULL, 1);
 	ESP_LOGI("Sleep", "initializezd");
 #endif
 	
-	
-	wifi_connection_init();
+	// init user  spiffs partition to save data as files ( big data)
+    spiffs_init();
 
-	vTaskDelay(5000 / portTICK_PERIOD_MS);
+    // // init esp nvs , to save simple variables as string, integers  and low size data
+    // if (config_init() != ESP_OK)
+    // {
+    //     ESP_LOGE(TAG, "NVS Fail.");
+    // }
+    // get wifi mac
+    uint8_t derived_mac_addr[6] = {0};
+    get_mac_addr(&derived_mac_addr[0]);
 
-	//char * test;
-	get_ip();
-	mqtt_app_start();
+    // every tag using esp_log can have its own setting to show only INFO , ERROR , DEBUG ,VERBOSE or NONE
+    // esp_log_level_set("leds", ESP_LOG_NONE);
+    // esp_log_level_set("internet", ESP_LOG_NONE);
+    // esp_log_level_set("wifi", ESP_LOG_NONE);
 
-	char data_char[10];
-	uint16_t value = 0;
+    // // Get and print reset reason
+    // esp_reset_reason_t reason = esp_reset_reason();
+    // char str[100];
+    // get_reset_reason(reason, str, sizeof(str));
+    // ESP_LOGW(TAG, "RESET REASON: %s", str);
 
-	while(1)
-	{
+    InternetInterfaceUpdate();
+    if (InternetInterfaceInit() == ESP_OK)
+    {
+        if ((InternetInterfaceConnect() != ESP_OK))
+        {
+            AP_mode(false);
+        }
+    }
+    else
+    {
+        //ESP_LOGE(TAG, "Error initializing Internet interface %s", str);
+    }
+
+	// wifi_connection_init();
+
+	// vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+	// //char * test;
+	// get_ip();
+	// mqtt_app_start();
+
+	// char data_char[10];
+	// uint16_t value = 0;
+
+	// while(1)
+	// {
 		
-		sprintf(data_char,"%d",value);
-		mqtt_pub("SynthRio/all/config/p1", data_char);		
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+	// 	sprintf(data_char,"%d",value);
+	// 	mqtt_pub("SynthRio/all/config/p1", data_char);		
+	// 	vTaskDelay(50 / portTICK_PERIOD_MS);
 
-		value++;
-		if(value>1022)
-		{
-			value = 0;
-		}
-	}
+	// 	value++;
+	// 	if(value>1022)
+	// 	{
+	// 		value = 0;
+	// 	}
+	// }
 
 }
 

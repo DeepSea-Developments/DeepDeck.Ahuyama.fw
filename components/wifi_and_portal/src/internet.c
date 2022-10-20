@@ -11,7 +11,7 @@
 
 #include <string.h>
 
-#include "internet_interfaces/wifi.h"
+#include "wifi.h"
 
 #include "esp_sntp.h"
 #include "internet.h"
@@ -136,12 +136,12 @@ esp_err_t InternetInterfaceConnect(void)
     default:
     case IOT_CLIENT_WIFI:
 
-        ssid = config_get_str("WifiSSID");
-        password = config_get_str("WifiPass");
+        ssid = "KURO 2s.4ETB";//config_get_str("WifiSSID");
+        password = "TururuTuru";//config_get_str("WifiPass");
 
         ret = start_wifi_sta(ssid, password);
-        free(ssid);
-        free(password);
+        // free(ssid);
+        // free(password);
 
         break;
     }
@@ -198,7 +198,7 @@ static void cmd_ping_on_ping_end(esp_ping_handle_t hdl, void *args)
     }
     else
     {
-        printf("\n--- %s ping statistics ---\n", inet6_ntoa(*ip_2_ip6(&target_addr)));
+        //printf("\n--- %s ping statistics ---\n", inet6_ntoa(*ip_2_ip6(&target_addr)));
     }
     // printf("%d packets transmitted, %d received, %d%% packet loss, time %dms\n",
     //        transmitted, received, loss, total_time_ms);
@@ -283,8 +283,8 @@ bool IsInternetInterfaceConnected(void)
     }
     else
     {
-        struct in6_addr addr6 = ((struct sockaddr_in6 *)(res->ai_addr))->sin6_addr;
-        inet6_addr_to_ip6addr(ip_2_ip6(&target_addr), &addr6);
+        // struct in6_addr addr6 = ((struct sockaddr_in6 *)(res->ai_addr))->sin6_addr;
+        // inet6_addr_to_ip6addr(ip_2_ip6(&target_addr), &addr6);
     }
     freeaddrinfo(res);
 

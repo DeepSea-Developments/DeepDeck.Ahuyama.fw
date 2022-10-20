@@ -1,5 +1,5 @@
 #include "esp_vfs_semihost.h"
-#include "esp_vfs_fat.h"
+//#include "esp_vfs_fat.h"
 #include "esp_spiffs.h"
 #include "nvs_flash.h"
 #include "nvs_flash.h"
@@ -19,10 +19,10 @@
 
 #include "vpp_system.h"
 #include "portal.h"
-#include "internet_interfaces/wifi.h"
+#include "wifi.h"
 
 // PORTAL RESOURCES
-const char *login_answer = R"({"access":"abc","refresh":"123","user":{"username":"admin","first_name":"admin","last_name":"admin","email":"admin@gmail.com","clients":[{"id":"dsd","name":"DSD"}],"groups":[{"id":1,"name":"Administrador"}]}})";
+const char *login_answer;// = R"({"access":"abc","refresh":"123","user":{"username":"admin","first_name":"admin","last_name":"admin","email":"admin@gmail.com","clients":[{"id":"dsd","name":"DSD"}],"groups":[{"id":1,"name":"Administrador"}]}})";
 #define CONFIG_EXAMPLE_MDNS_HOST_NAME "DeepG"
 #define CONFIG_EXAMPLE_WEB_MOUNT_POINT "/spiffs"
 
@@ -363,7 +363,8 @@ static esp_err_t uptade_post_handler(httpd_req_t *req)
     do
     {
         /* Read the data for the request */
-        if ((recv_len = httpd_req_recv(req, ota_buff, MIN(content_length, sizeof(ota_buff)))) < 0)
+        //if ((recv_len = httpd_req_recv(req, ota_buff, MIN(content_length, sizeof(ota_buff)))) < 0)
+        if ((recv_len = httpd_req_recv(req, ota_buff, content_length)) < 0)
         {
             if (recv_len == HTTPD_SOCK_ERR_TIMEOUT)
             {

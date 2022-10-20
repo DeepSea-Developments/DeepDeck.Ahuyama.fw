@@ -1,6 +1,8 @@
-# Espressif ESP32 Partition Table,,,,
-# Name,     Type,   SubType,    Offset,     Size
-nvs,        data,   nvs,        0x9000,     0x4000
-otadata,    data,   ota,        0xd000,     0x2000
-phy_init,   data,   phy,        0xf000,     0x1000
-factory,    0,      0,          0x10000,    3M
+# Name,   Type, SubType, Offset,  Size, Flags
+# Note: if you have increased the bootloader size, make sure to update the offsets to avoid overlap
+nvs,      data, nvs,      0x9000,  0x4000,
+otadata,  data, ota,      0xd000,  0x2000,
+phy_init, data, phy,      0xf000,  0x1000,
+ota_0,    app,  ota_0,    ,         1536K,
+dev_twin, data, spiffs,  ,        40K,
+www_0,      data, spiffs,  ,        2M,
