@@ -418,8 +418,8 @@ void AP_mode(bool clean_init)
     uint8_t derived_mac_addr[6] = {0};
     get_mac_addr(&derived_mac_addr[0]);
     char wifi_ap_ssid[100];
-    sprintf(wifi_ap_ssid, "DeepG_%02X%02X", derived_mac_addr[4], derived_mac_addr[5]);
-    start_wifi_ap(wifi_ap_ssid, "Deep123456789");
+    sprintf(wifi_ap_ssid, "DeepDeck_%02X", derived_mac_addr[5]);
+    start_wifi_ap(wifi_ap_ssid, "Ahuyama");
     start_portal();
     uint32_t sec_until_reset = (5 * 60);
     while (sec_until_reset--)
@@ -594,25 +594,8 @@ void app_main()
 	// init user  spiffs partition to save data as files ( big data)
     spiffs_init();
 
-    // // init esp nvs , to save simple variables as string, integers  and low size data
-    // if (config_init() != ESP_OK)
-    // {
-    //     ESP_LOGE(TAG, "NVS Fail.");
-    // }
-    // get wifi mac
-    uint8_t derived_mac_addr[6] = {0};
-    get_mac_addr(&derived_mac_addr[0]);
-
-    // every tag using esp_log can have its own setting to show only INFO , ERROR , DEBUG ,VERBOSE or NONE
-    // esp_log_level_set("leds", ESP_LOG_NONE);
-    // esp_log_level_set("internet", ESP_LOG_NONE);
-    // esp_log_level_set("wifi", ESP_LOG_NONE);
-
-    // // Get and print reset reason
-    // esp_reset_reason_t reason = esp_reset_reason();
-    // char str[100];
-    // get_reset_reason(reason, str, sizeof(str));
-    // ESP_LOGW(TAG, "RESET REASON: %s", str);
+    // uint8_t derived_mac_addr[6] = {0};
+    // get_mac_addr(&derived_mac_addr[0]);
 
     InternetInterfaceUpdate();
     if (InternetInterfaceInit() == ESP_OK)
@@ -626,31 +609,6 @@ void app_main()
     {
         //ESP_LOGE(TAG, "Error initializing Internet interface %s", str);
     }
-
-	// wifi_connection_init();
-
-	// vTaskDelay(5000 / portTICK_PERIOD_MS);
-
-	// //char * test;
-	// get_ip();
-	// mqtt_app_start();
-
-	// char data_char[10];
-	// uint16_t value = 0;
-
-	// while(1)
-	// {
-		
-	// 	sprintf(data_char,"%d",value);
-	// 	mqtt_pub("SynthRio/all/config/p1", data_char);		
-	// 	vTaskDelay(50 / portTICK_PERIOD_MS);
-
-	// 	value++;
-	// 	if(value>1022)
-	// 	{
-	// 		value = 0;
-	// 	}
-	// }
 
 }
 

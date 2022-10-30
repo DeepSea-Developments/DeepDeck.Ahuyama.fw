@@ -23,10 +23,10 @@
 
 // PORTAL RESOURCES
 const char *login_answer;// = R"({"access":"abc","refresh":"123","user":{"username":"admin","first_name":"admin","last_name":"admin","email":"admin@gmail.com","clients":[{"id":"dsd","name":"DSD"}],"groups":[{"id":1,"name":"Administrador"}]}})";
-#define CONFIG_EXAMPLE_MDNS_HOST_NAME "DeepG"
+#define CONFIG_EXAMPLE_MDNS_HOST_NAME "deepdeck"
 #define CONFIG_EXAMPLE_WEB_MOUNT_POINT "/spiffs"
 
-#define MDNS_INSTANCE "DeepG Web Server"
+#define MDNS_INSTANCE "DeepDeck Web Server"
 
 static const char *TAG = "portal";
 
@@ -335,7 +335,7 @@ static esp_err_t reset_post_handler(httpd_req_t *req)
 {
     httpd_resp_set_status(req, HTTPD_200);
     httpd_resp_send(req, NULL, 0);
-    reset_DeepG(0);
+    //reset_DeepG(0);
     return ESP_OK;
 }
 

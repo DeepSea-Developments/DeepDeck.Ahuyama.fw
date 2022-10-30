@@ -59,7 +59,7 @@ extern "C"
 
     AP_flag - value to save in nvs, true for enter in ap mode when restart.
   */
-  extern void reset_DeepG(uint8_t AP_flag);
+  //extern void reset_DeepG(uint8_t AP_flag);
 
   /* Function: esp_err_t config_init(void)
   Init the NVS system.
@@ -139,7 +139,7 @@ extern "C"
     buff - pointer when the function returns the string reset reson.
     max_size - max size of string reset reason.
   */
-  void get_reset_reason(esp_reset_reason_t reason, char *buff, uint32_t max_size);
+  // void get_reset_reason(esp_reset_reason_t reason, char *buff, uint32_t max_size);
 
 #ifdef __cplusplus
 }

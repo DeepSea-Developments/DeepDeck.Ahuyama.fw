@@ -25,75 +25,75 @@ static const char *TAG = "system";
 #define CONFIG_NAMESPACE "dsd_config"
 
 
-bool GetInternalTime(struct tm *info)
-{
-    time_t now;
-    time(&now);
-    localtime_r(&now, info);
-    if (info->tm_year < (DSD_VALID_YEAR - 1900))
-    {
-        ESP_LOGI(TAG, "Internal time invalid");
-        return false;
-    }
+// bool GetInternalTime(struct tm *info)
+// {
+//     time_t now;
+//     time(&now);
+//     localtime_r(&now, info);
+//     if (info->tm_year < (DSD_VALID_YEAR - 1900))
+//     {
+//         ESP_LOGI(TAG, "Internal time invalid");
+//         return false;
+//     }
 
-    return true;
-}
-void get_reset_reason(esp_reset_reason_t reason, char *buff, uint32_t max_size)
-{
-    switch (reason)
-    {
-    default:
-    case ESP_RST_UNKNOWN:
-        snprintf(buff, max_size, "ESP_RST_UNKNOWN");
-        ESP_LOGW(TAG, "ESP_RST_UNKNOWN");
-        break;
-    case ESP_RST_POWERON:
-        snprintf(buff, max_size, "ESP_RST_POWERON");
-        ESP_LOGW(TAG, "ESP_RST_POWERON");
-        break;
-    case ESP_RST_EXT:
-        snprintf(buff, max_size, "ESP_RST_EXT");
-        ESP_LOGW(TAG, "ESP_RST_EXT");
-        break;
-    case ESP_RST_SW:
-        snprintf(buff, max_size, "ESP_RST_SW");
-        ESP_LOGW(TAG, "ESP_RST_SW");
-        break;
-    case ESP_RST_PANIC:
-        snprintf(buff, max_size, "ESP_RST_PANIC");
-        ESP_LOGW(TAG, "ESP_RST_PANIC");
-        break;
-    case ESP_RST_INT_WDT:
-        snprintf(buff, max_size, "ESP_RST_INT_WDT");
-        ESP_LOGW(TAG, "ESP_RST_INT_WDT");
-        break;
-    case ESP_RST_TASK_WDT:
-        snprintf(buff, max_size, "ESP_RST_TASK_WDT");
-        ESP_LOGW(TAG, "ESP_RST_TASK_WDT");
-        break;
-    case ESP_RST_WDT:
-        snprintf(buff, max_size, "ESP_RST_WDT");
-        ESP_LOGW(TAG, "ESP_RST_WDT");
-        break;
-    case ESP_RST_DEEPSLEEP:
-        snprintf(buff, max_size, "ESP_RST_DEEPSLEEP");
-        ESP_LOGW(TAG, "ESP_RST_DEEPSLEEP");
-        break;
-    case ESP_RST_BROWNOUT:
-        snprintf(buff, max_size, "ESP_RST_BROWNOUT");
-        ESP_LOGW(TAG, "ESP_RST_BROWNOUT");
-        break;
-    case ESP_RST_SDIO:
-        snprintf(buff, max_size, "ESP_RST_SDIO");
-        ESP_LOGW(TAG, "ESP_RST_SDIO");
-        break;
-    }
-}
+//     return true;
+// }
+// void get_reset_reason(esp_reset_reason_t reason, char *buff, uint32_t max_size)
+// {
+//     switch (reason)
+//     {
+//     default:
+//     case ESP_RST_UNKNOWN:
+//         snprintf(buff, max_size, "ESP_RST_UNKNOWN");
+//         ESP_LOGW(TAG, "ESP_RST_UNKNOWN");
+//         break;
+//     case ESP_RST_POWERON:
+//         snprintf(buff, max_size, "ESP_RST_POWERON");
+//         ESP_LOGW(TAG, "ESP_RST_POWERON");
+//         break;
+//     case ESP_RST_EXT:
+//         snprintf(buff, max_size, "ESP_RST_EXT");
+//         ESP_LOGW(TAG, "ESP_RST_EXT");
+//         break;
+//     case ESP_RST_SW:
+//         snprintf(buff, max_size, "ESP_RST_SW");
+//         ESP_LOGW(TAG, "ESP_RST_SW");
+//         break;
+//     case ESP_RST_PANIC:
+//         snprintf(buff, max_size, "ESP_RST_PANIC");
+//         ESP_LOGW(TAG, "ESP_RST_PANIC");
+//         break;
+//     case ESP_RST_INT_WDT:
+//         snprintf(buff, max_size, "ESP_RST_INT_WDT");
+//         ESP_LOGW(TAG, "ESP_RST_INT_WDT");
+//         break;
+//     case ESP_RST_TASK_WDT:
+//         snprintf(buff, max_size, "ESP_RST_TASK_WDT");
+//         ESP_LOGW(TAG, "ESP_RST_TASK_WDT");
+//         break;
+//     case ESP_RST_WDT:
+//         snprintf(buff, max_size, "ESP_RST_WDT");
+//         ESP_LOGW(TAG, "ESP_RST_WDT");
+//         break;
+//     case ESP_RST_DEEPSLEEP:
+//         snprintf(buff, max_size, "ESP_RST_DEEPSLEEP");
+//         ESP_LOGW(TAG, "ESP_RST_DEEPSLEEP");
+//         break;
+//     case ESP_RST_BROWNOUT:
+//         snprintf(buff, max_size, "ESP_RST_BROWNOUT");
+//         ESP_LOGW(TAG, "ESP_RST_BROWNOUT");
+//         break;
+//     case ESP_RST_SDIO:
+//         snprintf(buff, max_size, "ESP_RST_SDIO");
+//         ESP_LOGW(TAG, "ESP_RST_SDIO");
+//         break;
+//     }
+// }
 
-void reset_DeepG(uint8_t AP_flag)
-{
-    esp_restart();
-}
+// void reset_DeepG(uint8_t AP_flag)
+// {
+//     esp_restart();
+// }
 
 char *config_get_str(const char *var_name)
 {
