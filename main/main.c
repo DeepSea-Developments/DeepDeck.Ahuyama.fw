@@ -545,30 +545,6 @@ void app_main()
 			configMAX_PRIORITIES, NULL, 1);
 	ESP_LOGI("Sleep", "initializezd");
 #endif
-	wifi_connection_init();
-
-	vTaskDelay(5000 / portTICK_PERIOD_MS);
-
-	//char * test;
-	get_ip();
-	mqtt_app_start();
-
-	char data_char[10];
-	uint16_t value = 0;
-
-	while(1)
-	{
-		
-		sprintf(data_char,"%d",value);
-		mqtt_pub("SynthRio/all/config/p1", data_char);		
-		vTaskDelay(50 / portTICK_PERIOD_MS);
-
-		value++;
-		if(value>1022)
-		{
-			value = 0;
-		}
-	}
 
 }
 
