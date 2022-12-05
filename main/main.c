@@ -43,15 +43,12 @@
 #include "esp_pm.h"
 
 //HID Ble functions
-//#include "HID_kbdmousejoystick.h"
 #include "hal_ble.h"
 
 //MK32 functions
 #include "matrix.h"
 #include "keypress_handles.c"
 #include "keyboard_config.h"
-#include "espnow_receive.h"
-#include "espnow_send.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
 #include "nvs_keymaps.h"
@@ -72,10 +69,13 @@
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
 
+
+#define BASE_PRIORITY 1
+
 //plugin functions
 static config_data_t config;
-QueueHandle_t espnow_recieve_q;
 
+//ToDo remove global flags
 bool DEEP_SLEEP = true; // flag to check if we need to go to deep sleep
 
 #ifdef OLED_ENABLE
@@ -84,14 +84,14 @@ TaskHandle_t xOledTask;
 TaskHandle_t xKeyreportTask;
 
 
-
 //Task for continually updating the OLED
+// ToDo: Add a better way to handle freertos task without running wild.
 void oled_task(void *pvParameters) 
 {
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
-	while (1) {
-
+	while (1) 
+	{
 		switch(deepdeck_status)
 		{
 			case S_NORMAL:
@@ -122,6 +122,7 @@ void oled_task(void *pvParameters)
 
 			break;
 		}
+		vTaskDelay(pdMS_TO_TICKS(50));
 	}
 
 }
@@ -158,9 +159,8 @@ void key_reports(void *pvParameters) {
 	uint8_t past_report[REPORT_LEN] = { 0 };
 	uint8_t report_state[REPORT_LEN];
 
-
-
-	while (1) {
+	while (1) 
+	{
 		memcpy(report_state, check_key_state(layouts[current_layout]),
 				sizeof report_state);
 
@@ -203,7 +203,7 @@ void key_reports(void *pvParameters) {
 				xQueueSend(input_str_q, pReport, (TickType_t) 0);
 			}
 		}
-
+		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 
 }
@@ -216,6 +216,7 @@ void rgb_leds_task(void *pvParameters) {
 	rgb_notification_led_init();
 	while (1) {
 		key_led_modes();
+		taskYIELD();
 	}
 }
 
@@ -227,7 +228,8 @@ void encoder1_report(void *pvParameters) {
 	uint8_t encoder_status = 0;
 	uint8_t past_encoder_state = 0;
 
-	while (1) {
+	while (1) 
+	{
 		encoder_status = encoder_state(encoder_a);
 
 		if (encoder_status != past_encoder_state) 
@@ -249,10 +251,9 @@ void encoder1_report(void *pvParameters) {
 			{
 				encoder_command(encoder_status, encoder_map[current_layout]);
 			}
-
-			
 			past_encoder_state = encoder_status;
 		}
+		taskYIELD();
 	}
 }
 
@@ -279,46 +280,13 @@ void encoder2_report(void *pvParameters) {
 			{
 				encoder_command(encoder_status, slave_encoder_map[current_layout]);
 			}
-
 			
 			past_encoder_state = encoder_status;
 		}
+		taskYIELD();
+
 	}
 }
-
-//Function for sending out the modified matrix
-void slave_scan(void *pvParameters) {
-
-	uint8_t PAST_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-
-	while (1) {
-		scan_matrix();
-		if (memcmp(&PAST_MATRIX, &MATRIX_STATE, sizeof MATRIX_STATE) != 0) {
-			DEEP_SLEEP = false;
-			memcpy(&PAST_MATRIX, &MATRIX_STATE, sizeof MATRIX_STATE);
-			xQueueSend(espnow_matrix_send_q, (void*) &MATRIX_STATE,
-					(TickType_t) 0);
-
-		}
-	}
-}
-
-//Update the matrix state via reports recieved by espnow
-void espnow_update_matrix(void *pvParameters) {
-
-	uint8_t CURRENT_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-	while (1) {
-		if (xQueueReceive(espnow_receive_q, &CURRENT_MATRIX, 10000)) {
-			DEEP_SLEEP = false;
-			memcpy(&SLAVE_MATRIX_STATE, &CURRENT_MATRIX, sizeof CURRENT_MATRIX);
-		}
-	}
-}
-//what to do after waking from deep sleep, doesn't seem to work after updating esp-idf
-//void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
-//    rtc_matrix_deinit();;
-//    SLEEP_WAKE=true;
-//}
 
 /*If no key press has been recieved in SLEEP_MINS amount of minutes, put device into deep sleep
  *  wake up on touch on GPIO pin 2
@@ -374,31 +342,6 @@ void deep_sleep(void *pvParameters) {
 #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void app_main() 
 {
 	//Reset the rtc GPIOS
@@ -437,6 +380,7 @@ void app_main()
 	esp_log_level_set("*", ESP_LOG_INFO);
 
 	//Loading layouts from nvs (if found)
+
 #ifdef MASTER
 	nvs_load_layouts();
 	//activate keyboard BT stack
@@ -444,23 +388,17 @@ void app_main()
 	ESP_LOGI("HIDD", "MAIN finished...");
 #endif
 
-	//If the device is a slave initialize sending reports to master
-#ifdef SLAVE
-	xTaskCreatePinnedToCore(slave_scan, "Scan matrix changes for slave", 4096, xKeyreportTask, configMAX_PRIORITIES, NULL,1);
-#ifdef R_ENCODER_SLAVE
-	xTaskCreatePinnedToCore(slave_encoder_report, "Scan encoder changes for slave", 4096, NULL, configMAX_PRIORITIES, NULL,1);
-#endif
-	espnow_send();
-#endif
+	//activate oled
+#ifdef	OLED_ENABLE
+	init_oled(ROTATION);
 
-	//If the device is a master for split board initialize receiving reports from slave
-#ifdef SPLIT_MASTER
-	espnow_receive_q = xQueueCreate(32, REPORT_LEN * sizeof(uint8_t));
-	espnow_receive();
-	xTaskCreatePinnedToCore(espnow_update_matrix, "ESP-NOW slave matrix state",
-			4096, NULL, configMAX_PRIORITIES, NULL, 1);
-	ESP_LOGI("ESPNOW", "initializezd");
+	deepdeck_status = S_NORMAL;
+	splashScreen();
+	vTaskDelay(pdMS_TO_TICKS(500));
 
+	xTaskCreate(oled_task, "oled task", 4096, NULL,
+			BASE_PRIORITY, &xOledTask);
+	ESP_LOGI("Oled", "initializezd");
 #endif
 
 	//activate encoder functions
@@ -480,8 +418,8 @@ void app_main()
     // Start encoder
     ESP_ERROR_CHECK(encoder_a->start(encoder_a));
 
-	xTaskCreatePinnedToCore(encoder1_report, "encoder report", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+	xTaskCreate(encoder1_report, "encoder report", 4096, NULL,
+			BASE_PRIORITY, NULL);
 	ESP_LOGI("Encoder 1", "initializezd");
 #endif
 #ifdef	R_ENCODER_2
@@ -499,52 +437,40 @@ void app_main()
     // Start encoder
     ESP_ERROR_CHECK(encoder_b->start(encoder_b));
 
-	xTaskCreatePinnedToCore(encoder2_report, "encoder 2 report", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+	xTaskCreate(encoder2_report, "encoder 2 report", 4096, NULL,
+			BASE_PRIORITY, NULL);
 	ESP_LOGI("Encoder 2", "initialized");
 #endif
 
 #ifdef RGB_LEDS
-	xTaskCreatePinnedToCore(rgb_leds_task, "rgb_leds_task", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+	xTaskCreate(rgb_leds_task, "rgb_leds_task", 4096, NULL,
+			BASE_PRIORITY, NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
 #endif
-
-
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
 #ifdef MASTER
 	BLE_EN = 1;
-	xTaskCreatePinnedToCore(key_reports, "key report task", 8192,
-			xKeyreportTask, configMAX_PRIORITIES, NULL, 1);
+	xTaskCreate(key_reports, "key report task", 8192,
+			xKeyreportTask, BASE_PRIORITY, NULL);
 	ESP_LOGI("Keyboard task", "initializezd");
-#endif
-	//activate oled
-#ifdef	OLED_ENABLE
-	init_oled(ROTATION);
-
-	deepdeck_status = S_NORMAL;
-	splashScreen();
-	vTaskDelay(pdMS_TO_TICKS(1800));
-
-	xTaskCreatePinnedToCore(oled_task, "oled task", 4096, NULL,
-			configMAX_PRIORITIES, &xOledTask, 1);
-	ESP_LOGI("Oled", "initializezd");
 #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
-		xTaskCreatePinnedToCore(battery_reports, "battery reporst", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+		xTaskCreate(battery_reports, "battery reporst", 4096, NULL,
+			BASE_PRIORITY, NULL;
 	ESP_LOGI("Battery monitor", "initializezd");
 #endif
 
 #ifdef SLEEP_MINS
-	xTaskCreatePinnedToCore(deep_sleep, "deep sleep task", 4096, NULL,
-			configMAX_PRIORITIES, NULL, 1);
+	xTaskCreate(deep_sleep, "deep sleep task", 4096, NULL,
+			BASE_PRIORITY, NULL);
 	ESP_LOGI("Sleep", "initializezd");
 #endif
+
+	ESP_LOGI("Main", "Main sequence done!");
 
 }
 
