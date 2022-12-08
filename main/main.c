@@ -4,17 +4,9 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
- * 
- * Copyright 2018 Gal Zaidenstein.
+ * Done by: Electronick - nick@dsd.dev
+ * DeepDeck, a product by DeepSea Developments.
  */
 
 #include <stdio.h>
@@ -45,9 +37,9 @@
 //HID Ble functions
 #include "hal_ble.h"
 
-//MK32 functions
+//Deepdeck functions
 #include "matrix.h"
-#include "keypress_handles.c"
+//#include "keypress_handles.c"
 #include "keyboard_config.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
@@ -61,16 +53,16 @@
 #include "menu.h"
 
 #include "plugins.h"
-
+#include "deepdeck_tasks.h"
 
 #define KEY_REPORT_TAG "KEY_REPORT"
 #define SYSTEM_REPORT_TAG "KEY_REPORT"
-#define TRUNC_SIZE 20
+// #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
 
-
 #define BASE_PRIORITY 1
+
 
 //plugin functions
 static config_data_t config;
@@ -84,141 +76,96 @@ TaskHandle_t xOledTask;
 TaskHandle_t xKeyreportTask;
 
 
-//Task for continually updating the OLED
-// ToDo: Add a better way to handle freertos task without running wild.
-void oled_task(void *pvParameters) 
-{
-	ble_connected_oled();
-	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
-	while (1) 
-	{
-		switch(deepdeck_status)
-		{
-			case S_NORMAL:
-				if (halBLEIsConnected() == 0) {
-					if (CON_LOG_FLAG == false) {
-						ESP_LOGI(KEY_REPORT_TAG,
-								"Not connected, waiting for connection ");
-					}
-					waiting_oled();
-					//DEEP_SLEEP = false;
-					CON_LOG_FLAG = true;
-				} else {
-					if (CON_LOG_FLAG == true) {
-						ble_connected_oled();
-					}
-					update_oled();
-					CON_LOG_FLAG = false;
-				}
-			break;
-			case S_SETTINGS:
-				menu_init();
-				vTaskDelay(pdMS_TO_TICKS(200));
+// //handle battery reports over BLE
+// void battery_reports(void *pvParameters) {
+// 	//uint8_t past_battery_report[1] = { 0 };
 
-				menu_screen();
-				ble_connected_oled();
+// 	while(1){
+// 		uint32_t bat_level = get_battery_level();
+// 		//if battery level is above 100, we're charging
+// 		if(bat_level > 100){
+// 			bat_level = 100;
+// 			//if charging, do not enter deepsleep
+// 			DEEP_SLEEP = false;
+// 		}
+// 		void* pReport = (void*) &bat_level;
 
-				deepdeck_status = S_NORMAL;
+// 		ESP_LOGI("Battery Monitor","battery level %d", bat_level);
+// 		if(BLE_EN == 1){
+// 			xQueueSend(battery_q, pReport, (TickType_t) 0);
+// 		}
+// 		if(input_str_q != NULL){
+// 			xQueueSend(input_str_q, pReport, (TickType_t) 0);
+// 		}
+// 		vTaskDelay(60*1000/ portTICK_PERIOD_MS);
+// 	}
+// }
 
-			break;
-		}
-		vTaskDelay(pdMS_TO_TICKS(50));
-	}
+// //How to handle key reports
+// void key_reports(void *pvParameters) {
+// 	// Arrays for holding the report at various stages
+// 	uint8_t past_report[REPORT_LEN] = { 0 };
+// 	uint8_t report_state[REPORT_LEN];
 
-}
+// 	while (1) 
+// 	{
+// 		memcpy(report_state, check_key_state(layouts[current_layout]),
+// 				sizeof report_state);
 
-//handle battery reports over BLE
-void battery_reports(void *pvParameters) {
-	//uint8_t past_battery_report[1] = { 0 };
+// 		//Do not send anything if queues are uninitialized
+// 		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL) {
+// 			ESP_LOGE(KEY_REPORT_TAG, "queues not initialized");
+// 			continue;
+// 		}
 
-	while(1){
-		uint32_t bat_level = get_battery_level();
-		//if battery level is above 100, we're charging
-		if(bat_level > 100){
-			bat_level = 100;
-			//if charging, do not enter deepsleep
-			DEEP_SLEEP = false;
-		}
-		void* pReport = (void*) &bat_level;
+// 		//Check if the report was modified, if so send it
+// 		if (memcmp(past_report, report_state, sizeof past_report) != 0) {
+// 			DEEP_SLEEP = false;
+// 			void* pReport;
+// 			memcpy(past_report, report_state, sizeof past_report);
 
-		ESP_LOGI("Battery Monitor","battery level %d", bat_level);
-		if(BLE_EN == 1){
-			xQueueSend(battery_q, pReport, (TickType_t) 0);
-		}
-		if(input_str_q != NULL){
-			xQueueSend(input_str_q, pReport, (TickType_t) 0);
-		}
-		vTaskDelay(60*1000/ portTICK_PERIOD_MS);
-	}
-}
+// #ifndef NKRO
+// 			uint8_t trunc_report[REPORT_LEN] = {0};
+// 			trunc_report[0] = report_state[0];
+// 			trunc_report[1] = report_state[1];
 
+// 			uint16_t cur_index = 2;
+// 			//Phone's mtu size is usuaully limited to 20 bytes
+// 			for(uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE; ++i){
+// 				if(report_state[i] != 0){
+// 					trunc_report[cur_index] = report_state[i];
+// 					++cur_index;
+// 				}
+// 			}
 
-//How to handle key reports
-void key_reports(void *pvParameters) {
-	// Arrays for holding the report at various stages
-	uint8_t past_report[REPORT_LEN] = { 0 };
-	uint8_t report_state[REPORT_LEN];
+// 			pReport = (void *) &trunc_report;
+// #endif
+// #ifdef NKRO
+// 			pReport = (void *) &report_state;
+// #endif
 
-	while (1) 
-	{
-		memcpy(report_state, check_key_state(layouts[current_layout]),
-				sizeof report_state);
+// 			if(BLE_EN == 1){
+// 				xQueueSend(keyboard_q, pReport, (TickType_t) 0);
+// 			}
+// 			if(input_str_q != NULL){
+// 				xQueueSend(input_str_q, pReport, (TickType_t) 0);
+// 			}
+// 		}
+// 		vTaskDelay(pdMS_TO_TICKS(10));
+// 	}
 
-		//Do not send anything if queues are uninitialized
-		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL) {
-			ESP_LOGE(KEY_REPORT_TAG, "queues not initialized");
-			continue;
-		}
+// }
 
-		//Check if the report was modified, if so send it
-		if (memcmp(past_report, report_state, sizeof past_report) != 0) {
-			DEEP_SLEEP = false;
-			void* pReport;
-			memcpy(past_report, report_state, sizeof past_report);
-
-#ifndef NKRO
-			uint8_t trunc_report[REPORT_LEN] = {0};
-			trunc_report[0] = report_state[0];
-			trunc_report[1] = report_state[1];
-
-			uint16_t cur_index = 2;
-			//Phone's mtu size is usuaully limited to 20 bytes
-			for(uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE; ++i){
-				if(report_state[i] != 0){
-					trunc_report[cur_index] = report_state[i];
-					++cur_index;
-				}
-			}
-
-			pReport = (void *) &trunc_report;
-#endif
-#ifdef NKRO
-			pReport = (void *) &report_state;
-#endif
-
-			if(BLE_EN == 1){
-				xQueueSend(keyboard_q, pReport, (TickType_t) 0);
-			}
-			if(input_str_q != NULL){
-				xQueueSend(input_str_q, pReport, (TickType_t) 0);
-			}
-		}
-		vTaskDelay(pdMS_TO_TICKS(10));
-	}
-
-}
-
-
-//Handling rgb LEDs
-void rgb_leds_task(void *pvParameters) {
+// //Handling rgb LEDs
+// void rgb_leds_task(void *pvParameters) {
 	
-	rgb_key_led_init();
-	rgb_notification_led_init();
-	while (1) {
-		key_led_modes();
-		taskYIELD();
-	}
-}
+// 	rgb_key_led_init();
+// 	rgb_notification_led_init();
+// 	while (1) {
+// 		key_led_modes();
+// 		taskYIELD();
+// 	}
+// }
 
 rotary_encoder_t *encoder_a = NULL;
 rotary_encoder_t *encoder_b = NULL;
@@ -398,7 +345,7 @@ void app_main()
 
 	xTaskCreate(oled_task, "oled task", 4096, NULL,
 			BASE_PRIORITY, &xOledTask);
-	ESP_LOGI("Oled", "initializezd");
+	ESP_LOGI("Oled", "initialized");
 #endif
 
 	//activate encoder functions
@@ -420,7 +367,7 @@ void app_main()
 
 	xTaskCreate(encoder1_report, "encoder report", 4096, NULL,
 			BASE_PRIORITY, NULL);
-	ESP_LOGI("Encoder 1", "initializezd");
+	ESP_LOGI("Encoder 1", "initialized");
 #endif
 #ifdef	R_ENCODER_2
 
@@ -454,20 +401,20 @@ void app_main()
 	BLE_EN = 1;
 	xTaskCreate(key_reports, "key report task", 8192,
 			xKeyreportTask, BASE_PRIORITY, NULL);
-	ESP_LOGI("Keyboard task", "initializezd");
+	ESP_LOGI("Keyboard task", "initialized");
 #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
 		xTaskCreate(battery_reports, "battery reporst", 4096, NULL,
-			BASE_PRIORITY, NULL;
-	ESP_LOGI("Battery monitor", "initializezd");
+			BASE_PRIORITY, NULL);
+	ESP_LOGI("Battery monitor", "initialized");
 #endif
 
 #ifdef SLEEP_MINS
 	xTaskCreate(deep_sleep, "deep sleep task", 4096, NULL,
 			BASE_PRIORITY, NULL);
-	ESP_LOGI("Sleep", "initializezd");
+	ESP_LOGI("Sleep", "initialized");
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
