@@ -1,12 +1,36 @@
-/*
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+/**
+ * @file main.c
+ * @author ElectroNick (nick@dsd.dev)
+ * @brief Main file of DeepDeck, an open source Macropad based on ESP32
+ * @version 0.2
+ * @date 2022-12-08
+ * @copyright Copyright (c) 2022
  * 
+ * MIT License
+ * Copyright (c) 2022
  * 
- * Done by: Electronick - nick@dsd.dev
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
  * DeepDeck, a product by DeepSea Developments.
+ * More info on DeepDeck @ www.deepdeck.co
+ * DeepseaDev.com
+ * 
  */
 
 #include <stdio.h>
@@ -39,7 +63,6 @@
 
 //Deepdeck functions
 #include "matrix.h"
-//#include "keypress_handles.c"
 #include "keyboard_config.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
@@ -48,273 +71,50 @@
 
 #include "esp_err.h"
 
-#include "rotary_encoder.h"
-#include "rgb_led.h"
-#include "menu.h"
-
 #include "plugins.h"
 #include "deepdeck_tasks.h"
 
-#define KEY_REPORT_TAG "KEY_REPORT"
-#define SYSTEM_REPORT_TAG "KEY_REPORT"
-// #define TRUNC_SIZE 20
-#define USEC_TO_SEC 1000000
-#define SEC_TO_MIN 60
 
-#define BASE_PRIORITY 1
+#define BASE_PRIORITY 5
+#define CREATOR_PRIORITY 20
 
 
 //plugin functions
 static config_data_t config;
 
-//ToDo remove global flags
-bool DEEP_SLEEP = true; // flag to check if we need to go to deep sleep
-
-#ifdef OLED_ENABLE
-TaskHandle_t xOledTask;
-#endif
-TaskHandle_t xKeyreportTask;
 
 
-// //handle battery reports over BLE
-// void battery_reports(void *pvParameters) {
-// 	//uint8_t past_battery_report[1] = { 0 };
 
-// 	while(1){
-// 		uint32_t bat_level = get_battery_level();
-// 		//if battery level is above 100, we're charging
-// 		if(bat_level > 100){
-// 			bat_level = 100;
-// 			//if charging, do not enter deepsleep
-// 			DEEP_SLEEP = false;
-// 		}
-// 		void* pReport = (void*) &bat_level;
-
-// 		ESP_LOGI("Battery Monitor","battery level %d", bat_level);
-// 		if(BLE_EN == 1){
-// 			xQueueSend(battery_q, pReport, (TickType_t) 0);
-// 		}
-// 		if(input_str_q != NULL){
-// 			xQueueSend(input_str_q, pReport, (TickType_t) 0);
-// 		}
-// 		vTaskDelay(60*1000/ portTICK_PERIOD_MS);
-// 	}
-// }
-
-// //How to handle key reports
-// void key_reports(void *pvParameters) {
-// 	// Arrays for holding the report at various stages
-// 	uint8_t past_report[REPORT_LEN] = { 0 };
-// 	uint8_t report_state[REPORT_LEN];
-
-// 	while (1) 
-// 	{
-// 		memcpy(report_state, check_key_state(layouts[current_layout]),
-// 				sizeof report_state);
-
-// 		//Do not send anything if queues are uninitialized
-// 		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL) {
-// 			ESP_LOGE(KEY_REPORT_TAG, "queues not initialized");
-// 			continue;
-// 		}
-
-// 		//Check if the report was modified, if so send it
-// 		if (memcmp(past_report, report_state, sizeof past_report) != 0) {
-// 			DEEP_SLEEP = false;
-// 			void* pReport;
-// 			memcpy(past_report, report_state, sizeof past_report);
-
-// #ifndef NKRO
-// 			uint8_t trunc_report[REPORT_LEN] = {0};
-// 			trunc_report[0] = report_state[0];
-// 			trunc_report[1] = report_state[1];
-
-// 			uint16_t cur_index = 2;
-// 			//Phone's mtu size is usuaully limited to 20 bytes
-// 			for(uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE; ++i){
-// 				if(report_state[i] != 0){
-// 					trunc_report[cur_index] = report_state[i];
-// 					++cur_index;
-// 				}
-// 			}
-
-// 			pReport = (void *) &trunc_report;
-// #endif
-// #ifdef NKRO
-// 			pReport = (void *) &report_state;
-// #endif
-
-// 			if(BLE_EN == 1){
-// 				xQueueSend(keyboard_q, pReport, (TickType_t) 0);
-// 			}
-// 			if(input_str_q != NULL){
-// 				xQueueSend(input_str_q, pReport, (TickType_t) 0);
-// 			}
-// 		}
-// 		vTaskDelay(pdMS_TO_TICKS(10));
-// 	}
-
-// }
-
-// //Handling rgb LEDs
-// void rgb_leds_task(void *pvParameters) {
-	
-// 	rgb_key_led_init();
-// 	rgb_notification_led_init();
-// 	while (1) {
-// 		key_led_modes();
-// 		taskYIELD();
-// 	}
-// }
-
-rotary_encoder_t *encoder_a = NULL;
-rotary_encoder_t *encoder_b = NULL;
-
-//Handling rotary encoder
-void encoder1_report(void *pvParameters) {
-	uint8_t encoder_status = 0;
-	uint8_t past_encoder_state = 0;
-
-	while (1) 
-	{
-		encoder_status = encoder_state(encoder_a);
-
-		if (encoder_status != past_encoder_state) 
-		{
-			DEEP_SLEEP = false;
-			// Check if both encoder are pushed, to enter settings mode.
-
-			if(deepdeck_status == S_SETTINGS)
-			{
-				menu_command((encoder_state_t)encoder_status);
-			}
-			else if( encoder_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_b) )
-			{
-				//Enter Setting mode.
-				deepdeck_status = S_SETTINGS;
-				ESP_LOGI("Encoder 1","setting mode");
-			}
-			else
-			{
-				encoder_command(encoder_status, encoder_map[current_layout]);
-			}
-			past_encoder_state = encoder_status;
-		}
-		taskYIELD();
-	}
-}
-
-void encoder2_report(void *pvParameters) {
-	uint8_t encoder_status = 0;
-	uint8_t past_encoder_state = 0;
-
-	while (1) 
-	{
-		encoder_status = encoder_state(encoder_b);
-		//encoder_state_2 = encoder_state(encoder_a);
-
-		if (encoder_status != past_encoder_state) {
-			DEEP_SLEEP = false; 
-
-			// Check if both encoder are pushed, to enter settings mode.
-			if( encoder_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_a) )
-			{
-				//Enter Setting mode.
-				deepdeck_status = S_SETTINGS;
-				ESP_LOGI("Encoder 2","setting mode");
-			}
-			else
-			{
-				encoder_command(encoder_status, slave_encoder_map[current_layout]);
-			}
-			
-			past_encoder_state = encoder_status;
-		}
-		taskYIELD();
-
-	}
-}
-
-/*If no key press has been recieved in SLEEP_MINS amount of minutes, put device into deep sleep
- *  wake up on touch on GPIO pin 2
- *  */
-#ifdef SLEEP_MINS
-void deep_sleep(void *pvParameters) {
-	uint64_t initial_time = esp_timer_get_time(); // notice that timer returns time passed in microseconds!
-	uint64_t current_time_passed = 0;
-	uint8_t force_sleep = false;
-	while (1) {
-
-		current_time_passed = (esp_timer_get_time() - initial_time);
-
-		if (DEEP_SLEEP == false) {
-			current_time_passed = 0;
-			initial_time = esp_timer_get_time();
-			DEEP_SLEEP = true;
-		}
-		if (menu_get_goto_sleep())
-		{
-			force_sleep = true;
-			DEEP_SLEEP = true;
-		}
-		
-
-		if ( ( ((double)current_time_passed/USEC_TO_SEC) >= (double)  (SEC_TO_MIN * SLEEP_MINS)) || force_sleep ) {
-			if (DEEP_SLEEP == true) 
-			{
-				force_sleep = false;
-				ESP_LOGE(SYSTEM_REPORT_TAG, "going to sleep!");
-#ifdef OLED_ENABLE
-				vTaskDelay(20 / portTICK_PERIOD_MS);
-				vTaskSuspend(xOledTask);
-				deinit_oled();
-#endif
-				// wake up esp32 using rtc gpio
-				rtc_matrix_setup();
-				esp_sleep_enable_touchpad_wakeup();
-				esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
-				esp_deep_sleep_start();
-
-			}
-			if (DEEP_SLEEP == false) {
-				current_time_passed = 0;
-				initial_time = esp_timer_get_time();
-				DEEP_SLEEP = true;
-			}
-		}
-
-	}
-
-}
-#endif
-
-
+/**
+ * @brief Main tasks of ESP32. This is a tasks with priority level 1.
+ * Be carefull when defining other tasks with higer priorities
+ * 
+ */
 void app_main() 
 {
 	//Reset the rtc GPIOS
 	rtc_matrix_deinit();
-
-	//Underclocking for better current draw (not really effective)
-	//	esp_pm_config_esp32_t pm_config;
-	//	pm_config.max_freq_mhz = 10;
-	//	pm_config.min_freq_mhz = 10;
-	//	esp_pm_configure(&pm_config);
+	// Setup keys matrix
 	matrix_setup();
+	
+	// Initialize NVS (non volatile storage).
 	esp_err_t ret;
-
-	// Initialize NVS.
 	ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-		ESP_ERROR_CHECK (nvs_flash_erase());ret = nvs_flash_init();
+	if (ret == ESP_ERR_NVS_NO_FREE_PAGES) // If no space available, erase NVS and init it again
+	{
+		ESP_ERROR_CHECK (nvs_flash_erase());
+		ret = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK(ret);
 
-	// Read config
+	// Read config from NVS
 	nvs_handle my_handle;
 	ESP_LOGI("MAIN", "loading configuration from NVS");
 	ret = nvs_open("config_c", NVS_READWRITE, &my_handle);
+	
 	if (ret != ESP_OK)
 		ESP_LOGE("MAIN", "error opening NVS");
+	
 	size_t available_size = MAX_BT_DEVICENAME_LENGTH;
 	strcpy(config.bt_device_name, GATTS_TAG);
 	nvs_get_str(my_handle, "btname", config.bt_device_name, &available_size);
@@ -324,69 +124,33 @@ void app_main()
 	} else
 		ESP_LOGI("MAIN", "bt device name is: %s", config.bt_device_name);
 
+
+	// Set log level of the progam
 	esp_log_level_set("*", ESP_LOG_INFO);
 
 	//Loading layouts from nvs (if found)
-
-#ifdef MASTER
 	nvs_load_layouts();
 	//activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
-#endif
 
 	//activate oled
 #ifdef	OLED_ENABLE
 	init_oled(ROTATION);
-
-	deepdeck_status = S_NORMAL;
+	
 	splashScreen();
-	vTaskDelay(pdMS_TO_TICKS(500));
+	vTaskDelay(pdMS_TO_TICKS(1000));
 
-	xTaskCreate(oled_task, "oled task", 4096, NULL,
+	xTaskCreate(oled_task, "oled task", 1024*4, NULL,
 			BASE_PRIORITY, &xOledTask);
 	ESP_LOGI("Oled", "initialized");
 #endif
 
 	//activate encoder functions
 #ifdef	R_ENCODER_1
-	
-	// Rotary encoder underlying device is represented by a PCNT unit in this example
-    uint32_t pcnt_unit_a = 0;
-
-    // Create rotary encoder instance
-    rotary_encoder_config_t config_a = \
-		ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN, ENCODER1_S_ACTIVE_LOW);
-    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_a, &encoder_a));
-
-    // Filter out glitch (1us)
-    ESP_ERROR_CHECK(encoder_a->set_glitch_filter(encoder_a, 1));
-
-    // Start encoder
-    ESP_ERROR_CHECK(encoder_a->start(encoder_a));
-
-	xTaskCreate(encoder1_report, "encoder report", 4096, NULL,
+	xTaskCreate(encoder_report, "encoder report", 4096, NULL,
 			BASE_PRIORITY, NULL);
 	ESP_LOGI("Encoder 1", "initialized");
-#endif
-#ifdef	R_ENCODER_2
-
-    uint32_t pcnt_unit_b = 1;
-
-    // Create rotary encoder instance
-    rotary_encoder_config_t config_b = \
-			ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN, ENCODER2_S_ACTIVE_LOW);
-    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_b, &encoder_b));
-
-    // Filter out glitch (1us)
-    ESP_ERROR_CHECK(encoder_b->set_glitch_filter(encoder_b, 1));
-
-    // Start encoder
-    ESP_ERROR_CHECK(encoder_b->start(encoder_b));
-
-	xTaskCreate(encoder2_report, "encoder 2 report", 4096, NULL,
-			BASE_PRIORITY, NULL);
-	ESP_LOGI("Encoder 2", "initialized");
 #endif
 
 #ifdef RGB_LEDS
@@ -418,7 +182,6 @@ void app_main()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
-
 }
 
 

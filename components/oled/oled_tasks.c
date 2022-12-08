@@ -429,7 +429,7 @@ void splashScreen(void)
 
 	u8g2_SendBuffer(&u8g2);
 
-	vTaskDelay(5000 / portTICK_PERIOD_MS);
+	//vTaskDelay(5000 / portTICK_PERIOD_MS);
 }
 
 
