@@ -11,11 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef RGB_LED_H_
+#define RGB_LED_H_
 
 #include "led_strip.h"
 #include "esp_err.h"
@@ -36,13 +34,27 @@ extern "C" {
 #define RGB_LED_KEYBOARD_NUMBER 16
 #define RGB_LED_NOTIFICATION_NUMBER 2
 
+/** @brief Queue for sending mouse reports
+ * @see mouse_command_t */
+extern QueueHandle_t keyled_q;
+
 void rgb_notification_led_init(void);
 void rgb_key_led_init(void);
 
 void rgb_key_led_press(uint8_t row, uint8_t col);
 
 void hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b);
-void test(void);
+
+// Todo list:
+// Integrate the LED modes into the configuration. Tasks:
+// [] Review QMK way of manage leds with keys (mode, speed, color?)
+// [] Create an structure that manage LEDs characteristics
+// [] Create function that controls 2 mode LEDs
+// [] Create way of changing LED characteristic via key definitios OR via embedded settings menu.
+// 
+
+
+void key_led_modes(void);
 
 typedef struct rbg_key {
         uint16_t h;
@@ -53,9 +65,5 @@ typedef struct rbg_key {
 //pulsating keys
 rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
-static const char *TAG = "RGB_LEDs";
 
-
-#ifdef __cplusplus
-}
-#endif
+#endif /* RGB_LED_H_ */

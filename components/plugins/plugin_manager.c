@@ -34,7 +34,7 @@ void start_plugin_task(func_t plugin, int wifi_enable, int block_ble_report){
 	if(no_err == 1){
 		ESP_LOGI(PLUGIN_LOG, "Starting plugin");
 		pluginEn = 1;
-		xTaskCreatePinnedToCore(plugin, "Plugin task", 4096, NULL,configMAX_PRIORITIES,&pluginHandle, 1);
+		xTaskCreatePinnedToCore(plugin, "Plugin task", 4096, NULL,5,&pluginHandle, 1);
 		taskFlag = 1;
 	}
 	if(no_err == 0){

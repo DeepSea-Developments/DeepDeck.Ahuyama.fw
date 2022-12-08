@@ -10,10 +10,6 @@
 
 #include <freertos/queue.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //Queue for receiving report from slave
 extern QueueHandle_t espnow_receive_q;
 
@@ -21,8 +17,5 @@ extern QueueHandle_t espnow_receive_q;
  * */
 void espnow_receive(void);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* ESPNOW_SPLIT_H_ */

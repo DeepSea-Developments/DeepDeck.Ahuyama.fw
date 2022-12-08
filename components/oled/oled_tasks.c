@@ -78,10 +78,21 @@ void update_oled(void) {
 #endif
 
 	if (xQueueReceive(layer_recieve_q, &curr_layout, (TickType_t) 0)) {
-		erase_area(0, 7, 45, 7);
+
+		erase_area(0, 15, 128, 20);
+		u8g2_SetFont(&u8g2, u8g2_font_courB24_tf);
+		u8g2_DrawStr(&u8g2, 0, 35, layer_names_arr[curr_layout]);
+
 		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-		u8g2_DrawStr(&u8g2, 0, 14, layer_names_arr[curr_layout]);
+		u8g2_DrawStr(&u8g2, 0, 42, " copy  paste  SIDEBR RAISE |");
+		u8g2_DrawStr(&u8g2, 0, 49, "coment COMENT palete Msel  |");
+		u8g2_DrawStr(&u8g2, 0, 56, " ALT    HOME    UP   END  ");
+		u8g2_DrawStr(&u8g2, 0, 63, " CTRL   LEFT   DOWN  RIGHT");
+
+
 		u8g2_SendBuffer(&u8g2);
+		
+
 	}
 	if (xQueueReceive(led_recieve_q, &current_led, (TickType_t) 0)) {
 		erase_area(0, 24, 127, 8);
@@ -140,10 +151,20 @@ void ble_connected_oled(void) {
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
 	u8g2_DrawStr(&u8g2, 0, 6, GATTS_TAG);
-	u8g2_DrawStr(&u8g2, 0, 14, layer_names_arr[current_layout]);
+	//u8g2_DrawStr(&u8g2, 0, 14, layer_names_arr[current_layout]);
 	u8g2_SetFont(&u8g2, u8g2_font_open_iconic_all_1x_t);
 	u8g2_DrawGlyph(&u8g2, 110 + offset_x_batt , 8 + offset_y_batt, BATT_ICON);
 	u8g2_DrawGlyph(&u8g2, 120 + offset_x_batt, 8 + offset_y_batt , BT_ICON);
+
+	
+	u8g2_SetFont(&u8g2, u8g2_font_courB24_tf);
+	u8g2_DrawStr(&u8g2, 0, 35, layer_names_arr[current_layout]);
+
+	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
+	u8g2_DrawStr(&u8g2, 0, 42, " copy  paste  SIDEBR RAISE |");
+	u8g2_DrawStr(&u8g2, 0, 49, "coment COMENT palete Msel  |");
+	u8g2_DrawStr(&u8g2, 0, 56, " ALT    HOME    UP   END  ");
+	u8g2_DrawStr(&u8g2, 0, 63, " CTRL   LEFT   DOWN  RIGHT");
 
 //	if(CHECK_BIT(curr_led,0)!=0){
 //		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf );
@@ -308,8 +329,8 @@ void init_oled(const u8g2_cb_t *rotation) {
 }
 
 /**
- * Made with Marlin Bitmap Converter
  * https://marlinfw.org/tools/u8glib/converter.html
+ * Made with Marlin Bitmap Converter
  *
  * This bitmap from the file 'DeepDeck.png'
  */
@@ -407,6 +428,8 @@ void splashScreen(void)
 	u8g2_DrawBitmap(&u8g2,0,0,16,64,bitmap_splash);
 
 	u8g2_SendBuffer(&u8g2);
+
+	//vTaskDelay(5000 / portTICK_PERIOD_MS);
 }
 
 

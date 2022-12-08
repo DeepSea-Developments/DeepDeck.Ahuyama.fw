@@ -170,15 +170,6 @@
 #endif 
 #endif
 
-/*==========================================*/
-/* C++ compatible */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*==========================================*/
-
 #ifdef U8G2_16BIT
 typedef uint16_t u8g2_uint_t;	/* for pixel position only */
 typedef int16_t u8g2_int_t;		/* introduced for circle calculation */
@@ -2660,13 +2651,6 @@ extern const uint8_t u8g2_font_px437wyse700b_mn[] U8G2_FONT_SECTION("u8g2_font_p
 #define u8g_font_profont29   u8g2_font_profont29_tf
 #define u8g_font_profont29r   u8g2_font_profont29_tr
 
-
-/*==========================================*/
-/* C++ compatible */
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif

@@ -549,3 +549,10 @@ uint8_t wifi_connection_init(void){
 
 
 }
+
+void get_ip(void)
+{
+	tcpip_adapter_ip_info_t ip_info;
+	tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA,&ip_info);
+	ESP_LOGI(WIFI_TAG, "IP Address: %s ,Subnet mask: %s Subnet mask: %s",ip4addr_ntoa(&ip_info.ip),ip4addr_ntoa(&ip_info.netmask),ip4addr_ntoa(&ip_info.gw));
+}

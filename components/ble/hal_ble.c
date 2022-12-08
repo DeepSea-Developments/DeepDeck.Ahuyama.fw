@@ -231,7 +231,8 @@ void halBLETask_mouse(void * params) {
 	//check if queue is initialized
 	if (mouse_q != NULL) {
 		{
-			while (1) {
+			while (1) 
+			{
 
 				//pend on MQ, if timeout triggers, just wait again.
 				if (xQueueReceive(mouse_q, &mouse_report, portMAX_DELAY)) {
@@ -261,7 +262,8 @@ void halBLETask_joystick(void * params) {
 	//check if queue is initialized
 	if (joystick_q != NULL) {
 		{
-			while (1) {
+			while (1) 
+			{
 				//pend on MQ, if timeout triggers, just wait again.
 				if (xQueueReceive(joystick_q, &joystick_report,
 						portMAX_DELAY)) {
@@ -291,8 +293,8 @@ void halBLETask_media(void * params) {
 	//check if queue is initialized
 	if (media_q != NULL) {
 		{
-			while (1) {
-
+			while (1) 
+			{
 				//pend on MQ, if timeout triggers, just wait again.
 				if (xQueueReceive(media_q, &media_report, portMAX_DELAY)) {
 
@@ -433,19 +435,16 @@ esp_err_t halBLEInit(uint8_t enableKeyboard, uint8_t enableMedia,
 	TaskHandle_t xBLETask_media;
 	TaskHandle_t xBLETask_joystick;
 
-	xTaskCreatePinnedToCore(halBLETask_battery, "ble_task_battery",
-			TASK_BLE_STACKSIZE, NULL, configMAX_PRIORITIES, &xBLETask_battery,
-			0);
-	xTaskCreatePinnedToCore(halBLETask_keyboard, "ble_task_keyboard",
-			TASK_BLE_STACKSIZE, NULL, configMAX_PRIORITIES, &xBLETask_keyboard,
-			0);
-	xTaskCreatePinnedToCore(halBLETask_mouse, "ble_task_mouse",
-			TASK_BLE_STACKSIZE, NULL, configMAX_PRIORITIES, &xBLETask_mouse, 0);
-	xTaskCreatePinnedToCore(halBLETask_media, "ble_task_media",
-			TASK_BLE_STACKSIZE, NULL, configMAX_PRIORITIES, &xBLETask_media, 0);
-	xTaskCreatePinnedToCore(halBLETask_joystick, "ble_task_joystick",
-			TASK_BLE_STACKSIZE, NULL, configMAX_PRIORITIES, &xBLETask_joystick,
-			0);
+	xTaskCreate(halBLETask_battery, "ble_task_battery",
+			TASK_BLE_STACKSIZE, NULL, 6, &xBLETask_battery);
+	xTaskCreate(halBLETask_keyboard, "ble_task_keyboard",
+			TASK_BLE_STACKSIZE, NULL, 6, &xBLETask_keyboard);
+	xTaskCreate(halBLETask_mouse, "ble_task_mouse",
+			TASK_BLE_STACKSIZE, NULL, 6, &xBLETask_mouse);
+	xTaskCreate(halBLETask_media, "ble_task_media",
+			TASK_BLE_STACKSIZE, NULL, 6, &xBLETask_media);
+	xTaskCreate(halBLETask_joystick, "ble_task_joystick",
+			TASK_BLE_STACKSIZE, NULL, 6, &xBLETask_joystick);
 
 	//set log level according to define
 	esp_log_level_set(HID_LE_PRF_TAG, LOG_LEVEL_BLE);

@@ -67,7 +67,7 @@
 #define BATT_PIN ADC1_CHANNEL_7 //gpio pin 35, refer to the esp32 before modifying
 
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
-#define SLEEP_MINS 30 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
+#define SLEEP_MINS 10 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
 /*
  *---------------------------- Everything below here should not be modified for standard usage----------------------
@@ -79,7 +79,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 20 //Available macro lenght
+#define MACROS_NUM 40 //Available macro lenght
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 

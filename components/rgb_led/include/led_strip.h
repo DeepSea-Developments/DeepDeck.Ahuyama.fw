@@ -11,11 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef LED_STRIP_H_
+#define LED_STRIP_H_
 
 #include "esp_err.h"
 
@@ -142,6 +140,4 @@ led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num);
  */
 esp_err_t led_strip_denit(led_strip_t *strip);
 
-#ifdef __cplusplus
-}
-#endif
+#endif /* LED_STRIP_H_ */

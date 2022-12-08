@@ -11,11 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef ROTARY_ENCODER_H
+#define ROTARY_ENCODER_H
 
 #include "esp_err.h"
 
@@ -191,7 +189,4 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[4]);
  */
 uint8_t encoder_push_state(rotary_encoder_t *encoder);
 
-
-#ifdef __cplusplus
-}
-#endif
+#endif /* ROTARY_ENCODER_H_ */

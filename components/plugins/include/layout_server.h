@@ -8,10 +8,6 @@
 #ifndef PLUGINS_LAYOUT_SERVER_H_
 #define PLUGINS_LAYOUT_SERVER_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "plugin_manager.h"
 
 uint8_t killServer;
@@ -26,9 +22,5 @@ uint8_t killServer;
 
 //Initialize the layout server
 void http_server(void * pvParameters);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PLUGINS_LAYOUT_SERVER_H_ */

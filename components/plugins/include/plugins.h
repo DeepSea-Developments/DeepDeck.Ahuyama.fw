@@ -8,14 +8,11 @@
 #ifndef PLUGINS_PLUGINS_H_
 #define PLUGINS_PLUGINS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "plugin_manager.h"
 
 
-#define DEFAULT_SSID "DeepPeace" //default SSID for WiFi access point
-#define DEFAULT_PASSWORD "sitbreath" //default password for WiFi access point
+#define DEFAULT_SSID "SYNTHRIO" //default SSID for WiFi access point
+#define DEFAULT_PASSWORD "armatostre" //default password for WiFi access point
 
 /*
  *@brief Add the headers for your plugins here, make sure the
@@ -40,9 +37,5 @@ void plugin_launcher(uint16_t keycode);
 /** @brief Queue for sending mouse reports
  * @see mouse_command_t */
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PLUGINS_PLUGINS_H_ */

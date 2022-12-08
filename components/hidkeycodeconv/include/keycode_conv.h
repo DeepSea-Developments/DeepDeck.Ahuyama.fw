@@ -14,10 +14,6 @@
 #include <freertos/queue.h>
 #include "keyboard_config.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //Flag to enable or disable sending reports via BLE
 int BLE_EN;
 
@@ -53,10 +49,5 @@ uint8_t char_to_keycode(char ascii_key);
  * @convert typing to string, return string on enter key
  */
 char* input_string(void);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif /* KEYCODE_CONV_KEYCODE_CONV_H_ */
