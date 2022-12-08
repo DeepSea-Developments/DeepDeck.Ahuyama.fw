@@ -76,19 +76,15 @@
 
 
 #define BASE_PRIORITY 5
-#define CREATOR_PRIORITY 20
-
 
 //plugin functions
 static config_data_t config;
 
 
-
-
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
- * Be carefull when defining other tasks with higer priorities
  * 
+ * This task init all the basic hardware and then init the tasks needed to run DeepDeck
  */
 void app_main() 
 {
