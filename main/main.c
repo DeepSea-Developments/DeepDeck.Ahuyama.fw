@@ -81,6 +81,162 @@
 static config_data_t config;
 
 
+
+/***********************Playground******************************/
+
+#include "key_definitions.h"
+// #include "keyboard_config.h"
+#include "keymap.h"
+// #include "plugins.h"
+
+#define LAYER_NAMESPACE "layers"
+
+typedef struct dd_layer_str {
+	char name[15];                   // Name up to 14 characters
+	uint16_t key_map[4][4];            // Key maps
+	char key_map_names[4][4][7];       // Name of each key up to 6 characters
+	uint16_t left_encoder_map[5];    // Map ofr left encoder
+	uint16_t right_encoder_map[5];   // Map for rigth encoder
+	uint16_t gesture_map[6];         // Map for gesture sensor
+} dd_layer;
+
+dd_layer media_layer = 
+{
+	.name = "media",
+	.key_map = {
+			/* MEDIA
+			 * ,-----------------------------------------------------------------------.
+			 * |        <<       |        |>       |       >>        |  LAYER CHANGE   |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |   CHROME_PTAB   |    CHROME_NTAB  |    TERMINAL     |     SHUTTER     |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |    WINDOW_M     |  WINDOWS_KEY    |       UP        |    WINDOWPUT_K  |
+			 * |-----------------+-----------------+-----------------+-----------------|
+			 * |    WINDOW_W     |     LEFT        |      DOWN       |      RIGHT      |
+			 * `-----------------------------------------------------------------------'
+			 */
+
+			  {KC_MPRV,             KC_MPLY,            KC_MNXT,            KC_MNXT },
+			  {KC_MPRV,  KC_MPRV, KC_MPRV,    KC_MPRV },
+			  {KC_MPRV,     KC_LGUI,            KC_UP,              KC_MPRV} ,
+			  {KC_MPRV,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
+
+	},
+	.key_map_names = {
+		{"copy",  "paste",  "SIDEBR", "RAISE"},
+		{"copy",  "paste",  "SIDEBR", "RAISE"},
+		{"copy",  "paste",  "SIDEBR", "RAISE"},
+		{"copy",  "paste",  "SIDEBR", "RAISE"}
+	},
+	.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+	.right_encoder_map = { KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+	.gesture_map = { KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
+};
+
+
+void write_default_layers(nvs_handle_t nvs_handle);
+
+void check_memory_status(void)
+{
+	nvs_stats_t nvs_stats;
+	nvs_get_stats(NULL, &nvs_stats);
+	ESP_LOGI("NVS Status", "Count: UsedEntries = (%d), FreeEntries = (%d), AllEntries = (%d)",
+       nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries); 
+}
+
+void read_layers(void)
+{
+	nvs_handle_t nvs_layer_handle;
+	uint16_t layer_num;
+	char layer_num_key[10] = "layer_num";
+	const static char * TAG = "Read Layers";
+
+	esp_err_t res;
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
+	
+	res = nvs_get_u16(nvs_layer_handle,layer_num_key,&layer_num);
+	switch (res)
+    {
+    case ESP_ERR_NVS_NOT_FOUND:
+      ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
+	  write_default_layers(nvs_layer_handle);
+    break;
+    case ESP_OK:
+      ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
+    break;
+    default:
+      ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
+    break;
+    }
+	
+	//res = nvs_get_blob(nvs_handle, layer_num_key, (void *)&layer_num, &catSize);
+
+	nvs_close(nvs_layer_handle);
+}
+
+void write_default_layers(nvs_handle_t nvs_handle)
+{
+	// nvs_handle_t nvs_handle;
+	char layer_num_key[10] = "layer_num";
+	char layer_key[10];
+	const static char * TAG = "Read Layers";
+	uint16_t default_layer_num = 3;
+
+	// esp_err_t res;
+
+	//res = nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_handle);
+	
+	ESP_ERROR_CHECK(nvs_set_u16(nvs_handle,layer_num_key,default_layer_num));
+
+	for(int i = 0; i < default_layer_num; i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
+		
+		dd_layer new_layer = 
+		{
+			.key_map = {
+					{KC_MPRV,             KC_MPLY,            KC_MNXT,            KC_MNXT },
+					{KC_MPRV,  KC_MPRV, KC_MPRV,    KC_MPRV },
+					{KC_MPRV,     KC_LGUI,            KC_UP,              KC_MPRV} ,
+					{KC_MPRV,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
+			},
+			.key_map_names = {
+				{"copy",  "paste",  "SIDEBR", "RAISE"},
+				{"copy",  "paste",  "SIDEBR", "RAISE"},
+				{"copy",  "paste",  "SIDEBR", "RAISE"},
+				{"copy",  "paste",  "SIDEBR", "RAISE"}
+			},
+			.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+			.right_encoder_map = { KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+			.gesture_map = { KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
+		};
+		strcpy(new_layer.name,layer_key);
+		
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, (void *) &new_layer, sizeof(dd_layer) ));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+	//nvs_close(nvs_handle);
+	
+}
+
+esp_err_t overwrite_layer(dd_layer layer, uint8_t layer_num)
+{
+	nvs_handle_t nvs_layer_handle;
+	char layer_key[10];
+
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
+
+	sprintf(layer_key, "layer_%d", layer_num);
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *) &layer, sizeof(dd_layer) ));
+	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
+
+	nvs_close(nvs_layer_handle);
+
+	return ESP_OK;
+}
+
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
  * 
@@ -102,6 +258,12 @@ void app_main()
 		ret = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK(ret);
+
+	/*************************/
+	check_memory_status();
+	read_layers();
+	check_memory_status();
+	/*************************/
 
 	// Read config from NVS
 	nvs_handle my_handle;
@@ -129,6 +291,10 @@ void app_main()
 	//activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
+
+
+	
+
 
 	//activate oled
 #ifdef	OLED_ENABLE
@@ -178,6 +344,8 @@ void app_main()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
+
+	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
 }
 
 
