@@ -9,18 +9,22 @@
 #define NVS_KEYMAPS_H_
 #include <keyboard_config.h>
 
-//array for for holding the keymaps
-extern uint16_t ***layouts;
 
-//array for keymap names
-extern char **layer_names_arr;
+//*************new*********
 
-extern uint16_t **encoder_map;
-extern uint16_t **encoder2_map;
+typedef struct dd_layer_str {
+	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
+	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
+	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7];       // Name of each key up to 6 characters
+	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
+	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
+	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
+} dd_layer;
 
-extern uint16_t **slave_encoder_map;
+extern dd_layer *key_layouts;
 
 //amount of arrays
 extern uint8_t layers_num;
+
 
 #endif /* NVS_KEYMAPS_H_ */

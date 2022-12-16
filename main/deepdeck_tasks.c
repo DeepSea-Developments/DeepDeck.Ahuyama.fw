@@ -128,7 +128,7 @@ void key_reports(void *pvParameters)
 
 	while (1) 
 	{
-		memcpy(report_state, check_key_state(layouts[current_layout]),
+		memcpy(report_state, check_key_state(&key_layouts[current_layout]),
 				sizeof report_state);
 
 		//Do not send anything if queues are uninitialized
@@ -247,7 +247,7 @@ void encoder_report(void *pvParameters)
 			}
 			else
 			{
-				encoder_command(encoder1_status, encoder_map[current_layout]);
+				encoder_command(encoder1_status, key_layouts[current_layout].left_encoder_map);
 			}
 			past_encoder1_state = encoder1_status;
 		}
@@ -266,7 +266,7 @@ void encoder_report(void *pvParameters)
 			}
 			else
 			{
-				encoder_command(encoder2_status, slave_encoder_map[current_layout]);
+				encoder_command(encoder2_status, key_layouts[current_layout].right_encoder_map);
 			}
 			
 			past_encoder2_state = encoder2_status;

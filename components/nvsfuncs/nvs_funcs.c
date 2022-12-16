@@ -1,20 +1,38 @@
-/*
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
- *
- * Copyright 2018 Gal Zaidenstein.
+/**
+ * @file nvs_funcs.c
+ * @author ElectroNick (nick@dsd.dev)
+ * @brief 
+ * @version 0.1
+ * @date 2022-12-10
+ * 
+ * @copyright Copyright (c) 2022
+ * Based o the code f Gal Zaidenstein.
+ * 
+ * MIT License
+ * Copyright (c) 2022
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ * DeepDeck, a product by DeepSea Developments.
+ * More info on DeepDeck @ www.deepdeck.co
+ * DeepseaDev.com
+ * 
  */
 
 #include <stdio.h>
@@ -37,384 +55,148 @@
 #define ENCODER_NAMESPACE "encoder_config"
 #define SLAVE_ENCODER_NAMESPACE "slave_encoder_config"
 
-esp_err_t err;
 
-nvs_handle keymap_handle;
-nvs_handle encoder_handle;
-nvs_handle slave_encoder_handle;
+#include "key_definitions.h"
+// #include "keyboard_config.h"
+#include "keymap.h"
+// #include "plugins.h"
 
-#define LAYOUT_NAMES "layouts"
-#define LAYOUT_NUM "num_layouts"
+//NameSpaces
+#define LAYER_NAMESPACE "layers"
 
-char **layer_names_arr;
+//Keys
+#define LAYER_NUM_KEY "layer_num"
+
+dd_layer *key_layouts;
 uint8_t layers_num=0;
-uint16_t ***layouts;
-uint16_t **encoder_map;
-uint16_t **slave_encoder_map;
 
-//read a layout from nvs
-void nvs_read_layout(const char* layout_name,uint16_t buffer[MATRIX_ROWS][KEYMAP_COLS]){
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	uint16_t layout[MATRIX_ROWS][KEYMAP_COLS] = {0};
-	err = nvs_open(KEYMAP_NAMESPACE, NVS_READWRITE, &keymap_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	uint16_t layout_arr[MATRIX_ROWS*KEYMAP_COLS] = {0};
-	size_t arr_size;
-	//get blob array size
-	err = nvs_get_blob(keymap_handle, layout_name, NULL, &arr_size);
-	err = nvs_get_blob(keymap_handle,layout_name,layout_arr,&arr_size);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error getting layout: %s", esp_err_to_name(err));
-
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success getting layout");
-		blob_to_key_mat(layout_arr,layout);
-	}
-	memcpy(buffer, layout, sizeof(layout) );
-	ESP_LOGI(NVS_TAG, "Layout copied to buffer");
-	nvs_close(keymap_handle);
+// Check the number of available entries of the NVS
+void nvs_check_memory_status(void)
+{
+	nvs_stats_t nvs_stats;
+	nvs_get_stats(NULL, &nvs_stats);
+	ESP_LOGI("NVS Status", "Count: UsedEntries = (%d), FreeEntries = (%d), AllEntries = (%d)",
+       nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries); 
 }
 
-//read encoder layout
-void nvs_read_encoder_layout(const char* layout_name,uint16_t buffer[ENCODER_SIZE]){
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	uint16_t layout[ENCODER_SIZE] = {0};
-	err = nvs_open(ENCODER_NAMESPACE, NVS_READWRITE, &encoder_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	size_t arr_size;
-	//get blob array size
-	err = nvs_get_blob(keymap_handle, layout_name, NULL, &arr_size);
-	err = nvs_get_blob(keymap_handle,layout_name,layout,&arr_size);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error getting layout: %s", esp_err_to_name(err));
+// Read and returns the number of available layers stored
+uint8_t nvs_read_num_layers(void)
+{
+	nvs_handle_t nvs_handle;
+	uint8_t layer_num = 0;
+	const static char * TAG = "NVS Read#layers";
+	
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE,&nvs_handle));
+	
+	esp_err_t res = nvs_get_u8(nvs_handle,LAYER_NUM_KEY,&layer_num);
+	switch (res)
+    {
+    case ESP_ERR_NVS_NOT_FOUND:
+      ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
+	  nvs_write_default_layers(nvs_handle);
+	  ESP_ERROR_CHECK(nvs_get_u8(nvs_handle,LAYER_NUM_KEY,&layer_num));
+    break;
+    case ESP_OK:
+      ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
+    break;
+    default:
+      ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
+    break;
+    }
 
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success getting layout");
-	}
-	memcpy(buffer, layout, sizeof(layout) );
-	ESP_LOGI(NVS_TAG, "Layout copied to buffer");
-	nvs_close(encoder_handle);
+	nvs_close(nvs_handle);
+	return layer_num;
 }
 
-//add or overwrite an encoder layout to the nvs
-void nvs_write_encoder_layout(uint16_t encoder_layout_arr[ENCODER_SIZE], const char* encoder_layout_name){
+// Read all the available layers stored in the memory
+void nvs_read_layers(dd_layer * layers_array)
+{
+	nvs_handle_t nvs_layer_handle;
+	uint8_t layer_num;
+	char layer_num_key[10] = "layer_num";
+	const static char * TAG = "Read Layers";
+	char layer_key[10];
+	size_t dd_layer_size;
 
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	err = nvs_open(SLAVE_ENCODER_NAMESPACE, NVS_READWRITE, &slave_encoder_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	err = nvs_set_blob(keymap_handle,encoder_layout_name, encoder_layout_arr,sizeof(*encoder_layout_arr));
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error writing layout: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success writing layout");
-	}
+	esp_err_t res;
 
-	nvs_close(slave_encoder_handle);
-}
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
+	
+	res = nvs_get_u8(nvs_layer_handle,layer_num_key,&layer_num);
+	switch (res)
+    {
+    case ESP_ERR_NVS_NOT_FOUND:
+      ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
+	  nvs_write_default_layers(nvs_layer_handle);
+    break;
+    case ESP_OK:
+      ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
+    break;
+    default:
+      ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
+    break;
+    }
+	
+	for(int i = 0; i < layer_num; i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
 
-//read slave encoder layout
-void nvs_read_slave_encoder_layout(const char* layout_name,uint16_t buffer[ENCODER_SIZE]){
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	uint16_t layout[ENCODER_SIZE] = {0};
-	err = nvs_open(SLAVE_ENCODER_NAMESPACE, NVS_READWRITE, &slave_encoder_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	size_t arr_size;
-	//get blob array size
-	err = nvs_get_blob(keymap_handle, layout_name, NULL, &arr_size);
-	err = nvs_get_blob(keymap_handle,layout_name,layout,&arr_size);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error getting layout: %s", esp_err_to_name(err));
-
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success getting layout");
-	}
-	memcpy(buffer, layout, sizeof(layout) );
-	ESP_LOGI(NVS_TAG, "Layout copied to buffer");
-	nvs_close(slave_encoder_handle);
-}
-
-//add or overwrite a slave encoder layout to the nvs
-void nvs_write_slave_encoderlayout_(uint16_t encoder_layout_arr[ENCODER_SIZE], const char* encoder_layout_name){
-
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	err = nvs_open(ENCODER_NAMESPACE, NVS_READWRITE, &encoder_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	err = nvs_set_blob(keymap_handle,encoder_layout_name, encoder_layout_arr,sizeof(*encoder_layout_arr));
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error writing layout: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success writing layout");
-	}
-
-	nvs_close(encoder_handle);
-}
-
-//add or overwrite a keymap to the nvs
-void nvs_write_layout_matrix(uint16_t layout[MATRIX_ROWS][KEYMAP_COLS], const char* layout_name){
-
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	err = nvs_open(KEYMAP_NAMESPACE, NVS_READWRITE, &keymap_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
-	uint16_t layout_arr[MATRIX_ROWS*KEYMAP_COLS] = {0};
-	key_mat_to_blob(layout,layout_arr);
-
-	err = nvs_set_blob(keymap_handle,layout_name, layout_arr,sizeof(layout_arr));
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error writing layout: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success writing layout");
-	}
-
-	nvs_close(keymap_handle);
-}
-
-//add or overwrite a keymap to the nvs
-void nvs_write_layout(uint16_t layout[MATRIX_ROWS][KEYMAP_COLS], const char* layout_name){
-
-	ESP_LOGI(NVS_TAG,"Adding/Modifying Layout");
-	uint8_t FOUND_MATCH =0;
-	nvs_read_keymap_cfg();
-	uint8_t cur_layers_num=layers_num;
-
-	//check if layout exits
-	for(uint8_t i=0;i<layers_num;i++){
-		if(strcmp(layout_name, layer_names_arr[i])==0){
-			FOUND_MATCH =1;
-			break;
+		res = nvs_get_blob(nvs_layer_handle, layer_key, (void *)&layers_array[i], &dd_layer_size);
+		if(res != ESP_OK)
+		{
+			ESP_LOGE(TAG, "Error (%s) reading layer %s!\n", esp_err_to_name(res), layer_key);
 		}
 	}
-
-	//if layout exists
-	if(FOUND_MATCH==1){
-		ESP_LOGI(NVS_TAG,"Layout name previously listed: %s",layout_name);
-	}
-
-	//if layout doesn't exist
-	else{
-		cur_layers_num++;
-		ESP_LOGI(NVS_TAG,"New layout: %s",layout_name);
-		char (*curr_array)[MAX_LAYOUT_NAME_LENGTH];
-		curr_array = malloc(MAX_LAYOUT_NAME_LENGTH*cur_layers_num*sizeof(char));
-		for(uint8_t i=0;i<layers_num;i++){
-			strcpy(curr_array[i],layer_names_arr[i]);
-		}
-		strcpy(curr_array[layers_num],layout_name);
-		nvs_write_keymap_cfg(cur_layers_num,curr_array);
-
-	}
-	nvs_write_layout_matrix(layout,layout_name);
-
-	free(layer_names_arr);
+	nvs_close(nvs_layer_handle);
 }
 
-//read the what layouts are in the nvs
-void nvs_read_keymap_cfg(void){
-	free(layer_names_arr);
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	err = nvs_open(KEYMAP_NAMESPACE, NVS_READWRITE, &keymap_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successfully");
-	}
+// Write default layers
+void nvs_write_default_layers(nvs_handle_t nvs_handle)
+{
+	char layer_num_key[10] = "layer_num";
+	char layer_key[10];
+	const static char * TAG = "Read Layers";
+	uint8_t default_layer_num = LAYERS;
+	
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle,layer_num_key,default_layer_num));
 
-	uint8_t layers=0;
-	err =nvs_get_u8(keymap_handle, LAYOUT_NUM, &layers);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error getting layout num: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success getting layout num");
-	}
-	//set string array size
-	size_t str_size;
-	//get string array size
-	err = nvs_get_str(keymap_handle, LAYOUT_NAMES, NULL, &str_size);
-	if (err != ESP_OK) {
-		ESP_LOGI(NVS_TAG, "Error getting layout names size: %s", esp_err_to_name(err));
-	}
-	char *layer_names = (char *)malloc(str_size);
-	err = nvs_get_str(keymap_handle,LAYOUT_NAMES, layer_names, &str_size);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error getting layout name: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success getting layout name");
-		layers_num=layers;
-		str_to_str_arr(layer_names,layers,&layer_names_arr);
-
-		for(uint8_t i=0;i<layers_num;i++){
-			ESP_LOGI(NVS_TAG,"\nLayer %d:  %s",i,layer_names_arr[i]);
-		}
-	}
-	nvs_close(keymap_handle);
-
-
+	for(int i = 0; i < default_layer_num; i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
+		
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, (void *) default_layouts[i], sizeof(dd_layer) ));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}	
 }
 
-//write layout names to nvs
-void nvs_write_keymap_cfg(uint8_t layers, char (*layer_names_arr)[MAX_LAYOUT_NAME_LENGTH]){
+esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
+{
+	nvs_handle_t nvs_layer_handle;
+	char layer_key[10];
 
-	char *layer_names;
-	str_arr_to_str(layer_names_arr,layers,&layer_names);
 
-	ESP_LOGI(NVS_TAG,"Opening NVS handle");
-	err = nvs_open(KEYMAP_NAMESPACE, NVS_READWRITE, &keymap_handle);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG,"Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-	} else {
-		ESP_LOGI(NVS_TAG,"NVS Handle opened successful");
-	}
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
 
-	err =nvs_set_u8(keymap_handle, LAYOUT_NUM, layers);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error setting layout num: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success setting layout num");
-	}
+	sprintf(layer_key, "layer_%d", layer_num);
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *) &layer, sizeof(dd_layer) ));
+	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
 
-	err = nvs_set_str(keymap_handle,LAYOUT_NAMES, layer_names);
-	if (err != ESP_OK) {
-		ESP_LOGE(NVS_TAG, "Error setting layout names: %s", esp_err_to_name(err));
-	}
-	else{
-		ESP_LOGI(NVS_TAG, "Success setting layout names");
-	}
-	nvs_commit(keymap_handle);
-	nvs_close(keymap_handle);
-	free(layer_names);
+	nvs_close(nvs_layer_handle);
+
+	return ESP_OK;
 }
+
 
 //load the layouts from nvs
-void nvs_load_layouts(void){
+void nvs_load_layouts(void)
+{
+	layers_num = nvs_read_num_layers();
+	key_layouts = malloc(layers_num*sizeof(dd_layer));
+	
+	nvs_read_layers(key_layouts);
+	nvs_check_memory_status();
 
-	ESP_LOGI(NVS_TAG,"Loading layouts");
-	nvs_read_keymap_cfg();
-
-	if(layers_num!=0){
-
-		// set keymap layouts
-		ESP_LOGI(NVS_TAG,"Layouts found on NVS, loading layouts");
-		layouts = malloc(layers_num*sizeof(uint16_t**));
-		for(uint8_t i = 0;i < layers_num; i++){
-			uint16_t layout_buff[MATRIX_ROWS][KEYMAP_COLS] = {0};
-			nvs_read_layout(layer_names_arr[i],layout_buff);
-			layouts[i] = malloc(sizeof(layout_buff));
-			ESP_LOGI(NVS_TAG,"malloc");
-			for(uint8_t row=0; row<MATRIX_ROWS;row++){
-				layouts[i][row] = malloc(sizeof(layout_buff[row]));
-				for(uint8_t col=0; col<KEYMAP_COLS;col++){
-					layouts[i][row][col] = layout_buff[row][col];
-				}
-			}
-		}
-	}else{
-
-		ESP_LOGI(NVS_TAG,"Layouts not found on NVS, loading default layouts");
-		free(layer_names_arr);
-		layouts = malloc(LAYERS*sizeof(uint16_t**));
-		layer_names_arr = malloc(sizeof(default_layout_names));
-		for(uint8_t i = 0;i < LAYERS; i++){
-			layouts[i] = malloc(sizeof( (*default_layouts)[i]));
-			layer_names_arr[i] = malloc(sizeof(default_layout_names[i]));
-			strcpy(layer_names_arr[i],default_layout_names[i]);
-			for(uint8_t row=0; row<MATRIX_ROWS;row++){
-				layouts[i][row] = malloc(sizeof( (*default_layouts[i])[row]));
-				for(uint8_t col=0; col<KEYMAP_COLS;col++){
-					layouts[i][row][col] = (*default_layouts[i])[row][col];
-				}
-			}
-		}
-	}
-
-	//set encoder layouts
-	if(layers_num!=0){
-
-		ESP_LOGI(NVS_TAG,"Encoder layouts found on NVS, loading layouts");
-		encoder_map = malloc(layers_num*sizeof(uint16_t*));
-		for(uint8_t i = 0;i < layers_num; i++){
-			uint16_t encoder_layout_buff[ENCODER_SIZE] = {0};
-			nvs_read_encoder_layout(layer_names_arr[i],encoder_layout_buff);
-			encoder_map[i] = malloc(sizeof(encoder_layout_buff));
-			ESP_LOGI(NVS_TAG,"malloc");
-			for(uint8_t key=0; key<ENCODER_SIZE;key++){
-				encoder_map[i][key] = encoder_layout_buff[key];
-			}
-		}
-	}else{
-
-		ESP_LOGI(NVS_TAG,"Encoder layouts not found on NVS, loading default layouts");
-		free(layer_names_arr);
-		encoder_map = malloc(LAYERS*sizeof(uint16_t*));
-		layer_names_arr = malloc(sizeof(default_layout_names));
-		for(uint8_t i = 0;i < LAYERS; i++){
-			encoder_map[i] = malloc(sizeof((default_encoder_map)[i]));
-			layer_names_arr[i] = malloc(sizeof(default_layout_names[i]));
-			strcpy(layer_names_arr[i],default_layout_names[i]);
-			for(uint8_t key=0; key<ENCODER_SIZE;key++){
-				encoder_map[i][key] = default_encoder_map[i][key];
-			}
-		}
-	}
-
-	//set slave encoder layouts
-	if(layers_num!=0){
-		ESP_LOGI(NVS_TAG,"Slave Encoder layouts found on NVS, loading layouts");
-		slave_encoder_map = malloc(layers_num*sizeof(uint16_t*));
-		for(uint8_t i = 0;i < layers_num; i++){
-			uint16_t encoder_layout_buff[ENCODER_SIZE] = {0};
-			nvs_read_slave_encoder_layout(layer_names_arr[i],encoder_layout_buff);
-			encoder_map[i] = malloc(sizeof(encoder_layout_buff));
-			ESP_LOGI(NVS_TAG,"malloc");
-			for(uint8_t key=0; key<ENCODER_SIZE;key++){
-				slave_encoder_map[i][key] = encoder_layout_buff[key];
-			}
-		}
-	}else{
-
-		ESP_LOGI(NVS_TAG,"Slave encoder layouts not found on NVS, loading default layouts");
-		free(layer_names_arr);
-		slave_encoder_map = malloc(LAYERS*sizeof(uint16_t*));
-		layer_names_arr = malloc(sizeof(default_layout_names));
-		for(uint8_t i = 0;i < LAYERS; i++){
-			slave_encoder_map[i] = malloc(sizeof((default_encoder_map)[i]));
-			layer_names_arr[i] = malloc(sizeof(default_layout_names[i]));
-			strcpy(layer_names_arr[i],default_layout_names[i]);
-			for(uint8_t key=0; key<ENCODER_SIZE;key++){
-				slave_encoder_map[i][key] = default_slave_encoder_map[i][key];
-			}
-		}
-	}
-
+	ESP_LOGI("NVS_TAG","Layer names %s, %s, %s",key_layouts[0].name,key_layouts[1].name,key_layouts[2].name);
+	ESP_LOGI(NVS_TAG,"Layouts loaded");
 }
+

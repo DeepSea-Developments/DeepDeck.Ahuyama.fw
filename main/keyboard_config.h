@@ -67,7 +67,7 @@
 #define BATT_PIN ADC1_CHANNEL_7 //gpio pin 35, refer to the esp32 before modifying
 
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
-#define SLEEP_MINS 10 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
+#define SLEEP_MINS 50 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
 /*
  *---------------------------- Everything below here should not be modified for standard usage----------------------
@@ -93,7 +93,8 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define MACRO_BASE_VAL 0x103
 #define LAYERS_BASE_VAL 0xFF
 
-#define ENCODER_SIZE 5
+#define ENCODER_SIZE 5 //Number of actions that the encoder has
+#define GESTURE_SIZE 6 //Number of actions gesture sensor has
 
 typedef struct config_data {
 	char bt_device_name[MAX_BT_DEVICENAME_LENGTH];
