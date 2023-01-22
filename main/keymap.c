@@ -12,26 +12,25 @@
 #define LOWER 0x101
 #define RAISE 0x102
 
-// Keymaps are designed to be relatively interchangeable with QMK
-enum custom_keycodes {
-	QWERTY, NUM,
-    PLUGINS,
-};
+// // Keymaps are designed to be relatively interchangeable with QMK
+// enum custom_keycodes {
+// 	QWERTY, NUM,
+//     PLUGINS,
+// };
 
 //Set these for each layer and use when layers are needed in a hold-to use layer
 enum layer_holds {
 	QWERTY_H = LAYER_HOLD_BASE_VAL, NUM_H,FUNCS_H
 };
 
-// array to hold names of layouts for oled
-char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
-		  "VSCODE",
-		};
+// // array to hold names of layouts for oled
+// char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
+// 		  "VSCODE",
+// 		};
 
 /* select a keycode for your macro
  * important - first macro must be initialized as MACRO_BASE_VAL
  * */
-
 
 enum custom_macros {
 	KC_CTRLALT = MACRO_BASE_VAL,  //Ubuntu windows manager (change workspace)
@@ -134,50 +133,6 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 		{ KC_LCTRL, KC_V ,KC_NO}, 
 
 	};
-
-/*Encoder keys for each layer by order, and for each pad
- * First variable states what usage the encoder has
- */
-
-uint16_t default_encoder_map[LAYERS][ENCODER_SIZE] = { 
-		/* Encoder 1 layout
-			 * ,-----------------------------------------------------------------------------------------------------------.
-			 * |  ---Layers---   |  CW rotation    |    CCW rotation   |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L1   --> |    VOL UP       |    VOL DOWN       |      PLAY     |      MUTE       |    NEXT SONG    |
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L2   --> |    VOL UP       |    VOL DOWN       |      PLAY     |       MUTE      |    NEXT SONG    |
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |    VSCODE   --> |    VOL UP       |    VOL DOWN       |      UNDO     |       PLAY      |    NEXT SONG    |
-			 * |-----------------------------------------------------------------------------------------------------------|
-			 * |   x  GIMP   --> |  MOUSE WHEEL UP | MOUSE WHEEL DOWN  |   100% ZOOM   |       PLAY      |    NEXT SONG    |
-			 * `-----------------------------------------------------------------------------------------------------------'
-			 */
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
-		{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE,  KC_MEDIA_NEXT_TRACK }
-		/* { KC_MS_WH_DOWN,        KC_MS_WH_UP,        KC_1,    KC_APP_GIMP_FIT_IMAGE, KC_APP_GIMP_FIT_IMAGE } */
-		
-	};
-
-uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE] = {
-	/* Encoder 2 layout
-			 * ,-----------------------------------------------------------------------------------------------------------.
-			 * |  ---Layers---   |  CW rotation    |    CCW rotation   |      PUSH     |    LONG PUSH    |   DOUBLE PUSH   |
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L1   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |        L2   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
-			 * |-----------------+-----------------+-------------------+---------------+-----------------+-----------------|
-			 * |    VSCODE   --> |    FORWARD      |    BACKWARD       |      REDO     |       FIND      |    FIND ALL     |
-			 * |-----------------------------------------------------------------------------------------------------------|		
-			 * |    X   L3   --> | CHROME-NEXT TAB | CHROME-PREV TAB   |CHROME-NEW TAB |CHROME-NEW WINDW |CHROME-NEXT INCOG|
-			 * `-----------------------------------------------------------------------------------------------------------'
-			 */
-		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
-		{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
-		{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND }
-	 };
 	 
 
 // Fillers to make layering more clear
@@ -280,89 +235,16 @@ dd_layer layer3 =
 				{"copy",  "left",  "down", "right"}
 			},
 			.left_encoder_map = 
-				{KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+				{KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE,  KC_MEDIA_NEXT_TRACK },
 			.right_encoder_map = 
-				{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
+				{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND },
 			.gesture_map = 
-				{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
+				{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND },
 		};
 
 
 dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
 
-
-
-
-
-// // Each keymap is represented by an array, with an array that points to all the keymaps  by order
-// 	 uint16_t _QWERTY[MATRIX_ROWS][KEYMAP_COLS]={
-
-// 			/* MEDIA
-// 			 * ,-----------------------------------------------------------------------.
-// 			 * |        <<       |        |>       |       >>        |  LAYER CHANGE   |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |   CHROME_PTAB   |    CHROME_NTAB  |    TERMINAL     |     SHUTTER     |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |    WINDOW_M     |  WINDOWS_KEY    |       UP        |    WINDOWPUT_K  |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |    WINDOW_W     |     LEFT        |      DOWN       |      RIGHT      |
-// 			 * `-----------------------------------------------------------------------'
-// 			 */
-
-// 			  {KC_MPRV,             KC_MPLY,            KC_MNXT,            RAISE },
-// 			  {KC_APP_CHROME_PTAB,  KC_APP_CHROME_NTAB, KC_APP_TERMINAL,    KC_APP_SHUTTER },
-// 			  {KC_CTRLALTSHIFT,     KC_LGUI,            KC_UP,              KC_APP_WINDOWPUT_LINUX_K} ,
-// 			  {KC_CTRLALT,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
-
-// 	};
-
-// 	 uint16_t _NUM[MATRIX_ROWS][KEYMAP_COLS]={
-
-// 		 	/* MEDIA
-// 			 * ,-----------------------------------------------------------------------.
-// 			 * |        1        |         2       |       3         |  LAYER CHANGE   |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |        4        |         5       |       6         |        +        |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |        7        |         8       |       9         |        *        |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |        .        |         0       |        <-       |      ENTER      |
-// 			 * `-----------------------------------------------------------------------'
-// 			 */
-
-// 			  {KC_1,       KC_2,          KC_3,    RAISE  },
-// 			  {KC_4,       KC_5,          KC_6,    KC_KP_PLUS  },
-// 			  {KC_7,       KC_8,          KC_9,    KC_KP_ASTERISK },
-// 			  {KC_DOT,     KC_0,     KC_BSPACE,    KC_ENTER }
-
-// 	};
-
-// 	uint16_t _PLUGINS[MATRIX_ROWS][KEYMAP_COLS]={
-
-// 			/* VSCODE
-// 			 * ,-----------------------------------------------------------------------.
-// 			 * |      COPY       |      PASTE      |       SIDEBAR   |  LAYER CHANGE   |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |    COMMENT      |    S_COMMENT    |     PALLET      |     M_SELECT    |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |       ALT       |       HOME      |       UP        |       END       |
-// 			 * |-----------------+-----------------+-----------------+-----------------|
-// 			 * |       CTRL      |     LEFT        |      DOWN       |      RIGHT      |
-// 			 * `-----------------------------------------------------------------------'
-// 			 */
-// 			  {KC_APP_COPY,  KC_APP_PASTE,    KC_APP_VSCODE_TOGGLE_SIDEBAR,    RAISE },
-// 			  {KC_APP_VSCODE_COMMENT_LINE,  KC_APP_VSCODE_COMMENT_SELECTION,    KC_F1,    KC_APP_VSCODE_MULT_SELECTION},
-// 			  {KC_LALT,     KC_HOME,            KC_UP,              KC_END} ,
-// 			  {KC_LCTRL,          KC_LEFT,            KC_DOWN,            KC_RIGHT}
-			  
-
-// 		};
-
-// 	// 	};
-//  //Create an array that points to the various keymaps
-// uint16_t (*default_layouts[])[MATRIX_ROWS][KEYMAP_COLS] = { &_QWERTY, &_NUM,
-// 			&_PLUGINS
-// 		};
 
 uint8_t current_layout = 0;
 
