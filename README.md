@@ -10,8 +10,11 @@ Here are the features:
 ## DeepDeck features
 
 ✅ - Implemented
+
 🚧 - In process of improvement
+
 📝 - In the roadmap
+
 💬 - For feature releases/depending on the community votes
 
 ### Software Features
