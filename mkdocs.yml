@@ -40,6 +40,7 @@ theme:
         icon: material/weather-night
         name: Switch to light mode
 
+site_url: https://deepdeck.co
 repo_url: https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw
 repo_name: DeepDeck
 edit_uri: edit/master/docs/
@@ -79,7 +80,6 @@ extra:
           note: >- 
             Thanks for your feedback! Help us improve this page by
             using our <a href="..." target=_blank>feedback form</a>.
-
 
 plugins:
   - social
