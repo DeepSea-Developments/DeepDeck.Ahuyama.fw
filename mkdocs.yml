@@ -81,7 +81,8 @@ extra:
             using our <a href="..." target=_blank>feedback form</a>.
 
 
-
+plugins:
+  - social
 
 markdown_extensions:
 
