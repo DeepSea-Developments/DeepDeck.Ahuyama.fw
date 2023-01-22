@@ -81,9 +81,6 @@ extra:
             Thanks for your feedback! Help us improve this page by
             using our <a href="..." target=_blank>feedback form</a>.
 
-plugins:
-  - social
-
 markdown_extensions:
 
   # Python Markdown
