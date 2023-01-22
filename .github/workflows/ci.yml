@@ -20,3 +20,10 @@ jobs:
           path: .cache
       - run: pip install mkdocs-material 
       - run: mkdocs gh-deploy --force
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./public
+          cname: www.deepdeck.co
