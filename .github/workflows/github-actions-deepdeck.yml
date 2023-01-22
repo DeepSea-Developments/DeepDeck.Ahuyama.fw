@@ -1,31 +1,31 @@
-# This is a esp idf workflow to build ESP32 based project
+# # This is a esp idf workflow to build ESP32 based project
 
-name: Build and Artifact the ESP-IDF Project
+# name: Build and Artifact the ESP-IDF Project
 
-# Controls when the action will run. 
-on: [push, pull_request]
-  # Triggers the workflow on tag create like v1.0, v2.0.0 and so on
+# # Controls when the action will run. 
+# on: [push, pull_request]
+#   # Triggers the workflow on tag create like v1.0, v2.0.0 and so on
   
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install ESP-IDF and Build project
-      uses: rmshub/esp-idf-action@v4
-      with: 
-          esp_idf_version: 'v4.4'
-          esp_idf_target: 'esp32'
+# # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# jobs:
+#   # This workflow contains a single job called "build"
+#   build:
+#     # The type of runner that the job will run on
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: Install ESP-IDF and Build project
+#       uses: rmshub/esp-idf-action@v4
+#       with: 
+#           esp_idf_version: 'v4.4'
+#           esp_idf_target: 'esp32'
 
-    - name: Archive build output artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: build
-        path: |
-          build/bootloader/bootloader.bin
-          build/partition_table/partition-table.bin
-          build/ota_data_initial.bin
-          build/MK32.bin
+#     - name: Archive build output artifacts
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: build
+#         path: |
+#           build/bootloader/bootloader.bin
+#           build/partition_table/partition-table.bin
+#           build/ota_data_initial.bin
+#           build/MK32.bin
