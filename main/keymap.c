@@ -166,44 +166,48 @@ dd_layer layer1 =
 				{"copy",  "GUI",  "up", "RAISE"},
 				{"copy",  "left",  "down", "right"}
 			},
+			//Knobs - {CW, CCW, Single Press, Long Press, Double press}
 			.left_encoder_map = 
 				{KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
 			.right_encoder_map = 
 				{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
+			
 			.gesture_map = 
 				{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
 		};
 
 dd_layer layer2 = 
 		{
-			.name = "Num",
+			.name = "Numpad",
 			/* Num
 			 * ,-----------------------------------------------------------------------.
-			 * |        1        |         2       |       3         |  LAYER CHANGE   |
+			 * |        7        |         8       |       9         |  LAYER CHANGE   |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        4        |         5       |       6         |        +        |
+			 * |        4        |         5       |       6         |        /        |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        7        |         8       |       9         |        *        |
+			 * |        1        |         2       |       3         |        *        |
 			 * |-----------------+-----------------+-----------------+-----------------|
-			 * |        .        |         0       |        <-       |      ENTER      |
+			 * |        .        |         0       |        -        |        +        |
 			 * `-----------------------------------------------------------------------'
 			 */
 			.key_map = {
-					{KC_1,       KC_2,          KC_3,    RAISE  },
-					{KC_4,       KC_5,          KC_6,    KC_KP_PLUS  },
-					{KC_7,       KC_8,          KC_9,    KC_KP_ASTERISK },
-					{KC_DOT,     KC_0,     KC_BSPACE,    KC_ENTER }
+					{KC_7,       KC_8,          KC_9,    RAISE  },
+					{KC_4,       KC_5,          KC_6,    KC_KP_SLASH  },
+					{KC_1,       KC_2,          KC_3,    KC_KP_ASTERISK },
+					{KC_DOT,     KC_0,     KC_KP_MINUS,    KC_KP_PLUS }
 			},
 			.key_map_names = {
-				{"1",  "2",  "3", "layer"},
-				{"4",  "5",  "6", "+"},
-				{"7",  "8",  "9", "*"},
-				{".",  "0",  "<-", "enter"}
+				{"7",  "8",  "9", "layer"},
+				{"4",  "5",  "6", "/"},
+				{"1",  "2",  "3", "*"},
+				{".",  "0",  "-", "+"}
 			},
+			//Knobs - {CW, CCW, Single Press, Long Press, Double press}
 			.left_encoder_map = 
-				{KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK },
+				{KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE,  KC_APP_PASTE },
 			.right_encoder_map = 
-				{ KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW },
+				{ KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB },
+			
 			.gesture_map = 
 				{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
 		};
@@ -234,10 +238,13 @@ dd_layer layer3 =
 				{"copy",  "GUI",  "up", "RAISE"},
 				{"copy",  "left",  "down", "right"}
 			},
+
+			//Knobs - {CW, CCW, Single Press, Long Press, Double press}
 			.left_encoder_map = 
 				{KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE,  KC_MEDIA_NEXT_TRACK },
 			.right_encoder_map = 
 				{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND },
+			
 			.gesture_map = 
 				{ KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND },
 		};
