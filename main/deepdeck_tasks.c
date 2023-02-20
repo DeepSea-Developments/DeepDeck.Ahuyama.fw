@@ -31,6 +31,7 @@
 #include "hal_ble.h"
 
 #include "keycode_conv.h"
+#include "gesture_handles.h"
 
 static const char * TAG = "KeyReport";
 
@@ -39,11 +40,14 @@ static const char * TAG = "KeyReport";
 // #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
+#define LONG_TIME 0xffff
 
 #ifdef OLED_ENABLE
 TaskHandle_t xOledTask;
 #endif
 TaskHandle_t xKeyreportTask;
+
+extern SemaphoreHandle_t xSemaphore;
 
 /**
  * @todo look a better way to handle the deepsleep flag.
@@ -90,6 +94,36 @@ void oled_task(void *pvParameters)
 			break;
 		}
 		vTaskDelay(pdMS_TO_TICKS(250));
+	}
+
+}
+
+
+void gesture_task(void *pvParameters) {
+
+	while (true) {
+
+		if ( xSemaphoreTake( xSemaphore, LONG_TIME ) == pdTRUE) {
+
+				//Do not send anything if queues are uninitialized
+				if (keyboard_q == NULL	|| joystick_q == NULL) {
+					ESP_LOGE(TAG, "queues not initialized");
+					continue;
+				}
+
+//				ESP_LOGI("Gesture", "xSemaphore Take");
+//				ESP_LOGI("Gesture", "Suspend xOledTask");
+//				vTaskSuspend(xOledTask);
+				read_gesture();
+//				ESP_LOGI("Gesture", "Resume xOledTask");
+//				vTaskResume(xOledTask);
+
+			}
+
+			vTaskDelay(pdMS_TO_TICKS(100));
+
+
+
 	}
 
 }
