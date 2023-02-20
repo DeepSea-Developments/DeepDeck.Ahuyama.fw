@@ -25,7 +25,7 @@
 //HID Ble functions
 #include "hal_ble.h"
 
-
+TaskHandle_t xGesture;
 
 i2c_bus_handle_t i2c_bus = NULL;
 apds9960_handle_t apds9960 = NULL;
@@ -43,7 +43,7 @@ void vTimerCallback(TimerHandle_t pxTimer) {
 //////////////////////////////////
 esp_err_t set_timer(void) {
 	xTimer = xTimerCreate("Timer", // Just a text name, not used by the kernel.
-			(pdMS_TO_TICKS(250)),   // The timer period in ticks.
+			(pdMS_TO_TICKS(750)),   // The timer period in ticks.
 			pdFALSE, //pdTRUE The timers will auto-reload themselves when they expire.
 			(void*) timerID, // Assign each timer a unique id equal to its array index.
 			vTimerCallback // Each timer calls the same callback when it expires.
@@ -146,6 +146,7 @@ void read_gesture() {
 		xTimerStart(xTimer, 0);
 		flag = false;
 		apds9960_gesture_init(apds9960);
+//		apds9960_clear_interrupt(apds9960);
 
 	}
 

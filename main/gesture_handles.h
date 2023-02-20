@@ -29,9 +29,9 @@
 #define GPIO_INPUT_PIN_SEL  (1ULL<<APDS9960_INT_PIN)
 #define ESP_INTR_FLAG_DEFAULT 0
 
-
+extern TaskHandle_t xGesture;
 extern TaskHandle_t xOledTask;
-extern dd_layer *key_layouts;
+//extern dd_layer *key_layouts;
 
 void IRAM_ATTR gesture_isr_handler(void *arg);
 esp_err_t set_timer(void);
@@ -45,7 +45,7 @@ esp_err_t set_timer(void);
  * @return
  *      - gesture_state_t: TODO
  */
-void gesture_command(uint8_t command, uint16_t gesture_commands[6]);
+void gesture_command(uint8_t command, uint16_t gesture_commands[5]);
 
 
 

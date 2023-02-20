@@ -138,7 +138,7 @@ void app_main()
 
 	apds9960_init();
 	vTaskDelay(pdMS_TO_TICKS(1000));
-	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	NULL);
+	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	&xGesture);
 	ESP_LOGI("Gesture", "initialized");
 
 

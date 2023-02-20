@@ -45,6 +45,7 @@ static const char * TAG = "KeyReport";
 #ifdef OLED_ENABLE
 TaskHandle_t xOledTask;
 #endif
+
 TaskHandle_t xKeyreportTask;
 
 extern SemaphoreHandle_t xSemaphore;
@@ -84,6 +85,7 @@ void oled_task(void *pvParameters)
 			break;
 			case S_SETTINGS:
 				menu_init();
+
 				vTaskDelay(pdMS_TO_TICKS(200));
 
 				menu_screen();
@@ -271,7 +273,9 @@ void encoder_report(void *pvParameters)
 
 			if(deepdeck_status == S_SETTINGS)
 			{
+
 				menu_command((encoder_state_t)encoder1_status);
+
 			}
 			else if( encoder1_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_b) )
 			{
