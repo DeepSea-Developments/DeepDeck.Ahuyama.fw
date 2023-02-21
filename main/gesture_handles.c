@@ -34,10 +34,9 @@ int timerID = 1;
 bool flag = false;
 
 
-extern SemaphoreHandle_t xSemaphore;
 ///////////////////////////////////
 void vTimerCallback(TimerHandle_t pxTimer) {
-//	ESP_LOGI(".", "vTimerCallback");
+	ESP_LOGI(".", "vTimerCallback");
 	flag = true;
 }
 //////////////////////////////////
@@ -105,43 +104,45 @@ void read_gesture() {
 	uint8_t gesture = 0;
 //flag to prevent false gestures while using the left encoder
 	if (flag) {
-		xTimerStop(xTimer, 0);
-		flag = false;
-		ESP_LOGI("Gesture", "Suspend xOledTask");
-		vTaskSuspend(xOledTask);
 
-		ESP_LOGI("Gesture", "Read Gesture start .......");
-		gesture = apds9960_read_gesture(apds9960);
-		if (gesture != APDS9960_NONE) {
-			if (gesture == APDS9960_DOWN) {
-				ESP_LOGI("Gesture", "_DOWN");
+			xTimerStop(xTimer, 0);
+			flag = false;
+			ESP_LOGI("Gesture", "Suspend xOledTask");
+			vTaskSuspend(xOledTask);
 
-			} else if (gesture == APDS9960_UP) {
-				ESP_LOGI("Gesture", "_UP");
+			ESP_LOGI("Gesture", "Read Gesture start .......");
+			gesture = apds9960_read_gesture(apds9960);
+			if (gesture != APDS9960_NONE) {
+				if (gesture == APDS9960_DOWN) {
+					ESP_LOGI("Gesture", "_DOWN");
 
-			} else if (gesture == APDS9960_LEFT) {
-				ESP_LOGI("Gesture", "_LEFT");
+				} else if (gesture == APDS9960_UP) {
+					ESP_LOGI("Gesture", "_UP");
 
-			} else if (gesture == APDS9960_RIGHT) {
-				ESP_LOGI("Gesture", "_RIGHT");
+				} else if (gesture == APDS9960_LEFT) {
+					ESP_LOGI("Gesture", "_LEFT");
 
-			} else if (gesture == APDS9960_FAR) {
-				ESP_LOGI("Gesture", "_FAR");
+				} else if (gesture == APDS9960_RIGHT) {
+					ESP_LOGI("Gesture", "_RIGHT");
 
-			} else if (gesture == APDS9960_NEAR) {
-				ESP_LOGI("Gesture", "_NEAR");
+				} else if (gesture == APDS9960_FAR) {
+					ESP_LOGI("Gesture", "_FAR");
+
+				} else if (gesture == APDS9960_NEAR) {
+					ESP_LOGI("Gesture", "_NEAR");
+
+				}
+				gesture_command(gesture,
+						key_layouts[current_layout].gesture_map);
 
 			}
-			gesture_command(gesture, key_layouts[current_layout].gesture_map);
 
-		}
-
-		ESP_LOGI("Gesture", "Resume xOledTask");
-		vTaskResume(xOledTask);
-		xTimerStart(xTimer, 0);
+			ESP_LOGI("Gesture", "Resume xOledTask");
+			vTaskResume(xOledTask);
+			xTimerStart(xTimer, 0);
 
 	} else { //reload the timer
-//		ESP_LOGI(".", "to soon");
+		ESP_LOGI(".", "reload the timer");
 		xTimerStop(xTimer, 0);
 		xTimerStart(xTimer, 0);
 		flag = false;

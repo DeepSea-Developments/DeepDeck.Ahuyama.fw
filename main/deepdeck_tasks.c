@@ -40,7 +40,7 @@ static const char * TAG = "KeyReport";
 // #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
-#define LONG_TIME 0xffff
+
 
 #ifdef OLED_ENABLE
 TaskHandle_t xOledTask;
@@ -48,7 +48,7 @@ TaskHandle_t xOledTask;
 
 TaskHandle_t xKeyreportTask;
 
-extern SemaphoreHandle_t xSemaphore;
+//extern SemaphoreHandle_t xSemaphore;
 
 /**
  * @todo look a better way to handle the deepsleep flag.
@@ -105,7 +105,7 @@ void gesture_task(void *pvParameters) {
 
 	while (true) {
 
-		if ( xSemaphoreTake( xSemaphore, LONG_TIME ) == pdTRUE) {
+		if ( xSemaphoreTake( xSemaphore, 10 ) == pdTRUE) {
 
 				//Do not send anything if queues are uninitialized
 				if (keyboard_q == NULL	|| joystick_q == NULL) {
@@ -113,16 +113,18 @@ void gesture_task(void *pvParameters) {
 					continue;
 				}
 
-//				ESP_LOGI("Gesture", "xSemaphore Take");
+				ESP_LOGI("Gesture", "xSemaphore Take");
 //				ESP_LOGI("Gesture", "Suspend xOledTask");
 //				vTaskSuspend(xOledTask);
 				read_gesture();
 //				ESP_LOGI("Gesture", "Resume xOledTask");
 //				vTaskResume(xOledTask);
 
+			}else{
+				vTaskDelay(pdMS_TO_TICKS(10));
 			}
 
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(250));
 
 
 

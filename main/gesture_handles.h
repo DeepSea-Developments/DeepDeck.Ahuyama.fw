@@ -28,9 +28,10 @@
 #define APDS9960_INT_PIN     19
 #define GPIO_INPUT_PIN_SEL  (1ULL<<APDS9960_INT_PIN)
 #define ESP_INTR_FLAG_DEFAULT 0
-
+#define LONG_TIME 0xffff
 extern TaskHandle_t xGesture;
 extern TaskHandle_t xOledTask;
+extern SemaphoreHandle_t xSemaphore;
 //extern dd_layer *key_layouts;
 
 void IRAM_ATTR gesture_isr_handler(void *arg);
