@@ -52,6 +52,7 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[5]);
 
 void apds9960_test_gesture();
 void apds9960_deinit();
+void apds9960_free();
 void apds9960_init();
 void read_gesture();
 void config_interrup_pin(void);

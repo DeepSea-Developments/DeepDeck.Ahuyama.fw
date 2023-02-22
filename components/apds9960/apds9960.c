@@ -831,7 +831,8 @@ uint8_t apds9960_read_gesture(apds9960_handle_t sensor) {
 //		ESP_LOGI(":", "......");
 		if (!apds9960_gesture_valid(sensor) || time_error > 10) {
 			gestureReceived = APDS9960_NONE;
-
+//			ESP_LOGI(":", "sen_gvalid[%d]  time_error[%d]  ",
+//					sens->_gstatus_t.gvalid, time_error);
 			apds9960_reset_counts(sensor);
 //			///////
 //			apds9960_clear_interrupt(sensor);
@@ -850,6 +851,9 @@ uint8_t apds9960_read_gesture(apds9960_handle_t sensor) {
 		i2c_bus_read_bytes(sens->i2c_dev, APDS9960_GFIFO_U, toRead, buf);
 //		ESP_LOGI(":", "UP[%d]  DOWN[%d]  RIGHT[%d]  LEFT[%d]", buf[0], buf[1],
 //				buf[2], buf[3]);
+
+//		ESP_LOGI(":", "input %d = [%d,%d,%d,%d]", (time_error + 1), buf[0],
+//				buf[1], buf[2], buf[3]);
 //
 //		ESP_LOGI("*", "");
 
@@ -871,7 +875,7 @@ uint8_t apds9960_read_gesture(apds9960_handle_t sensor) {
 //				sens->right_cnt);
 //		ESP_LOGI(":", "far_count=%d  		near_count=%d", far_count, near_count);
 
-		if ((up_down_diff < 50) & (left_right_diff < 30))
+		if ((((int) buf[0] - (int) buf[1]) < 50) & (left_right_diff < 30))
 			near_count++;
 		else
 			far_count++;
@@ -917,17 +921,26 @@ uint8_t apds9960_read_gesture(apds9960_handle_t sensor) {
 			}
 		}
 
-		if ((sens->down_cnt > 4) & (near_count > 4)) {
-			gestureReceived = APDS9960_NEAR;
-		}
-		if (((sens->down_cnt > 4) & (time_error > 5)) & (far_count > 4)) {
-			gestureReceived = APDS9960_FAR;
+		if ((sens->down_cnt > 3) & ((near_count > 4) || (far_count > 4))) {
+
+			if ((buf[0] > 200) & (buf[1] > 200))
+				gestureReceived = APDS9960_NEAR;
+			else
+				gestureReceived = APDS9960_FAR;
 		}
 
-		if (up_down_diff != 0 || left_right_diff != 0) {
+		if (up_down_diff != 0 || left_right_diff != 0 || near_count >= 1
+				|| far_count >= 1) {
 			t = xTaskGetTickCount();
 		}
-//		ESP_LOGI("*", "temp_gesture = %d", gestureReceived);
+
+//		ESP_LOGI(":", "up_down_diff=%d			left_right_diff=%d", up_down_diff,
+//				left_right_diff);
+//		ESP_LOGI(":", "up_cnt=%d				down_cnt=%d", sens->up_cnt, sens->down_cnt);
+//		ESP_LOGI(":", "left_cnt=%d				right_cnt=%d", sens->left_cnt,
+//				sens->right_cnt);
+//		ESP_LOGI(":", "far_count=%d				near_count=%d", far_count, near_count);
+
 		if (gestureReceived
 				|| xTaskGetTickCount() - t > (300 / portTICK_RATE_MS)) {
 
