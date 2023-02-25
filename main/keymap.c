@@ -209,7 +209,7 @@ dd_layer layer2 =
 				{ KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB },
 			
 			.gesture_map = 
-				{ KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE,  KC_MEDIA_NEXT_TRACK,KC_MEDIA_NEXT_TRACK },
+				{ KC_0, KC_1, KC_2, KC_3,  KC_4,KC_5 },
 		};
 
 dd_layer layer3 = 
