@@ -18,6 +18,7 @@
 #include <string.h>
 #include <keyboard_config.h>
 #include "nvs_keymaps.h"
+#include "nvs.h"
 
 #define NVS_CONFIG_OK 1
 #define NVS_CONFIG_ERR 0

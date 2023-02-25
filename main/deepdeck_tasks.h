@@ -33,6 +33,14 @@ extern TaskHandle_t xKeyreportTask;
 void oled_task(void *pvParameters);
 
 /**
+ * @brief Tasks that manage the Gesture Sensor
+ * @todo
+ *
+ * @param pvParameters
+ */
+void gesture_task(void *pvParameters);
+
+/**
  * @brief Task that hanldes battery status and report to screen and BT.
  * 
  * @param pvParameters 
