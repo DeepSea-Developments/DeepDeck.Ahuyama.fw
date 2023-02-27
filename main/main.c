@@ -136,11 +136,12 @@ void app_main()
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
 
+#ifdef GESTURE_ENABLE
 	apds9960_init();
 	vTaskDelay(pdMS_TO_TICKS(1000));
 	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	&xGesture);
 	ESP_LOGI("Gesture", "initialized");
-
+#endif
 
 
 	//activate oled
