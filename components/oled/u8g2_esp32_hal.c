@@ -115,21 +115,21 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
 				break;
 			}
 
-		    i2c_config_t conf;
-			conf.clk_flags = 0;
-		    conf.mode = I2C_MODE_MASTER;
-			ESP_LOGI(TAG, "sda_io_num %d", u8g2_esp32_hal.sda);
-		    conf.sda_io_num = u8g2_esp32_hal.sda;
-		    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-			ESP_LOGI(TAG, "scl_io_num %d", u8g2_esp32_hal.scl);
-		    conf.scl_io_num = u8g2_esp32_hal.scl;
-		    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-			ESP_LOGI(TAG, "clk_speed %d", I2C_MASTER_FREQ_HZ);
-		    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-			ESP_LOGI(TAG, "i2c_param_config %d", conf.mode);
-		    ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
-			ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
-		    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
+//		    i2c_config_t conf;
+//			conf.clk_flags = 0;
+//		    conf.mode = I2C_MODE_MASTER;
+//			ESP_LOGI(TAG, "sda_io_num %d", u8g2_esp32_hal.sda);
+//		    conf.sda_io_num = u8g2_esp32_hal.sda;
+//		    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+//			ESP_LOGI(TAG, "scl_io_num %d", u8g2_esp32_hal.scl);
+//		    conf.scl_io_num = u8g2_esp32_hal.scl;
+//		    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+//			ESP_LOGI(TAG, "clk_speed %d", I2C_MASTER_FREQ_HZ);
+//		    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
+//			ESP_LOGI(TAG, "i2c_param_config %d", conf.mode);
+//		    ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
+//			ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
+//		    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
 			break;
 		}
 

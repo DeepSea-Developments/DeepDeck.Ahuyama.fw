@@ -1,4 +1,5 @@
 .config
+.cache
 *.o
 *.pyc
 

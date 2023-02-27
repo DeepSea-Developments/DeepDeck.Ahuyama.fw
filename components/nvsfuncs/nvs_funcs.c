@@ -88,6 +88,10 @@ uint8_t nvs_read_num_layers(void)
 	
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE,&nvs_handle));
 	
+#ifdef LAYER_MODIFICATION_MODE
+	nvs_write_default_layers(nvs_handle);
+#endif // LAYER_MODIFICATION_MODE
+
 	esp_err_t res = nvs_get_u8(nvs_handle,LAYER_NUM_KEY,&layer_num);
 	switch (res)
     {

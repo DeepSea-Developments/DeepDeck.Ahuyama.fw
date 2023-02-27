@@ -9,7 +9,6 @@
  * 
  */
 
-
 #include "deepdeck_tasks.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -31,8 +30,9 @@
 #include "hal_ble.h"
 
 #include "keycode_conv.h"
+#include "gesture_handles.h"
 
-static const char * TAG = "KeyReport";
+static const char *TAG = "KeyReport";
 
 #define KEY_REPORT_TAG "KEY_REPORT"
 #define SYSTEM_REPORT_TAG "KEY_REPORT"
@@ -43,7 +43,10 @@ static const char * TAG = "KeyReport";
 #ifdef OLED_ENABLE
 TaskHandle_t xOledTask;
 #endif
+
 TaskHandle_t xKeyreportTask;
+
+//extern SemaphoreHandle_t xSemaphore;
 
 /**
  * @todo look a better way to handle the deepsleep flag.
@@ -51,42 +54,39 @@ TaskHandle_t xKeyreportTask;
  */
 bool DEEP_SLEEP = true; // flag to check if we need to go to deep sleep
 
-
-void oled_task(void *pvParameters) 
-{
+void oled_task(void *pvParameters) {
 	deepdeck_status = S_NORMAL;
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
-	while (1) 
-	{
-		switch(deepdeck_status)
-		{
-			case S_NORMAL:
-				if (halBLEIsConnected() == 0) {
-					if (CON_LOG_FLAG == false) {
-						ESP_LOGI(TAG,
-								"Not connected, waiting for connection ");
-					}
-					waiting_oled();
-					DEEP_SLEEP = false;
-					CON_LOG_FLAG = true;
-				} else {
-					if (CON_LOG_FLAG == true) {
-						ble_connected_oled();
-					}
-					update_oled();
-					CON_LOG_FLAG = false;
+	while (1) {
+		switch (deepdeck_status) {
+		case S_NORMAL:
+			if (halBLEIsConnected() == 0) {
+				if (CON_LOG_FLAG == false) {
+					ESP_LOGI(TAG, "Not connected, waiting for connection ");
 				}
+				waiting_oled();
+				DEEP_SLEEP = false;
+				CON_LOG_FLAG = true;
+			} else {
+				if (CON_LOG_FLAG == true) {
+					ble_connected_oled();
+				}
+				update_oled();
+				CON_LOG_FLAG = false;
+			}
 			break;
-			case S_SETTINGS:
-				menu_init();
-				vTaskDelay(pdMS_TO_TICKS(200));
+		case S_SETTINGS:
+			menu_init();
 
-				menu_screen();
-				ble_connected_oled();
+			vTaskDelay(pdMS_TO_TICKS(200));
 
-				deepdeck_status = S_NORMAL;
+			menu_screen();
+			ble_connected_oled();
 
+			deepdeck_status = S_NORMAL;
+			//release gesture sensor again
+			apds9960_free();
 			break;
 		}
 		vTaskDelay(pdMS_TO_TICKS(250));
@@ -94,40 +94,64 @@ void oled_task(void *pvParameters)
 
 }
 
+void gesture_task(void *pvParameters) {
 
-void battery_reports(void *pvParameters) 
-{
+	while (true) {
+
+		if ( xSemaphoreTake( xSemaphore, 10 ) == pdTRUE) {
+
+			//Do not send anything if queues are uninitialized
+			if (keyboard_q == NULL || joystick_q == NULL) {
+				ESP_LOGE(TAG, "queues not initialized");
+				continue;
+			}
+
+//			ESP_LOGI("Gesture", "xSemaphore Take");
+			do{
+				vTaskDelay(pdMS_TO_TICKS(10));
+			}while(deepdeck_status == S_SETTINGS);
+			read_gesture();
+
+		} else {
+			vTaskDelay(pdMS_TO_TICKS(10));
+		}
+
+		vTaskDelay(pdMS_TO_TICKS(250));
+
+	}
+
+}
+
+void battery_reports(void *pvParameters) {
 	//uint8_t past_battery_report[1] = { 0 };
 
-	while(1){
+	while (1) {
 		uint32_t bat_level = get_battery_level();
 		//if battery level is above 100, we're charging
-		if(bat_level > 100){
+		if (bat_level > 100) {
 			bat_level = 100;
 			//if charging, do not enter deepsleep
 			DEEP_SLEEP = false;
 		}
-		void* pReport = (void*) &bat_level;
+		void *pReport = (void*) &bat_level;
 
-		ESP_LOGI("Battery Monitor","battery level %d", bat_level);
-		if(BLE_EN == 1){
-			xQueueSend(battery_q, pReport, (TickType_t) 0);
+		ESP_LOGI("Battery Monitor", "battery level %d", bat_level);
+		if (BLE_EN == 1) {
+			xQueueSend(battery_q, pReport, (TickType_t ) 0);
 		}
-		if(input_str_q != NULL){
-			xQueueSend(input_str_q, pReport, (TickType_t) 0);
+		if (input_str_q != NULL) {
+			xQueueSend(input_str_q, pReport, (TickType_t ) 0);
 		}
-		vTaskDelay(60*1000/ portTICK_PERIOD_MS);
+		vTaskDelay(60 * 1000 / portTICK_PERIOD_MS);
 	}
 }
 
-void key_reports(void *pvParameters)
-{
+void key_reports(void *pvParameters) {
 	// Arrays for holding the report at various stages
 	uint8_t past_report[REPORT_LEN] = { 0 };
 	uint8_t report_state[REPORT_LEN];
 
-	while (1) 
-	{
+	while (1) {
 		memcpy(report_state, check_key_state(&key_layouts[current_layout]),
 				sizeof report_state);
 
@@ -140,34 +164,35 @@ void key_reports(void *pvParameters)
 		//Check if the report was modified, if so send it
 		if (memcmp(past_report, report_state, sizeof past_report) != 0) {
 			DEEP_SLEEP = false;
-			void* pReport;
+			void *pReport;
 			memcpy(past_report, report_state, sizeof past_report);
 
 #ifndef NKRO
-			uint8_t trunc_report[REPORT_LEN] = {0};
+			uint8_t trunc_report[REPORT_LEN] = { 0 };
 			trunc_report[0] = report_state[0];
 			trunc_report[1] = report_state[1];
 
 			uint16_t cur_index = 2;
 			//Phone's mtu size is usuaully limited to 20 bytes
-			for(uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE; ++i){
-				if(report_state[i] != 0){
+			for (uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE;
+					++i) {
+				if (report_state[i] != 0) {
 					trunc_report[cur_index] = report_state[i];
 					++cur_index;
 				}
 			}
 
-			pReport = (void *) &trunc_report;
+			pReport = (void*) &trunc_report;
 #endif
 #ifdef NKRO
 			pReport = (void *) &report_state;
 #endif
 
-			if(BLE_EN == 1){
-				xQueueSend(keyboard_q, pReport, (TickType_t) 0);
+			if (BLE_EN == 1) {
+				xQueueSend(keyboard_q, pReport, (TickType_t ) 0);
 			}
-			if(input_str_q != NULL){
-				xQueueSend(input_str_q, pReport, (TickType_t) 0);
+			if (input_str_q != NULL) {
+				xQueueSend(input_str_q, pReport, (TickType_t ) 0);
 			}
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
@@ -175,9 +200,8 @@ void key_reports(void *pvParameters)
 
 }
 
-void rgb_leds_task(void *pvParameters) 
-{
-	
+void rgb_leds_task(void *pvParameters) {
+
 	rgb_key_led_init();
 	rgb_notification_led_init();
 	while (1) {
@@ -186,8 +210,7 @@ void rgb_leds_task(void *pvParameters)
 	}
 }
 
-void encoder_report(void *pvParameters) 
-{
+void encoder_report(void *pvParameters) {
 	uint8_t encoder1_status = 0;
 	uint8_t encoder2_status = 0;
 	uint8_t past_encoder1_state = 0;
@@ -196,79 +219,74 @@ void encoder_report(void *pvParameters)
 	rotary_encoder_t *encoder_a = NULL;
 	rotary_encoder_t *encoder_b = NULL;
 
-
 	//--------------------Start encoder 1---------------
 	// Rotary encoder underlying device is represented by a PCNT unit in this example
-    uint32_t pcnt_unit_a = 0;
+	uint32_t pcnt_unit_a = 0;
 
-    // Create rotary encoder instance
-    rotary_encoder_config_t config_a = \
-		ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN, ENCODER1_S_ACTIVE_LOW);
-    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_a, &encoder_a));
+	// Create rotary encoder instance
+	rotary_encoder_config_t config_a =
+					ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_a, ENCODER1_A_PIN, ENCODER1_B_PIN, ENCODER1_S_PIN, ENCODER1_S_ACTIVE_LOW);
+	ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_a, &encoder_a));
 
-    // Filter out glitch (1us)
-    ESP_ERROR_CHECK(encoder_a->set_glitch_filter(encoder_a, 1));
+	// Filter out glitch (1us)
+	ESP_ERROR_CHECK(encoder_a->set_glitch_filter(encoder_a, 1));
 
-    // Start encoder
-    ESP_ERROR_CHECK(encoder_a->start(encoder_a));
+	// Start encoder
+	ESP_ERROR_CHECK(encoder_a->start(encoder_a));
 
 	//--------------------Start encoder 2---------------
 	uint32_t pcnt_unit_b = 1;
 
-    // Create rotary encoder instance
-    rotary_encoder_config_t config_b = \
-			ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN, ENCODER2_S_ACTIVE_LOW);
-    ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_b, &encoder_b));
+	// Create rotary encoder instance
+	rotary_encoder_config_t config_b =
+					ROTARY_ENCODER_DEFAULT_CONFIG((rotary_encoder_dev_t)pcnt_unit_b, ENCODER2_A_PIN, ENCODER2_B_PIN, ENCODER2_S_PIN, ENCODER2_S_ACTIVE_LOW);
+	ESP_ERROR_CHECK(rotary_encoder_new_ec11(&config_b, &encoder_b));
 
-    // Filter out glitch (1us)
-    ESP_ERROR_CHECK(encoder_b->set_glitch_filter(encoder_b, 1));
+	// Filter out glitch (1us)
+	ESP_ERROR_CHECK(encoder_b->set_glitch_filter(encoder_b, 1));
 
-    // Start encoder
-    ESP_ERROR_CHECK(encoder_b->start(encoder_b));
+	// Start encoder
+	ESP_ERROR_CHECK(encoder_b->start(encoder_b));
 
-	while (1) 
-	{
+	while (1) {
 		encoder1_status = encoder_state(encoder_a);
 
-		if(encoder1_status != past_encoder1_state) 
-		{
+		if (encoder1_status != past_encoder1_state) {
 			//EEP_SLEEP = false;
 			// Check if both encoder are pushed, to enter settings mode.
 
-			if(deepdeck_status == S_SETTINGS)
-			{
-				menu_command((encoder_state_t)encoder1_status);
-			}
-			else if( encoder1_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_b) )
-			{
+			if (deepdeck_status == S_SETTINGS) {
+
+				menu_command((encoder_state_t) encoder1_status);
+
+			} else if (encoder1_status == ENC_BUT_LONG_PRESS
+					&& encoder_push_state(encoder_b)) {
 				//Enter Setting mode.
 				deepdeck_status = S_SETTINGS;
-				ESP_LOGI("Encoder 1","setting mode");
-			}
-			else
-			{
-				encoder_command(encoder1_status, key_layouts[current_layout].left_encoder_map);
+				ESP_LOGI("Encoder 1", "setting mode");
+			} else {
+				encoder_command(encoder1_status,
+						key_layouts[current_layout].left_encoder_map);
 			}
 			past_encoder1_state = encoder1_status;
 		}
-		
+
 		encoder2_status = encoder_state(encoder_b);
 
 		if (encoder2_status != past_encoder2_state) {
-			DEEP_SLEEP = false; 
+			DEEP_SLEEP = false;
 
 			// Check if both encoder are pushed, to enter settings mode.
-			if( encoder2_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_a) )
-			{
+			if (encoder2_status == ENC_BUT_LONG_PRESS
+					&& encoder_push_state(encoder_a)) {
 				//Enter Setting mode.
 				deepdeck_status = S_SETTINGS;
-				ESP_LOGI("Encoder 2","setting mode");
+				ESP_LOGI("Encoder 2", "setting mode");
+			} else {
+				encoder_command(encoder2_status,
+						key_layouts[current_layout].right_encoder_map);
 			}
-			else
-			{
-				encoder_command(encoder2_status, key_layouts[current_layout].right_encoder_map);
-			}
-			
+
 			past_encoder2_state = encoder2_status;
 		}
 		taskYIELD();
@@ -279,14 +297,12 @@ void encoder_report(void *pvParameters)
  *  wake up on touch on GPIO pin 2
  *  */
 #ifdef SLEEP_MINS
-void deep_sleep(void *pvParameters) 
-{
+void deep_sleep(void *pvParameters) {
 
 	uint64_t initial_time = esp_timer_get_time(); // notice that timer returns time passed in microseconds!
 	uint64_t current_time_passed = 0;
 	uint8_t force_sleep = false;
-	while (1) 
-	{
+	while (1) {
 		current_time_passed = (esp_timer_get_time() - initial_time);
 
 		if (DEEP_SLEEP == false) {
@@ -294,16 +310,14 @@ void deep_sleep(void *pvParameters)
 			initial_time = esp_timer_get_time();
 			DEEP_SLEEP = true;
 		}
-		if (menu_get_goto_sleep())
-		{
+		if (menu_get_goto_sleep()) {
 			force_sleep = true;
 			DEEP_SLEEP = true;
 		}
-		
 
-		if ( ( ((double)current_time_passed/USEC_TO_SEC) >= (double)  (SEC_TO_MIN * SLEEP_MINS)) || force_sleep ) {
-			if (DEEP_SLEEP == true) 
-			{
+		if ((((double) current_time_passed / USEC_TO_SEC)
+				>= (double) (SEC_TO_MIN * SLEEP_MINS)) || force_sleep) {
+			if (DEEP_SLEEP == true) {
 				force_sleep = false;
 				ESP_LOGE(SYSTEM_REPORT_TAG, "going to sleep!");
 #ifdef OLED_ENABLE
