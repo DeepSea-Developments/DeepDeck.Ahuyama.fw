@@ -121,8 +121,8 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
-plugins:
-  - social
+# plugins:
+#   - social
 
   # Page tree
 nav:
