@@ -113,7 +113,7 @@ void read_gesture() {
 
 			flag = false;
 //			ESP_LOGI("Gesture", "Suspend xOledTask");
-			vTaskSuspend(xOledTask);
+			vTaskSuspend(xOledTask);//suspend oled task to prevent i2c bus crashed
 
 //			ESP_LOGI("Gesture", "Read Gesture start .......");
 			gesture = apds9960_read_gesture(apds9960);

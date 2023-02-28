@@ -34,13 +34,17 @@ extern TaskHandle_t xOledTask;
 extern SemaphoreHandle_t xSemaphore;
 //extern dd_layer *key_layouts;
 
+
+//interrup callback to handle apds9960 pint interrup
 void IRAM_ATTR gesture_isr_handler(void *arg);
+
+//software timer to block gesture detection ehile using right rotary encoder
 esp_err_t set_timer(void);
 
 
 
 /**
- * @brief
+ * @brief How to process encoder activity
  *
  * @param
  * @return
@@ -51,11 +55,17 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[5]);
 
 
 void apds9960_test_gesture();
+// deinit apds9960 sensor - delete sensor for i2c bus
 void apds9960_deinit();
+// test to free apds9960 after Ole-menu-config
 void apds9960_free();
+// Config and startup  gesture sensor
 void apds9960_init();
+// read  apds9960 gesture
 void read_gesture();
+//configure interrup input pin for gesture detection
 void config_interrup_pin(void);
+// stand-alone test for gesture sensor
 void test();
 
 #endif /* MAIN_GESTURE_HANDLES_H_ */
