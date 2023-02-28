@@ -49,6 +49,13 @@ enum custom_macros
 	KC_APP_CHROME_NEW_WINDOW,		 // Chrome - New window
 	KC_APP_CHROME_N_INC_WINDOW,		 // Chrome - New incognito window
 	KC_APP_CHROME_CLOSE_TAB,		 // Chrome - Close tab
+	KC_APP_CHROME_TAB1,              // Chrome - Open tab 1
+	KC_APP_CHROME_TAB2,              // Chrome - Open tab 2
+	KC_APP_CHROME_TAB3,              // Chrome - Open tab 3
+	KC_APP_CHROME_TAB_LAST,			 // Chrome - Open last tab
+	KC_APP_CHROME_REOPEN_TABS,       // Chrome - Reopen all the tabs
+	KC_APP_CHROME_BACKWARD,          // Chrome - Navigate Backward
+	KC_APP_CHROME_FORWARD,           // Chrome - Navigate forward
 	KC_APP_WINDOWPUT_LINUX_K,		 // Windows plugin call windowput to move windows to certain parts. use this plus arrows.
 	KC_APP_GIMP_DESELECT,			 // Gimp shortcut to deselect all.
 	KC_APP_GIMP_INVERT,				 // Gimp shortcut to invert selection.
@@ -97,6 +104,20 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 	{KC_LCTRL, KC_LSHIFT, KC_N, KC_NO},
 	// Chrome - Close tab
 	{KC_LCTRL, KC_W, KC_NO},
+	//  Chrome - Open tab 1
+	{KC_LCTRL, KC_1, KC_NO},
+	//  Chrome - Open tab 2
+	{KC_LCTRL, KC_2, KC_NO},
+	//  Chrome - Open tab 3
+	{KC_LCTRL, KC_3, KC_NO},
+	//  Chrome - Open last tab
+	{KC_LCTRL, KC_9, KC_NO},
+	//  Chrome - Reopen all the tabs
+	{KC_LCTRL, KC_LSHIFT, KC_T, KC_NO},
+	//Chrome - Navigate Backward
+	{KC_LALT, KC_LEFT, KC_NO},
+	//Chrome - Navigate forward
+	{KC_LALT, KC_RIGHT, KC_NO},
 
 	// Linux - WindowPut plugin - MosaicWindow
 	{KC_LGUI, KC_LALT, KC_NO},
@@ -195,42 +216,26 @@ dd_layer layer2 =
 		.gesture_map = {KC_0, KC_1, KC_2, KC_3, KC_4, KC_5},
 };
 
-	KC_APP_CHROME_NTAB,				 // Chrome - Next tab
-	KC_APP_CHROME_PTAB,				 // Chrome - Prev tab
-	KC_APP_CHROME_NEW_TAB,			 // Chrome - New window
-	KC_APP_CHROME_NEW_WINDOW,		 // Chrome - New window
-	KC_APP_CHROME_N_INC_WINDOW,		 // Chrome - New incognito window
-	KC_APP_CHROME_CLOSE_TAB,		 // Chrome - Close tab
-
-	KC_APP_CHROME_TAB1,              //Chrome - Open tab 1
-	KC_APP_CHROME_TAB2,              //Chrome - Open tab 2
-	KC_APP_CHROME_TAB3,              //Chrome - Open tab 3
-	KC_APP_CHROME_TAB_LAST,			 //Chrome - Open last tab
-	KC_APP_CHROME_REOPEN_TABS,       //Chrome - Reopen all the tabs
-	KC_APP_CHROME_FORWARD,           //Chrome - Navigate forward
-	KC_APP_CHROME_BACKWARD,          //Chrome - Navigate Backward
-
-
 dd_layer layer3 =
 	{
 		.name = "Chrome",
-		/* VSCODE
+		/* Chrome
 		 * ,-----------------------------------------------------------------------.
-		 * |        F12      |       F11       |     PrtScr      |  LAYER CHANGE   |
+		 * | F12 (dev tools) | F11 (large screen) |     PrtScr   |  LAYER CHANGE   |
 		 * |-----------------+-----------------+-----------------+-----------------|
-		 * |       NTAB      |      PTAB       |    Reopen tabs  |   close tabs    |
+		 * |   Next TAB      |  Previous TAB   |    Reopen tabs  |   close tab     |
 		 * |-----------------+-----------------+-----------------+-----------------|
-		 * |  Navigate back  |Navigate forward |       UP        |       END       |
+		 * |  Navigate back  |Navigate forward |   New Tab       |New incognito tab|
 		 * |-----------------+-----------------+-----------------+-----------------|
 		 * |       Tab 1     |      Tab 2      |     Tab 3       |      Tab n      |
 		 * `-----------------------------------------------------------------------'
 		 */
 		.key_map = {
-			{KC_APP_CHROME_TAB1, KC_APP_CHROME_TAB2, KC_APP_CHROME_TAB_LAST, RAISE},
-			{KC_APP_CHROME_NTAB, KC_APP_CHROME_PTAB, KC_APP_CHROME_REOPEN_TABS, KC_APP_CHROME_CLOSE_TAB},
-			{KC_APP_CHROME_BACKWARD, KC_APP_CHROME_FORWARD, KC_UP, KC_END},
-			{KC_LCTRL, KC_LEFT, KC_DOWN, KC_RIGHT}},
-		.key_map_names = {{"NTAB", "PTAB", "next", "layer"}, {"PTAB", "NTAB", "Term", "Shutt"}, {"copy", "GUI", "up", "RAISE"}, {"Tab1", "Tab2", "Tab3", "TabN"}},
+			{KC_F12, KC_F11, KC_PSCREEN, RAISE},
+			{KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_REOPEN_TABS, KC_APP_CHROME_CLOSE_TAB},
+			{KC_APP_CHROME_BACKWARD, KC_APP_CHROME_FORWARD, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_N_INC_WINDOW},
+			{KC_APP_CHROME_TAB1, KC_APP_CHROME_TAB2, KC_APP_CHROME_TAB3, KC_APP_CHROME_TAB_LAST}},
+		.key_map_names = {{"dev", "fullscr", "prtscr", "layer"}, {"PTAB", "NTAB", "reopne", "close"}, {"back", "forw", "new", "incog"}, {"Tab1", "Tab2", "Tab3", "TabN"}},
 
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK},
