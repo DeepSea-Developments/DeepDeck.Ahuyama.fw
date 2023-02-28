@@ -82,7 +82,8 @@ void IRAM_ATTR gesture_isr_handler(void *arg) {
 void apds9960_init() {
 	set_timer();
 	config_interrup_pin();
-
+	//TO DO -improve this.
+	// this is also for oled  initialization. 
 	int i2c_master_port = APDS9960_I2C_MASTER_NUM;
 	i2c_config_t conf = { .mode = I2C_MODE_MASTER, .sda_io_num =
 	APDS9960_I2C_MASTER_SDA_IO, .sda_pullup_en = GPIO_PULLUP_ENABLE,
