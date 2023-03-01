@@ -95,3 +95,5 @@ managed_components
 
 # pytest log
 pytest_embedded_log/
+
+.cache

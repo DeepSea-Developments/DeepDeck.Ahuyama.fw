@@ -73,6 +73,7 @@
 
 #include "plugins.h"
 #include "deepdeck_tasks.h"
+#include "gesture_handles.h"
 
 
 #define BASE_PRIORITY 5
@@ -80,6 +81,8 @@
 //plugin functions
 static config_data_t config;
 
+// xSemaphore for i2C shared resource
+SemaphoreHandle_t xSemaphore = NULL;
 
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
@@ -88,6 +91,8 @@ static config_data_t config;
  */
 void app_main() 
 {
+	xSemaphore = xSemaphoreCreateBinary();
+
 	//Reset the rtc GPIOS
 	rtc_matrix_deinit();
 	// Setup keys matrix
@@ -126,9 +131,18 @@ void app_main()
 
 	//Loading layouts from nvs (if found)
 	nvs_load_layouts();
+
 	//activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
+
+#ifdef GESTURE_ENABLE
+	apds9960_init();
+	vTaskDelay(pdMS_TO_TICKS(1000));
+	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	&xGesture);
+	ESP_LOGI("Gesture", "initialized");
+#endif
+
 
 	//activate oled
 #ifdef	OLED_ENABLE
@@ -178,6 +192,8 @@ void app_main()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
+
+	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
 }
 
 

@@ -91,7 +91,7 @@ static void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int dat
 	// currently for encoder reports
 	if(data_len==1){
 		memcpy(CURRENT_ENCODER, data, sizeof(CURRENT_ENCODER) );
-		encoder_command(CURRENT_ENCODER[0], slave_encoder_map[current_layout]);
+		//encoder_command(CURRENT_ENCODER[0], key_layout[current_layout]);
 
 	}
 

@@ -61,7 +61,7 @@ enum {
 
 char menu_titles[menu_num][MENU_CHAR_NUM] =
 {
-    "Main Menu",
+    "Main Menu v0.5.0",
     "Bluetooth",
     "LED modes"
 };

@@ -210,8 +210,8 @@ void key_led_modes(void)
                     
                     // Build RGB values
                     
-                    hsv2rgb(hue, 100, 5, &red, &green, &blue);
-                    hsv2rgb(hue2, 100, 5, &red2, &green2, &blue2);
+                    hsv2rgb(hue, 100, 100, &red, &green, &blue);
+                    hsv2rgb(hue2, 100, 100, &red2, &green2, &blue2);
                     // Write RGB values to strip driver
                     ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
                 }

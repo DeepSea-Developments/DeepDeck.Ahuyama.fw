@@ -160,8 +160,8 @@ void layer_adjust(uint16_t keycode) {
 uint8_t matrix_prev_state[MATRIX_ROWS][MATRIX_COLS] = { 0 };
 
 // checking the state of each key in the matrix
-uint8_t *check_key_state(uint16_t **keymap) {
-
+uint8_t *check_key_state(dd_layer * keymap) 
+{
 	scan_matrix();
 	for (uint8_t pad = 0; pad < KEYPADS; pad++) {
 
@@ -180,17 +180,18 @@ uint8_t *check_key_state(uint16_t **keymap) {
 				#endif
 
 				uint16_t report_index = (2 + col + row * KEYMAP_COLS);
-				keycode = keymap[row][col];
+				
+				keycode = keymap->key_map[row][col];
 
-				//checking if the keycode is transparent
-				if (keycode == KC_TRNS) {
-					if (current_layout == 0) {
-						keycode = *default_layouts[MAX_LAYER][row][col];
-					} else {
-						keycode =
-								*default_layouts[current_layout - 1][row][col];
-					}
-				}
+				// //checking if the keycode is transparent
+				// if (keycode == KC_TRNS) {
+				// 	if (current_layout == 0) {
+				// 		keycode = *default_layouts[MAX_LAYER][row][col];
+				// 	} else {
+				// 		keycode =
+				// 				*default_layouts[current_layout - 1][row][col];
+				// 	}
+				// }
 
 				led_status = check_led_status(keycode);
 				if (matrix_state[row][col - MATRIX_COLS * pad] == 1) {
@@ -272,7 +273,7 @@ uint8_t *check_key_state(uint16_t **keymap) {
 				if (matrix_state[row][col - MATRIX_COLS * pad] == 0) {
 
 					//checking for layer hold release
-					if ((layouts[prev_layout][row][col] >= LAYER_HOLD_BASE_VAL)
+					if ((key_layouts[prev_layout].key_map[row][col] >= LAYER_HOLD_BASE_VAL)
 							&& (keycode <= LAYER_HOLD_MAX_VAL)
 							&& (layer_hold_flag == 1)) {
 						current_layout = 0;
