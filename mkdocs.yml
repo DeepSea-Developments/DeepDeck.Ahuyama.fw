@@ -135,7 +135,8 @@ nav:
       - Layer: layer-configuration.md
       - Macro: macro-configuration.md
       - Knob: knob-configuration.md
-  - Quick Start Guide: qsg.md
+  - Quick Start Guide: 
+      - qsg.md
       - Thank you!: thankyou.md
   - Known issues: known-issues.md
   - Support and docs: support.md
