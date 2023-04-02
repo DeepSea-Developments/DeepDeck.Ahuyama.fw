@@ -17,12 +17,6 @@
 #include "keyboard_config.h"
 
 //#define APDS9960_VL_IO                       (gpio_num_t)19
-#define APDS9960_I2C_MASTER_SCL_IO           (gpio_num_t)22          /*!< gpio number for I2C master clock */
-#define APDS9960_I2C_MASTER_SDA_IO           (gpio_num_t)21          /*!< gpio number for I2C master data  */
-#define APDS9960_I2C_MASTER_NUM              I2C_NUM_0   /*!< I2C port number for master dev */
-#define APDS9960_I2C_MASTER_TX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
-#define APDS9960_I2C_MASTER_RX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
-#define APDS9960_I2C_MASTER_FREQ_HZ          400000      /*!< I2C master clock frequency */
 
 #define INTERRUPT_GPIO 19
 #define APDS9960_INT_PIN     19
@@ -60,7 +54,8 @@ void apds9960_deinit();
 // test to free apds9960 after Ole-menu-config
 void apds9960_free();
 // Config and startup  gesture sensor
-void apds9960_init();
+//void apds9960_init();
+void apds9960_init(i2c_bus_handle_t *i2cbus);
 // read  apds9960 gesture
 void read_gesture();
 //configure interrup input pin for gesture detection

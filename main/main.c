@@ -136,13 +136,22 @@ void app_main()
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
 
+	// init i2c
+	int i2c_master_port = I2C_MASTER_NUM;
+	i2c_config_t conf = { .mode = I2C_MODE_MASTER, .sda_io_num =
+	I2C_MASTER_SDA_IO, .sda_pullup_en = GPIO_PULLUP_ENABLE,
+			.scl_io_num = I2C_MASTER_SCL_IO, .scl_pullup_en =
+					GPIO_PULLUP_ENABLE, .master.clk_speed =
+			I2C_MASTER_FREQ_HZ, };
+	i2c_bus_handle_t i2c_bus = i2c_bus_create(i2c_master_port, &conf);
+
+	//activate gesture
 #ifdef GESTURE_ENABLE
-	apds9960_init();
-	vTaskDelay(pdMS_TO_TICKS(1000));
+	apds9960_init(&i2c_bus);
+	vTaskDelay(pdMS_TO_TICKS(200));
 	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	&xGesture);
 	ESP_LOGI("Gesture", "initialized");
 #endif
-
 
 	//activate oled
 #ifdef	OLED_ENABLE
@@ -191,8 +200,8 @@ void app_main()
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
-	ESP_LOGI("Main", "Main sequence done!");
 
+	ESP_LOGI("Main", "Main sequence done!");
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
 }
 

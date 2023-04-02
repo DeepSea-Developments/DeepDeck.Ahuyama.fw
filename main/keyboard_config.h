@@ -44,7 +44,6 @@
 #define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
 #define ENCODER1_S_ACTIVE_LOW 0	  // encoder switch is active_low=1 active_high=0
 
-
 #define R_ENCODER_2 // undefine if no rotary encoder is used
 #define ENCODER2_A_PIN GPIO_NUM_33// encoder phase A pin
 #define ENCODER2_B_PIN GPIO_NUM_32// encoder phase B pin
@@ -54,7 +53,7 @@
 #define RGB_LEDS
 
 // Gesture sensor. Comment to disable
-#define GESTURE_ENABLE //ToDo, needs to be fixed to not damage the screen
+#define GESTURE_ENABLE
 
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
@@ -121,6 +120,13 @@ extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 
 extern TaskHandle_t xKeyreportTask;
+
+#define I2C_MASTER_SCL_IO           (gpio_num_t)22          /*!< gpio number for I2C master clock */
+#define I2C_MASTER_SDA_IO           (gpio_num_t)21          /*!< gpio number for I2C master data  */
+#define I2C_MASTER_NUM              I2C_NUM_0   /*!< I2C port number for master dev */
+#define I2C_MASTER_TX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
+#define I2C_MASTER_FREQ_HZ          400000      /*!< I2C master clock frequency */
 
 #endif
 //
