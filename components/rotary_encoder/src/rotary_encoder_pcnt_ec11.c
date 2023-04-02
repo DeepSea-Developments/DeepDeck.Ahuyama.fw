@@ -90,7 +90,7 @@ static int ec11_get_counter_value(rotary_encoder_t *encoder)
     ec11_t *ec11 = __containerof(encoder, ec11_t, parent);
     int16_t val = 0;
     pcnt_get_counter_value(ec11->pcnt_unit, &val);
-    return (val + ec11->accumu_count)/4;
+    return (val + ec11->accumu_count)/2;
 }
 
 static esp_err_t ec11_del(rotary_encoder_t *encoder)
@@ -153,7 +153,6 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     pcnt_counter_pause(ec11->pcnt_unit);
     pcnt_counter_clear(ec11->pcnt_unit);
 
-
     // register interrupt handler in a thread-safe way
     LOCK_ACQUIRE();
     if (!is_pcnt_isr_service_installed) {
@@ -213,7 +212,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
     int16_t PastEncoderCount = encoder->last_encoder_count;
     
     EncoderCount = encoder->get_counter_value(encoder);
-
+    
     if(EncoderCount > PastEncoderCount){
         EncoderState = ENC_UP;
         //ESP_LOGI("Encoder","up");
