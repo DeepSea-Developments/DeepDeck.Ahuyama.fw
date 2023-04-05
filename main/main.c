@@ -74,6 +74,7 @@
 #include "plugins.h"
 #include "deepdeck_tasks.h"
 #include "gesture_handles.h"
+#include "wifi_handles.h"
 
 
 #define BASE_PRIORITY 5
@@ -203,6 +204,12 @@ void app_main()
 
 	ESP_LOGI("Main", "Main sequence done!");
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
+
+
+
+	xTaskCreate()
+
+	
 }
 
 
