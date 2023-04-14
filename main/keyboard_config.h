@@ -60,10 +60,14 @@
 // Gesture sensor. Comment to disable
 #define GESTURE_ENABLE
 
+// Wifi. Comment to disable
+#define WIFI_ENABLE
+
+
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
 // every time you make a modification, or uncomment this line.
-#define LAYER_MODIFICATION_MODE
+// #define LAYER_MODIFICATION_MODE5
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used.
@@ -125,6 +129,8 @@ extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 
 extern TaskHandle_t xKeyreportTask;
+
+
 
 #define I2C_MASTER_SCL_IO           (gpio_num_t)22          /*!< gpio number for I2C master clock */
 #define I2C_MASTER_SDA_IO           (gpio_num_t)21          /*!< gpio number for I2C master data  */

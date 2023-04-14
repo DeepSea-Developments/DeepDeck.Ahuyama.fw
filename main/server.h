@@ -6,6 +6,8 @@
 #include "esp_http_server.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "rgb_led.h"
+#include "keyboard_config.h"
 
 #define MAX_APs 20
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
@@ -28,5 +30,8 @@ esp_err_t get_layer_url_handler(httpd_req_t *req);
 esp_err_t connect_url_handler(httpd_req_t *req);
 esp_err_t test_url_handler(httpd_req_t *req);
 esp_err_t hello_get_handler(httpd_req_t *req);
+
+
+esp_err_t change_keyboard_led_handler(httpd_req_t *req);
 
 #endif

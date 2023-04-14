@@ -244,6 +244,9 @@ dd_layer layer3 =
 		.gesture_map = {KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND},
 };
 
+// dd_layer user_layer1={0};
+// dd_layer user_layer2={0};
+
 dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
 
 uint8_t current_layout = 0;

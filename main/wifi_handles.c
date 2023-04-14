@@ -27,17 +27,16 @@
 
 #include "wifi_handles.h"
 #include "cJSON.h"
+#include "menu.h"
 
 #include "keyboard_config.h"
 #include "nvs_keymaps.h"
 #include "key_definitions.h"
 #include "nvs_funcs.h"
-// #include "mdns.h"
 #include "esp_vfs.h"
 #include "server.h"
 
-
-extern xSemaphoreHandle initSemaphore;
+extern xSemaphoreHandle Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -46,6 +45,7 @@ bool myflag = false;
 bool wifi_reset = false;
 bool wifi_connected = false;
 bool wifi_ap_mode = false;
+
 static const char *TAG = "wifi_handler";
 
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
@@ -73,8 +73,8 @@ static void connect_handler(void *arg, esp_event_base_t event_base,
 
 //////////////////////////WIFI AP//////////////////////////////////////////
 
-static void wifi_AP_event_handler(void *arg, esp_event_base_t event_base,
-								  int32_t event_id, void *event_data)
+void wifi_AP_event_handler(void *arg, esp_event_base_t event_base,
+						   int32_t event_id, void *event_data)
 {
 	if (event_id == WIFI_EVENT_AP_STACONNECTED)
 	{
@@ -127,14 +127,15 @@ void wifi_init_softap(void)
 	ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
 			 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS,
 			 EXAMPLE_ESP_WIFI_CHANNEL);
-	ap_mode = true;
+	wifi_ap_mode = true;
+	wifi_connected_oled("AP_MODE");
 }
 //////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////WIFI STATION/////////////////////////////////////////////
 
-static void event_handler(void *arg, esp_event_base_t event_base,
-						  int32_t event_id, void *event_data)
+void event_handler(void *arg, esp_event_base_t event_base,
+				   int32_t event_id, void *event_data)
 {
 	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
 	{
@@ -158,6 +159,12 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 	{
 		ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
 		ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+
+		// Convierte la dirección IP a una cadena de caracteres
+		char ip_char[16] = {0}; // 16 es el tamaño máximo de una dirección IP
+		sprintf(ip_char, "%d.%d.%d.%d", esp_ip4_addr1_16(&event->ip_info.ip), esp_ip4_addr2_16(&event->ip_info.ip), esp_ip4_addr3_16(&event->ip_info.ip), esp_ip4_addr4_16(&event->ip_info.ip));
+
+		wifi_connected_oled(ip_char);
 		s_retry_num = 0;
 		xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 	}
@@ -175,7 +182,7 @@ void wifi_init_sta(bool mode, char *ssid, char *pass)
 	}
 	else
 	{
-		if (!connected)
+		if (!wifi_connected)
 		{
 			ESP_LOGI("wifi", "init STA for firts time");
 			esp_netif_create_default_wifi_sta();
@@ -185,7 +192,7 @@ void wifi_init_sta(bool mode, char *ssid, char *pass)
 			ESP_LOGI("wifi", "changing network");
 			ESP_ERROR_CHECK(esp_wifi_stop());
 			ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
-			connected = false;
+			wifi_connected = false;
 		}
 	}
 
@@ -241,22 +248,22 @@ void wifi_init_sta(bool mode, char *ssid, char *pass)
 		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
 				 ssid, pass);
 		myflag = false;
-		ap_mode = false;
-		connected = true;
+		wifi_ap_mode = false;
+		wifi_connected = true;
 	}
 	else if (bits & WIFI_FAIL_BIT)
 	{
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
 				 ssid, pass);
 		myflag = true;
-		connected = false;
-		ap_mode = true;
+		wifi_connected = false;
+		wifi_ap_mode = true;
 	}
 	else
 	{
 		ESP_LOGE(TAG, "UNEXPECTED EVENT");
 		myflag = true;
-		ap_mode = true;
+		wifi_ap_mode = true;
 	}
 
 	/* The event will not be processed after unregister */
@@ -308,7 +315,7 @@ void resetWifi(void *params)
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	ESP_ERROR_CHECK(esp_wifi_stop());
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
-	xSemaphoreGive(initSemaphore);
+	xSemaphoreGive(Wifi_initSemaphore);
 
 	vTaskDelete(NULL);
 }
@@ -328,15 +335,18 @@ void wifiInit(void *params)
 	while (true)
 	{
 
-		if (xSemaphoreTake(initSemaphore, portMAX_DELAY))
+		if (xSemaphoreTake(Wifi_initSemaphore, portMAX_DELAY))
 		{
 			if (wifi_reset)
 			{
 				// server = NULL;
-				reset = false;
-				ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-				ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
-				ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
+				wifi_reset = false;
+				printf("Restarting now.\n");
+				fflush(stdout);
+				esp_restart();
+				// ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
+				// ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
+				// ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
 			}
 
 			ESP_LOGI(":", "Searching for wifi credentials");
@@ -384,7 +394,7 @@ void wifiInit(void *params)
 			{
 				// connectSTA(ssid, pass);
 
-				wifi_init_sta(ap_mode, ssid, pass);
+				wifi_init_sta(wifi_ap_mode, ssid, pass);
 			}
 			if (myflag)
 			{

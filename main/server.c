@@ -1,5 +1,5 @@
 
-#include "server.h";
+#include "server.h"
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/projdefs.h"
@@ -28,10 +28,99 @@
 #include "nvs_funcs.h"
 // #include "mdns.h"
 #include "esp_vfs.h"
+#define ROWS 4
+#define COLS 4
 
 static const char *TAG = "webserver";
-extern xSemaphoreHandle initSemaphore;
+extern xSemaphoreHandle Wifi_initSemaphore;
 
+// create a monitor with a list of supported resolutions
+// NOTE: Returns a heap allocated string, you are required to free it after use.
+char *create_monitor(void)
+{
+	const unsigned int resolution_numbers[3][2] = {
+		{1280, 720},
+		{1920, 1080},
+		{3840, 2160}};
+	char *string = NULL;
+	cJSON *name = NULL;
+	cJSON *resolutions = NULL;
+	cJSON *resolution = NULL;
+	cJSON *width = NULL;
+	cJSON *height = NULL;
+	size_t index = 0;
+
+	cJSON *monitor = cJSON_CreateObject();
+	if (monitor == NULL)
+	{
+		cJSON_Delete(monitor);
+		return string;
+	}
+
+	name = cJSON_CreateString("Awesome 4K");
+	if (name == NULL)
+	{
+		cJSON_Delete(monitor);
+		return string;
+	}
+	/* after creation was successful, immediately add it to the monitor,
+	 * thereby transferring ownership of the pointer to it */
+	cJSON_AddItemToObject(monitor, "name", name);
+
+	resolutions = cJSON_CreateArray();
+	if (resolutions == NULL)
+	{
+		cJSON_Delete(monitor);
+		return string;
+	}
+	cJSON_AddItemToObject(monitor, "resolutions", resolutions);
+
+	for (index = 0; index < (sizeof(resolution_numbers) / (2 * sizeof(int))); ++index)
+	{
+		resolution = cJSON_CreateObject();
+		if (resolution == NULL)
+		{
+			cJSON_Delete(monitor);
+			return string;
+		}
+		cJSON_AddItemToArray(resolutions, resolution);
+
+		width = cJSON_CreateNumber(resolution_numbers[index][0]);
+		if (width == NULL)
+		{
+			cJSON_Delete(monitor);
+			return string;
+		}
+		cJSON_AddItemToObject(resolution, "width", width);
+
+		height = cJSON_CreateNumber(resolution_numbers[index][1]);
+		if (height == NULL)
+		{
+			cJSON_Delete(monitor);
+			return string;
+		}
+		cJSON_AddItemToObject(resolution, "height", height);
+	}
+
+	string = cJSON_Print(monitor);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+
+	cJSON_Delete(monitor);
+	return string;
+}
+
+void *json_malloc(size_t size)
+{
+	return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+}
+
+void json_free(void *ptr)
+{
+	heap_caps_free(ptr);
+}
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
@@ -138,7 +227,7 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 			httpd_resp_send(req, NULL, 0);
 			// vTaskDelay(1000 / portTICK_PERIOD_MS);
 			wifi_reset = true;
-			xSemaphoreGive(initSemaphore);
+			xSemaphoreGive(Wifi_initSemaphore);
 		}
 	}
 
@@ -151,16 +240,6 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-void *json_malloc(size_t size)
-{
-	return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
-}
-
-void json_free(void *ptr)
-{
-	heap_caps_free(ptr);
-}
-
 /**
  * @brief Get the layer url handler object
  *
@@ -170,6 +249,7 @@ void json_free(void *ptr)
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET --> /api/layers");
+
 	httpd_resp_set_status(req, "200");
 
 	httpd_resp_send(req, NULL, 0);
@@ -185,9 +265,79 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 esp_err_t get_layerName_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET  --> /api/layers/layer_names");
-	httpd_resp_set_status(req, "200");
 
+	char *string = NULL;
+	cJSON *layer_data = NULL;
+	cJSON *layer_name = NULL;
+	cJSON *layout_pos = NULL;
+	cJSON *layers = NULL;
+
+	cJSON *monitor = cJSON_CreateObject();
+	if (monitor == NULL)
+	{
+		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	layers = cJSON_CreateArray();
+	if (layers == NULL)
+	{
+		cJSON_Delete(monitor);
+		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+	cJSON_AddItemToObject(monitor, "Layers", layers);
+
+	for (int index = 0; index < (LAYERS); ++index)
+	{
+		layer_data = cJSON_CreateObject();
+		if (layer_data == NULL)
+		{
+			cJSON_Delete(monitor);
+			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToArray(layers, layer_data);
+
+		layer_name = cJSON_CreateString((default_layouts[index]->name));
+		if (layer_name == NULL)
+		{
+			cJSON_Delete(monitor);
+			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		/* after creation was successful, immediately add it to the monitor,
+		 * thereby transferring ownership of the pointer to it */
+		char layer_key[8] = {'\0'};
+		snprintf(layer_key, sizeof(layer_key), "layer_%d", index);
+		cJSON_AddItemToObject(layer_data, layer_key, layer_name);
+
+		layout_pos = cJSON_CreateNumber(index);
+		if (layout_pos == NULL)
+		{
+			cJSON_Delete(monitor);
+			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(layer_data, "pos", layout_pos);
+	}
+
+	string = cJSON_Print(monitor);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, "200");
 	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(monitor);
 	return ESP_OK;
 }
 /**
@@ -204,6 +354,19 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
+
+void fill_row(cJSON *row, char names[][10], int codes[])
+{
+	int i;
+	cJSON *item;
+	for (i = 0; i < COLS; i++)
+	{
+		item = cJSON_GetArrayItem(row, i);
+		strcpy(names[i], cJSON_GetObjectItem(item, "name")->valuestring);
+		codes[i] = cJSON_GetObjectItem(item, "key_code")->valueint;
+	}
+}
+
 /**
  * @brief
  *
@@ -214,17 +377,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 {
 
 	ESP_LOGI(TAG, "HTTP PUT --> /api/layers");
-
+	int edit_layer = 0;
 	char buffer[1024];
-	// char *buffer = (char *)malloc(req->content_len);
-
-	// if (buffer == NULL) {
-	//     printf("Memory not allocated.\n");
-	// 	httpd_resp_set_status(req, "500");
-	//     return -1;
-	// }
-
-	// memset(&buffer, 0, sizeof(buffer));
 	httpd_req_recv(req, buffer, req->content_len);
 	cJSON *payload = cJSON_Parse(buffer);
 
@@ -244,18 +398,111 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_name = cJSON_GetObjectItem(payload, "layer name");
 	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
 	{
-		printf("Layer Name \"%s\"\n", layer_name->valuestring);
+		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
 	}
 
-	cJSON *row0 = cJSON_GetObjectItem(payload, "row0");
-	cJSON *key0 = cJSON_GetObjectItem(row0, "k0");
-	cJSON *key1 = cJSON_GetObjectItem(row0, "k1");
-	cJSON *key2 = cJSON_GetObjectItem(row0, "k2");
-	cJSON *key3 = cJSON_GetObjectItem(row0, "k3");
-	printf("row 0 [%d %d %d %d] \r\n", key0->valueint, key1->valueint, key2->valueint, key3->valueint);
+	cJSON *layer_pos = cJSON_GetObjectItem(payload, "layer pos");
+	if (cJSON_IsNumber(layer_pos) && (layer_name->valueint))
+	{
+		printf("Layer pos = \"%d\"\n", layer_pos->valueint);
+	}
 
+	for (int i = 0; i < 3; i++)
+	{
+		if (strcmp(default_layouts[i]->name, layer_name->valuestring) == 0)
+		{
+			printf("Layer[%s] found in pos=%d \n", (layer_name->valuestring), i);
+			edit_layer = i;
+		}
+	}
+
+	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "new_name");
+	if (cJSON_IsString(new_layer_name) && (new_layer_name->valuestring != NULL))
+	{
+		printf("New Layer Name = \"%s\"\n", new_layer_name->valuestring);
+		strcpy(default_layouts[edit_layer]->name, new_layer_name->valuestring);
+	}
+
+	// // Almacenar los valores en un 2D array
+	// int matrix[ROWS][COLS];
+	// for (int i = 0; i < ROWS; i++)
+	// {
+	// 	char row_key[8] = {'\0'};
+	// 	snprintf(row_key, sizeof(row_key), "row_%d", i);
+	// 	cJSON *row = cJSON_GetObjectItemCaseSensitive(payload, row_key);
+	// 	printf("\r\n row_%d:  \r\n", i);
+	// 	if (row != NULL)
+	// 	{
+	// 		for (int j = 0; j < COLS; j++)
+	// 		{
+	// 			char col_key[4] = {'\0'};
+	// 			snprintf(col_key, sizeof(col_key), "k%d", j);
+	// 			cJSON *cell = cJSON_GetObjectItemCaseSensitive(row, col_key);
+	// 			printf("K%d= %d  ", j, cell->valueint);
+	// 			if (cell != NULL)
+	// 			{
+	// 				default_layouts[edit_layer]->key_map[i][j] = cell->valueint;
+	// 				strcpy(default_layouts[edit_layer]->key_map_names[i][j], new_layer_name->valuestring);
+	// 			}
+	// 			else
+	// 			{
+	// 				default_layouts[edit_layer]->key_map[i][j] = KC_UNDEFINED; // Valor por defecto
+	// 			}
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		for (int j = 0; j < COLS; j++)
+	// 		{
+	// 			matrix[i][j] = -1; //
+	// 		}
+	// 	}
+	// }
+
+	//////////////////////
+
+	cJSON *row0 = cJSON_GetObjectItemCaseSensitive(payload, "row0");
+	cJSON *row1 = cJSON_GetObjectItemCaseSensitive(payload, "row1");
+	cJSON *row2 = cJSON_GetObjectItemCaseSensitive(payload, "row2");
+	cJSON *row3 = cJSON_GetObjectItemCaseSensitive(payload, "row3");
+
+	char names[ROWS][COLS][10];
+	int codes[ROWS][COLS];
+
+	fill_row(row0, names[0], codes[0]);
+	fill_row(row1, names[1], codes[1]);
+	fill_row(row2, names[2], codes[2]);
+	fill_row(row3, names[3], codes[3]);
+
+	int i, j;
+	printf("Names:\n");
+	for (i = 0; i < ROWS; i++)
+	{
+		for (j = 0; j < COLS; j++)
+		{
+			printf("%s\t", names[i][j]);			
+			strcpy(default_layouts[edit_layer]->key_map_names[i][j], names[i][j]);
+		}
+		printf("\n");
+	}
+
+	printf("\nCodes:\n");
+	for (i = 0; i < ROWS; i++)
+	{
+		for (j = 0; j < COLS; j++)
+		{
+			printf("%d\t", codes[i][j]);
+			default_layouts[edit_layer]->key_map[i][j] = codes[i][j];
+		}
+		printf("\n");
+	}
+
+	/////////////////////
+
+	nvs_write_layer(*default_layouts[edit_layer], layer_pos->valueint);
+	nvs_load_layouts();
 	cJSON_Delete(payload);
-	httpd_resp_set_status(req, "204 NO CONTENT");
+	httpd_resp_set_status(req, "200 CONFIG UPDATE");
 	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
@@ -275,6 +522,31 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
+esp_err_t change_keyboard_led_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST --> /api/led");
+	int mode_t;
+
+	char buffer[100];
+	memset(&buffer, 0, sizeof(buffer));
+	httpd_req_recv(req, buffer, req->content_len);
+	cJSON *payload = cJSON_Parse(buffer);
+	cJSON *led_mode = cJSON_GetObjectItem(payload, "led_mode");
+	if (cJSON_IsNumber(led_mode))
+	{
+		mode_t = led_mode->valueint;
+		xQueueSend(keyled_q, &mode_t, 0);
+		httpd_resp_set_status(req, "200");
+		httpd_resp_send(req, NULL, 0);
+	}
+	else
+	{
+		httpd_resp_set_status(req, "error");
+		httpd_resp_send(req, NULL, 0);
+	}
+
+	return ESP_OK;
+}
 /* This handler allows the custom error handling functionality to be
  * tested from client side. For that, when a PUT request 0 is sent to
  * URI /ctrl, the /hello and /echo URIs are unregistered and following
@@ -312,6 +584,7 @@ httpd_handle_t start_webserver(void)
 {
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+	config.max_uri_handlers = 20;
 
 	// Start the httpd server
 	ESP_ERROR_CHECK(httpd_start(&server, &config));
@@ -332,6 +605,10 @@ httpd_handle_t start_webserver(void)
 	// ESP_LOGI(TAG, "Registering URI handlers  --> /test");
 	httpd_register_uri_handler(server, &test_url);
 
+	////////LED
+	httpd_uri_t change_led_color_url = {.uri = "/api/led", .method = HTTP_POST, .handler = change_keyboard_led_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &change_led_color_url);
+
 	///////LAYERS
 	httpd_uri_t get_layer_url = {.uri = "/api/layers", .method = HTTP_GET, .handler = get_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &get_layer_url);
@@ -351,9 +628,9 @@ httpd_handle_t start_webserver(void)
 	// return NULL;
 }
 /**
- * @brief 
- * 
- * @param server 
+ * @brief
+ *
+ * @param server
  */
 void stop_webserver(httpd_handle_t server)
 {
