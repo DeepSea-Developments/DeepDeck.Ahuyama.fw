@@ -6,11 +6,17 @@
 #include "keymap.h"
 #include "plugins.h"
 #include "nvs_keymaps.h"
+#include "stdlib.h"
 
 // A bit different from QMK, default returns you to the first layer, LOWER and raise increase/lower layer by order.
 #define DEFAULT 0x100
 #define LOWER 0x101
 #define RAISE 0x102
+
+#define DD_LAYER_INIT(name)                        \
+	{                                              \
+		name, {{0}}, {{{0}}}, {0}, {0}, {0}, false \
+	}
 
 // // Keymaps are designed to be relatively interchangeable with QMK
 // enum custom_keycodes {
@@ -49,13 +55,13 @@ enum custom_macros
 	KC_APP_CHROME_NEW_WINDOW,		 // Chrome - New window
 	KC_APP_CHROME_N_INC_WINDOW,		 // Chrome - New incognito window
 	KC_APP_CHROME_CLOSE_TAB,		 // Chrome - Close tab
-	KC_APP_CHROME_TAB1,              // Chrome - Open tab 1
-	KC_APP_CHROME_TAB2,              // Chrome - Open tab 2
-	KC_APP_CHROME_TAB3,              // Chrome - Open tab 3
+	KC_APP_CHROME_TAB1,				 // Chrome - Open tab 1
+	KC_APP_CHROME_TAB2,				 // Chrome - Open tab 2
+	KC_APP_CHROME_TAB3,				 // Chrome - Open tab 3
 	KC_APP_CHROME_TAB_LAST,			 // Chrome - Open last tab
-	KC_APP_CHROME_REOPEN_TABS,       // Chrome - Reopen all the tabs
-	KC_APP_CHROME_BACKWARD,          // Chrome - Navigate Backward
-	KC_APP_CHROME_FORWARD,           // Chrome - Navigate forward
+	KC_APP_CHROME_REOPEN_TABS,		 // Chrome - Reopen all the tabs
+	KC_APP_CHROME_BACKWARD,			 // Chrome - Navigate Backward
+	KC_APP_CHROME_FORWARD,			 // Chrome - Navigate forward
 	KC_APP_WINDOWPUT_LINUX_K,		 // Windows plugin call windowput to move windows to certain parts. use this plus arrows.
 	KC_APP_GIMP_DESELECT,			 // Gimp shortcut to deselect all.
 	KC_APP_GIMP_INVERT,				 // Gimp shortcut to invert selection.
@@ -71,8 +77,9 @@ enum custom_macros
 	KC_APP_VSCODE_UNDO,				 // VSCode: undo
 	KC_APP_VSCODE_REDO,				 // VSCode: redo
 
-	KC_APP_COPY,  // Copy
-	KC_APP_PASTE, // Paste
+	KC_APP_COPY,	 // Copy
+	KC_APP_PASTE,	 // Paste
+	KC_SPECIAL_LINK, // SPECIAL LINK
 };
 
 /*define what the macros do
@@ -114,9 +121,9 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 	{KC_LCTRL, KC_9, KC_NO},
 	//  Chrome - Reopen all the tabs
 	{KC_LCTRL, KC_LSHIFT, KC_T, KC_NO},
-	//Chrome - Navigate Backward
+	// Chrome - Navigate Backward
 	{KC_LALT, KC_LEFT, KC_NO},
-	//Chrome - Navigate forward
+	// Chrome - Navigate forward
 	{KC_LALT, KC_RIGHT, KC_NO},
 
 	// Linux - WindowPut plugin - MosaicWindow
@@ -156,11 +163,15 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 	//  Paste
 	{KC_LCTRL, KC_V, KC_NO},
 
+	{KC_LCTRL, KC_K, KC_NO},
+
 };
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
 #define XXXXXXX KC_NO
+char encoder_items_names[ENCODER_SIZE][15] = {"CW", "CCW", "Single Press", "Long Press", "Double press"};
+char gesture_items_names[GESTURE_SIZE][8] = {"UP", "DOWN", "LEFT", "RIGHT", "NEAR", "FAR"};
 
 dd_layer layer1 =
 	{
@@ -180,13 +191,14 @@ dd_layer layer1 =
 			{KC_MPLY, KC_MNXT, KC_AUDIO_MUTE, RAISE},
 			{KC_ALT_TAB, KC_ALT_SHIFT_TAB, KC_F11, KC_PSCR},
 			{KC_APP_COPY, KC_APP_PASTE, KC_UP, KC_ENTER},
-			{KC_LGUI, KC_LEFT, KC_DOWN, KC_RIGHT}},
+			{KC_LGUI, KC_LEFT, KC_DOWN, KC_SPECIAL_LINK}},
 		.key_map_names = {{"Play", "next", "mute", "layer"}, {"nWind", "PWind", "F11", "PrtSC"}, {"Copy", "Paste", "up", "Enter"}, {"window", "left", "down", "right"}},
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK},
 		.right_encoder_map = {KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW},
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_NEXT_TRACK},
+		.active = true,
 };
 
 dd_layer layer2 =
@@ -212,8 +224,9 @@ dd_layer layer2 =
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},
 		.right_encoder_map = {KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB},
-		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}		
+		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_0, KC_1, KC_2, KC_3, KC_4, KC_5},
+		.active = true,
 };
 
 dd_layer layer3 =
@@ -239,13 +252,19 @@ dd_layer layer3 =
 
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK},
-		.right_encoder_map = {KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND},
+		.right_encoder_map = {KC_APP_CHROME_FORWARD, KC_APP_CHROME_BACKWARD, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_NEW_WINDOW, KC_APP_CHROME_CLOSE_TAB},
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
-		.gesture_map = {KC_APP_VSCODE_FORWARD, KC_APP_VSCODE_BACKWARD, KC_APP_VSCODE_REDO, KC_APP_VSCODE_FIND_ALL, KC_APP_VSCODE_FIND},
+		.gesture_map = {KC_APP_CHROME_CLOSE_TAB, 0, KC_APP_CHROME_NTAB, KC_APP_CHROME_PTAB, 0, 0},
+		.active = true,
 };
 
-dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
+dd_layer user_layer[3] = {
+	DD_LAYER_INIT("USER1"),
+	DD_LAYER_INIT("USER2"),
+	DD_LAYER_INIT("USER3"),
+};
 
+dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2] };
 uint8_t current_layout = 0;
 
 #endif

@@ -19,6 +19,7 @@ typedef struct dd_layer_str {
 	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
 	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
 	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
+	bool active;
 } dd_layer;
 
 extern dd_layer *key_layouts;
@@ -28,3 +29,6 @@ extern uint8_t layers_num;
 
 
 #endif /* NVS_KEYMAPS_H_ */
+
+
+

@@ -28,6 +28,7 @@ extern TaskHandle_t xOledTask;
 extern SemaphoreHandle_t xSemaphore;
 //extern dd_layer *key_layouts;
 
+extern apds9960_handle_t apds9960;
 
 //interrup callback to handle apds9960 pint interrup
 void IRAM_ATTR gesture_isr_handler(void *arg);

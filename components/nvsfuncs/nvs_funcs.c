@@ -1,26 +1,26 @@
 /**
  * @file nvs_funcs.c
  * @author ElectroNick (nick@dsd.dev)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-12-10
- * 
+ *
  * @copyright Copyright (c) 2022
  * Based o the code f Gal Zaidenstein.
- * 
+ *
  * MIT License
  * Copyright (c) 2022
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,11 +28,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
+ *
  * DeepDeck, a product by DeepSea Developments.
  * More info on DeepDeck @ www.deepdeck.co
  * DeepseaDev.com
- * 
+ *
  */
 
 #include <stdio.h>
@@ -55,20 +55,21 @@
 #define ENCODER_NAMESPACE "encoder_config"
 #define SLAVE_ENCODER_NAMESPACE "slave_encoder_config"
 
-
 #include "key_definitions.h"
 // #include "keyboard_config.h"
 #include "keymap.h"
 // #include "plugins.h"
 
-//NameSpaces
+// NameSpaces
 #define LAYER_NAMESPACE "layers"
 
-//Keys
+// Keys
 #define LAYER_NUM_KEY "layer_num"
 
+const static char *TAG = "NVS LAYERS";
+
 dd_layer *key_layouts;
-uint8_t layers_num=0;
+uint8_t layers_num = 0;
 
 // Check the number of available entries of the NVS
 void nvs_check_memory_status(void)
@@ -76,77 +77,88 @@ void nvs_check_memory_status(void)
 	nvs_stats_t nvs_stats;
 	nvs_get_stats(NULL, &nvs_stats);
 	ESP_LOGI("NVS Status", "Count: UsedEntries = (%d), FreeEntries = (%d), AllEntries = (%d)",
-       nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries); 
+			 nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries);
 }
 
 // Read and returns the number of available layers stored
 uint8_t nvs_read_num_layers(void)
 {
+	ESP_LOGV(TAG, "READ NUM LAYERS");
 	nvs_handle_t nvs_handle;
 	uint8_t layer_num = 0;
-	const static char * TAG = "NVS Read#layers";
-	
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE,&nvs_handle));
-	
+	esp_err_t error;
+
+	// ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK)
+	{
+		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+	}
+
 #ifdef LAYER_MODIFICATION_MODE
 	nvs_write_default_layers(nvs_handle);
-#endif // LAYER_MODIFICATION_MODE
+#endif
+	// LAYER_MODIFICATION_MODE
 
-	esp_err_t res = nvs_get_u8(nvs_handle,LAYER_NUM_KEY,&layer_num);
-	switch (res)
-    {
-    case ESP_ERR_NVS_NOT_FOUND:
-      ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
-	  nvs_write_default_layers(nvs_handle);
-	  ESP_ERROR_CHECK(nvs_get_u8(nvs_handle,LAYER_NUM_KEY,&layer_num));
-    break;
-    case ESP_OK:
-      ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
-    break;
-    default:
-      ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
-    break;
-    }
+	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
+	switch (error)
+	{
+	case ESP_ERR_NVS_NOT_FOUND:
+		ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
+		nvs_write_default_layers(nvs_handle);
+		ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num));
+		break;
+	case ESP_OK:
+		ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
+		break;
+	default:
+		ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
+		break;
+	}
 
 	nvs_close(nvs_handle);
 	return layer_num;
 }
 
 // Read all the available layers stored in the memory
-void nvs_read_layers(dd_layer * layers_array)
+void nvs_read_layers(dd_layer *layers_array)
 {
+	ESP_LOGV(TAG, "READ LAYERS");
 	nvs_handle_t nvs_layer_handle;
 	uint8_t layer_num;
 	char layer_num_key[10] = "layer_num";
-	const static char * TAG = "Read Layers";
 	char layer_key[10];
 	size_t dd_layer_size;
 
 	esp_err_t res;
 
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
-	
-	res = nvs_get_u8(nvs_layer_handle,layer_num_key,&layer_num);
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
+
+	res = nvs_get_u8(nvs_layer_handle, layer_num_key, &layer_num);
 	switch (res)
-    {
-    case ESP_ERR_NVS_NOT_FOUND:
-      ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
-	  nvs_write_default_layers(nvs_layer_handle);
-    break;
-    case ESP_OK:
-      ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
-    break;
-    default:
-      ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
-    break;
-    }
-	
-	for(int i = 0; i < layer_num; i++)
+	{
+	case ESP_ERR_NVS_NOT_FOUND:
+		ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
+		nvs_write_default_layers(nvs_layer_handle);
+		break;
+	case ESP_OK:
+		ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
+		break;
+	default:
+		ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
+		break;
+	}
+
+	for (int i = 0; i < layer_num; i++)
 	{
 		sprintf(layer_key, "layer_%d", i);
 
 		res = nvs_get_blob(nvs_layer_handle, layer_key, (void *)&layers_array[i], &dd_layer_size);
-		if(res != ESP_OK)
+		if (res != ESP_OK)
 		{
 			ESP_LOGE(TAG, "Error (%s) reading layer %s!\n", esp_err_to_name(res), layer_key);
 		}
@@ -159,18 +171,39 @@ void nvs_write_default_layers(nvs_handle_t nvs_handle)
 {
 	char layer_num_key[10] = "layer_num";
 	char layer_key[10];
-	const static char * TAG = "Read Layers";
 	uint8_t default_layer_num = LAYERS;
-	
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle,layer_num_key,default_layer_num));
 
-	for(int i = 0; i < default_layer_num; i++)
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, layer_num_key, default_layer_num));
+
+	for (int i = 0; i < default_layer_num; i++)
 	{
 		sprintf(layer_key, "layer_%d", i);
-		
-		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, (void *) default_layouts[i], sizeof(dd_layer) ));
+
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, (void *)default_layouts[i], sizeof(dd_layer)));
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	}	
+	}
+}
+
+esp_err_t nvs_restore_default_layers()
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	// ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK)
+	{
+		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+	}
+
+	nvs_write_default_layers(nvs_handle);
+	nvs_load_layouts();
+	nvs_close(nvs_handle);
+
+	return ESP_OK;
 }
 
 esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
@@ -178,29 +211,260 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
 	nvs_handle_t nvs_layer_handle;
 	char layer_key[10];
 
-
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE,NVS_READWRITE, &nvs_layer_handle));
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
 
 	sprintf(layer_key, "layer_%d", layer_num);
-	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *) &layer, sizeof(dd_layer) ));
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *)&layer, sizeof(dd_layer)));
 	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
 
 	nvs_close(nvs_layer_handle);
+	nvs_load_layouts();
+	return ESP_OK;
+}
+
+/*
+esp_err_t nvs_create_new_layer(dd_layer layer)
+{
+	nvs_handle_t nvs_layer_handle;
+	esp_err_t error;
+	uint8_t layer_num;
+	char layer_key[10];
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
+	error = nvs_get_u8(nvs_layer_handle, LAYER_NUM_KEY, &layer_num);
+	if (error == ESP_OK)
+	{
+		ESP_LOGI("TAG", "LAYER KEY FOUND ---OK");
+		ESP_LOGI("TAG", "Layer QTY %d", layer_num);
+	}
+	else
+	{
+		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
+	}
+	layer_num++;
+
+	ESP_LOGI("TAG", "New layer QTY %d", layer_num);
+	ESP_LOGI("new layer", " Name:%s", layer.name);
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_layer_handle, LAYER_NUM_KEY, layer_num));
+	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
+
+	sprintf(layer_key, "layer_%d", layer_num);
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *)&layer, sizeof(dd_layer)));
+
+	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
+
+	nvs_close(nvs_layer_handle);
+	free(key_layouts);
+	nvs_load_layouts();
+	return ESP_OK;
+}
+
+*/
+
+esp_err_t nvs_create_new_layer(dd_layer layer)
+{
+	int i = 0;
+	int count_active = 0;
+	nvs_handle_t nvs_handle;
+	nvs_handle_t nvs_handle_new;
+	esp_err_t error;
+	uint8_t layer_num;
+	char layer_key[10];
+
+	dd_layer *temp_layout = malloc(layers_num * sizeof(dd_layer));
+	nvs_read_layers(temp_layout);
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
+	if (error == ESP_OK)
+	{
+		ESP_LOGI("TAG", "LAYER KEY FOUND ---OK");
+		ESP_LOGI("TAG", "Layer QTY %d", layer_num);
+	}
+	else
+	{
+		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
+		return ESP_FAIL;
+	}
+
+	layer_num++;
+	ESP_LOGI("TAG", "New layer QTY %d", layer_num);
+	ESP_LOGI("TAG", " Name:%s", layer.name);	
+	dd_layer *aux = malloc((layers_num+1) * sizeof(dd_layer));
+	
+ESP_LOGI("TAG", "**");	
+	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
+	for (i = 0; i < (layer_num-1); i++)
+	{
+		if (temp_layout[i].active == true)
+		{
+			aux[count_active] = temp_layout[i];
+			count_active++;
+		}
+	}
+		ESP_LOGI("TAG", "**+");	
+	aux[count_active] = layer;
+	count_active++;
+ESP_LOGI("TAG", "**++");		
+	for (i = 0; i < (layer_num-1); i++)
+	{
+		if (temp_layout[i].active == false)
+		{
+			aux[count_active] = temp_layout[i];
+			count_active++;
+		}
+	}
+ESP_LOGI("TAG", "**++++");	
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	nvs_close(nvs_handle);
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle_new));
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle_new, LAYER_NUM_KEY, layer_num));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle_new));
+
+	for (i = 0; i < layer_num; i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
+
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle_new, layer_key, &aux[i], sizeof(dd_layer)));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle_new));
+
+		ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
+	}
+
+	free(temp_layout);
+	free(aux);
+	nvs_close(nvs_handle_new);
+	nvs_load_layouts();
 
 	return ESP_OK;
 }
 
-
-//load the layouts from nvs
-void nvs_load_layouts(void)
+esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 {
-	layers_num = nvs_read_num_layers();
-	key_layouts = malloc(layers_num*sizeof(dd_layer));
-	
-	nvs_read_layers(key_layouts);
-	nvs_check_memory_status();
+	esp_err_t error;
+	uint8_t layer_num;
+	char layer_key[10];
 
-	ESP_LOGI("NVS_TAG","Layer names %s, %s, %s",key_layouts[0].name,key_layouts[1].name,key_layouts[2].name);
-	ESP_LOGI(NVS_TAG,"Layouts loaded");
+	nvs_handle_t nvs_handle;
+	// ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK)
+	{
+		ESP_LOGE(TAG, "LAYER_NAMESPACE  open ---OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+	}
+
+	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
+	if (error == ESP_OK)
+	{
+		ESP_LOGE(TAG, "LAYER KEY FOUND ---OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) READING KEY!: \n", esp_err_to_name(error));
+	}
+
+	dd_layer **new_layouts = malloc((layers_num - 1) * sizeof(dd_layer));
+
+	// Copiar los elementos del array original al nuevo array, excepto el elemento a eliminar
+	int j = 0;
+	for (int i = 0; i < layer_num; i++)
+	{
+		if (i != delete_layer_num)
+		{ // Si no es la posición a eliminar
+			new_layouts[j++] = &key_layouts[i];
+		}
+	}
+
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, LAYER_NUM_KEY, (layer_num - 1)));
+
+	for (int i = 0; i < (layer_num - 1); i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
+
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, (void *)new_layouts[i], sizeof(dd_layer)));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	free(new_layouts);
+	nvs_close(nvs_handle);
+	nvs_load_layouts();
+	if (current_layout > 0)
+	{
+		current_layout--;
+	}
+
+	return ESP_OK;
 }
 
+void nvs_order_active_layers(dd_layer *layers_array)
+{
+	nvs_handle_t nvs_handle;
+	int i = 0;
+	dd_layer *temp_layout = malloc(layers_num * sizeof(dd_layer));
+	int count_active = 0;
+	char layer_key[10];
+	nvs_read_layers(temp_layout);
+
+	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
+	for (i = 0; i < layers_num; i++)
+	{
+		if (temp_layout[i].active == true)
+		{
+			layers_array[count_active] = temp_layout[i];
+			count_active++;
+		}
+	}
+	for (i = 0; i < layers_num; i++)
+	{
+		if (temp_layout[i].active == false)
+		{
+			layers_array[count_active] = temp_layout[i];
+			count_active++;
+		}
+	}
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	nvs_close(nvs_handle);
+
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, LAYER_NUM_KEY, layers_num));
+
+	for (i = 0; i < layers_num; i++)
+	{
+		sprintf(layer_key, "layer_%d", i);
+
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, layer_key, &layers_array[i], sizeof(dd_layer)));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	free(temp_layout);
+	nvs_close(nvs_handle);
+}
+
+// load the layouts from nvs
+void nvs_load_layouts(void)
+{
+	ESP_LOGV("NVS_TAG", "LOADING LAYOUTS");
+	layers_num = nvs_read_num_layers();
+	key_layouts = malloc(layers_num * sizeof(dd_layer));
+
+	nvs_read_layers(key_layouts);
+	nvs_check_memory_status();
+	// nvs_order_active_layers(key_layouts);
+
+	for (int i = 0; i < layers_num; i++)
+	{
+		ESP_LOGI("NVS_TAG", "LAYER NAME %s", key_layouts[i].name);
+	}
+	// ESP_LOGI("NVS_TAG","Layer names %s, %s, %s",key_layouts[0].name,key_layouts[1].name,key_layouts[2].name);
+	ESP_LOGI(NVS_TAG, "Layouts loaded");
+}

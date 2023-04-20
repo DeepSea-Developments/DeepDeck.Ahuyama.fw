@@ -50,8 +50,37 @@ void nvs_read_layers(dd_layer * layers_array);
  */
 void nvs_write_default_layers(nvs_handle_t nvs_handle);
 
-
+/**
+ * @brief 
+ * 
+ * @param layer 
+ * @param layer_num 
+ * @return esp_err_t 
+ */
 esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num);
+
+/**
+ * @brief 
+ * 
+ * @param layer 
+ * @return esp_err_t 
+ */
+esp_err_t nvs_create_new_layer(dd_layer layer);
+
+/**
+ * @brief 
+ * 
+ * @param delete_layer_num 
+ * @return esp_err_t 
+ */
+esp_err_t nvs_delete_layer(uint8_t delete_layer_num);
+
+/**
+ * @brief 
+ * 
+ * @return esp_rr_t 
+ */
+esp_err_t nvs_restore_default_layers();
 
 /**
  * @brief get the layers from memory and load them to for usage

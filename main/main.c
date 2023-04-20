@@ -63,6 +63,7 @@
 
 //Deepdeck functions
 #include "matrix.h"
+#include "keymap.h"
 #include "keyboard_config.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
@@ -74,6 +75,8 @@
 #include "plugins.h"
 #include "deepdeck_tasks.h"
 #include "gesture_handles.h"
+#include "wifi_handles.h"
+#include "server.h"
 
 
 #define BASE_PRIORITY 5
@@ -83,6 +86,8 @@ static config_data_t config;
 
 // xSemaphore for i2C shared resource
 SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t Wifi_initSemaphore = NULL;
+
 
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
@@ -97,6 +102,9 @@ void app_main()
 	rtc_matrix_deinit();
 	// Setup keys matrix
 	matrix_setup();
+
+	// init keymap
+
 	
 	// Initialize NVS (non volatile storage).
 	esp_err_t ret;
@@ -203,6 +211,15 @@ void app_main()
 
 	ESP_LOGI("Main", "Main sequence done!");
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
+
+#ifdef WIFI_ENABLE
+	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
+	// wifi_app_main();
+	Wifi_initSemaphore = xSemaphoreCreateBinary();
+	xTaskCreate(&wifiInit, "init comms", 1024 * 3, NULL, 10, NULL);
+	xSemaphoreGive(Wifi_initSemaphore);
+#endif
+	
 }
 
 
