@@ -63,6 +63,7 @@
 
 //Deepdeck functions
 #include "matrix.h"
+#include "keymap.h"
 #include "keyboard_config.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
@@ -101,6 +102,9 @@ void app_main()
 	rtc_matrix_deinit();
 	// Setup keys matrix
 	matrix_setup();
+
+	// init keymap
+
 	
 	// Initialize NVS (non volatile storage).
 	esp_err_t ret;

@@ -15,6 +15,14 @@
 #include "keyboard_config.h"
 #include "nvs_keymaps.h"
 
+
+
+
+
+
 extern dd_layer *default_layouts[LAYERS];
+extern char encoder_items_names[ENCODER_SIZE][15];
+extern char gesture_items_names[GESTURE_SIZE][8] ;
+void init_keymap();
 
 #endif /* MAIN_KEYMAP_H_ */

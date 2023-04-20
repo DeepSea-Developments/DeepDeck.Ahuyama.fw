@@ -31,6 +31,7 @@ esp_err_t connect_url_handler(httpd_req_t *req);
 esp_err_t test_url_handler(httpd_req_t *req);
 esp_err_t hello_get_handler(httpd_req_t *req);
 
+esp_err_t restore_default_layer_url_handler(httpd_req_t *req);
 
 esp_err_t change_keyboard_led_handler(httpd_req_t *req);
 

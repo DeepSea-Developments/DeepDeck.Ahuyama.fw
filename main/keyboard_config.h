@@ -30,7 +30,7 @@
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4 // For split keyboards, define columns for one side only.
 
-#define LAYERS 3 // number of layers defined
+#define LAYERS 6 // number of layers defined
 
 // Select diode direction
 #define COL2ROW

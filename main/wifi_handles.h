@@ -17,8 +17,6 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define ESP_STA_WIFI_SSID      "Wanda"
-#define ESP_STA_WIFI_PASS      "B1130615116"
 #define ESP_STA_MAXIMUM_RETRY  5
 
 // #if CONFIG_ESP_WIFI_AUTH_OPEN
@@ -46,8 +44,8 @@
 #define WIFI_FAIL_BIT      BIT1
 
 
-#define EXAMPLE_ESP_WIFI_SSID "myESP"
-#define EXAMPLE_ESP_WIFI_PASS "marcoco123456"
+#define EXAMPLE_ESP_WIFI_SSID "AHUYAMA"
+#define EXAMPLE_ESP_WIFI_PASS "DeepDeck"
 #define EXAMPLE_ESP_WIFI_CHANNEL 11
 #define EXAMPLE_MAX_STA_CONN 4
 
