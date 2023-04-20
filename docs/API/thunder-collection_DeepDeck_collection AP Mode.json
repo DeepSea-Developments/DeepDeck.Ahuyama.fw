@@ -1,0 +1,178 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "DeepDeck_collection AP Mode",
+    "dateExported": "2023-04-20T20:15:13.713Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "840041e0-4524-46c6-9cb7-33e32868c90e",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Get layer Names",
+            "url": "192.168.4.1/api/layers/layer_names",
+            "method": "GET",
+            "sortNum": 5000,
+            "created": "2023-04-19T05:23:17.152Z",
+            "modified": "2023-04-20T03:09:32.440Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "isDisabled": true
+                }
+            ],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "a83bce27-9ba9-46c7-bd40-b7ec392d512e",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Get layer Info",
+            "url": "192.168.4.1/api/layers",
+            "method": "GET",
+            "sortNum": 6250,
+            "created": "2023-04-19T19:10:45.225Z",
+            "modified": "2023-04-20T14:10:37.311Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "isDisabled": true
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"layer pos\":4\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "26d6d042-a37c-43f8-9102-c80ac086ddee",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Update Layer",
+            "url": "192.168.4.1/api/layers",
+            "method": "PUT",
+            "sortNum": 7500,
+            "created": "2023-04-19T05:23:08.385Z",
+            "modified": "2023-04-20T04:19:40.853Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"layer name\": \"Chrome\",\n  \"layer pos\": 2,\n  \"new_name\": \"MPP\",\n  \"row0\": [\n    {\n      \"name\": \"BACK\",\n      \"key_code\": 257\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"RAISE\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"left_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"right_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "8088db0a-2b33-46f2-84c3-7983f75d9d16",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Restore Default Layaouts",
+            "url": "192.168.4.1/api/layers/restore",
+            "method": "PUT",
+            "sortNum": 10000,
+            "created": "2023-04-19T05:22:04.577Z",
+            "modified": "2023-04-19T16:40:48.324Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "ce5c6d48-57a4-41e3-9f54-1605d0d0233e",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Create Layer",
+            "url": "192.168.4.1/api/layers",
+            "method": "POST",
+            "sortNum": 15000,
+            "created": "2023-04-19T05:23:46.155Z",
+            "modified": "2023-04-20T14:12:23.572Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \n  \"layer name\": \"abcd\",\n  \"row0\": [\n    {\n      \"name\": \"X\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"Y\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"Z\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "2c3cb13f-139c-4dd5-af8b-eb10c1200989",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Delete Layer",
+            "url": "192.168.4.1/api/layers",
+            "method": "DELETE",
+            "sortNum": 20000,
+            "created": "2023-04-19T05:22:18.327Z",
+            "modified": "2023-04-20T14:14:34.518Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \n  \"layer pos\":0\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "e5808224-44d7-4947-ae11-6339459b904a",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "LED_UPDATE",
+            "url": "192.168.4.1/api/led",
+            "method": "POST",
+            "sortNum": 50000,
+            "created": "2023-04-19T05:23:29.392Z",
+            "modified": "2023-04-20T14:16:50.786Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"led_mode\":0\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "b705cf56-f939-4589-a5a0-c0072acaa007",
+            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "containerId": "",
+            "name": "Wifi connect",
+            "url": "192.168.4.1/api/connect",
+            "method": "POST",
+            "sortNum": 80000,
+            "created": "2023-04-19T05:23:54.484Z",
+            "modified": "2023-04-19T05:23:54.484Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"ssid\": \"Wanda\",\n  \"pass\":\"B1130615116\"\n}",
+                "form": []
+            },
+            "tests": []
+        }
+    ]
+}
