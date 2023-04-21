@@ -33,6 +33,12 @@
 #define NOTIFICATION_RGB_GPIO   23
 #define RGB_LED_KEYBOARD_NUMBER 16
 #define RGB_LED_NOTIFICATION_NUMBER 2
+// The maximum brightness that the LEDs can be set to using the hsv2rgb function
+#define MAX_BRIGHTNESS 16
+// Colors for the solid color mode
+#define SOLID_RED 0
+#define SOLID_GREEN 85
+#define SOLID_BLUE 170
 
 /** @brief Queue for sending mouse reports
  * @see mouse_command_t */
