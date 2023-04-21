@@ -263,7 +263,7 @@ void key_led_modes(void)
                 
                 for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++) {
                     // Write RGB values to strip driver
-                    ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, SOLID_RED, SOLID_BLUE, SOLID_GREEN));
+                    ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, SOLID_RED, SOLID_GREEN, SOLID_BLUE));
                 }
                 // Set notification LEDs to same color as last key
                 ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, SOLID_RED, SOLID_GREEN, SOLID_BLUE));
