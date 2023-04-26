@@ -847,28 +847,28 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	fill_row(row3, names[3], codes[3]);
 
 	int i, j;
-	printf("Names:\n");
+	// printf("Names:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			printf("%s\t", names[i][j]);
+			// printf("%s\t", names[i][j]);
 
 			strcpy(temp_layaout.key_map_names[i][j], names[i][j]);
 		}
-		printf("\n");
+		// printf("\n");
 	}
 
-	printf("\nCodes:\n");
+	// printf("\nCodes:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			printf("%d\t", codes[i][j]);
+			// printf("%d\t", codes[i][j]);
 
 			temp_layaout.key_map[i][j] = codes[i][j];
 		}
-		printf("\n");
+		// printf("\n");
 	}
 	cJSON *item;
 	cJSON *left_encoder_map = cJSON_GetObjectItem(payload, "left_encoder_map");
@@ -912,9 +912,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	{
 		temp_layaout.active = false;
 	}
-
-	nvs_write_layer(temp_layaout, position);
 	cJSON_Delete(payload);
+	nvs_write_layer(temp_layaout, position);
 	nvs_load_layouts();
 
 	// apds9960_free();
@@ -1025,10 +1024,10 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 	cJSON_Delete(payload);
 	current_layout = 0;
-	res = nvs_create_new_layer(new_layer);	
+	res = nvs_create_new_layer(new_layer);
 	if (res == ESP_OK)
 	{
-		nvs_load_layouts();		
+		nvs_load_layouts();
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		// cJSON_Delete(payload);

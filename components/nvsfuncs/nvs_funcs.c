@@ -246,7 +246,7 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
 
 	nvs_close(nvs_layer_handle);
 	nvs_update_layout_position();
-	nvs_load_layouts();
+	// nvs_load_layouts();
 	return ESP_OK;
 }
 
