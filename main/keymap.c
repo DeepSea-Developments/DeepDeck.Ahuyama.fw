@@ -13,9 +13,9 @@
 #define LOWER 0x101
 #define RAISE 0x102
 
-#define DD_LAYER_INIT(name)                        \
-	{                                              \
-		name, {{0}}, {{{0}}}, {0}, {0}, {0}, false \
+#define DD_LAYER_INIT(name)                              \
+	{                                                    \
+		name, {{0}}, {{{0}}}, {0}, {0}, {0}, false, {0}, \
 	}
 
 // // Keymaps are designed to be relatively interchangeable with QMK
@@ -170,8 +170,8 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 // Fillers to make layering more clear
 #define _______ KC_TRNS
 #define XXXXXXX KC_NO
-char encoder_items_names[ENCODER_SIZE][15] = {"CW", "CCW", "Single Press", "Long Press", "Double press"};
-char gesture_items_names[GESTURE_SIZE][8] = {"UP", "DOWN", "LEFT", "RIGHT", "NEAR", "FAR"};
+char encoder_items_names[ENCODER_SIZE][15] = {"cw", "ccw", "single_press", "long_press", "double_press"};
+char gesture_items_names[GESTURE_SIZE][8] = {"up", "down", "left", "right", "near", "far"};
 
 dd_layer layer1 =
 	{
@@ -188,8 +188,8 @@ dd_layer layer1 =
 		 * `-----------------------------------------------------------------------'
 		 */
 		.key_map = {
-			{KC_MPLY, KC_MNXT, KC_AUDIO_MUTE, RAISE},
-			{KC_ALT_TAB, KC_ALT_SHIFT_TAB, KC_F11, KC_PSCR},
+			{KC_MPLY, KC_MNXT, KC_AUDIO_MUTE, RAISE},		 // row0
+			{KC_ALT_TAB, KC_ALT_SHIFT_TAB, KC_F11, KC_PSCR}, // row1
 			{KC_APP_COPY, KC_APP_PASTE, KC_UP, KC_ENTER},
 			{KC_LGUI, KC_LEFT, KC_DOWN, KC_SPECIAL_LINK}},
 		.key_map_names = {{"Play", "next", "mute", "layer"}, {"nWind", "PWind", "F11", "PrtSC"}, {"Copy", "Paste", "up", "Enter"}, {"window", "left", "down", "right"}},
@@ -199,6 +199,9 @@ dd_layer layer1 =
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_NEXT_TRACK},
 		.active = true,
+
+		// .layer_id
+
 };
 
 dd_layer layer2 =
@@ -264,7 +267,22 @@ dd_layer user_layer[3] = {
 	DD_LAYER_INIT("USER3"),
 };
 
-dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2] };
+dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2]};
 uint8_t current_layout = 0;
+
+void generate_uuid()
+{
+	uuid_t uu;
+	char uu_str[UUID_STR_LEN];
+
+	for (int i = 0; i < LAYERS; i++)
+	{
+		uuid_generate(uu);
+		uuid_unparse(uu, uu_str);
+		strcpy(	default_layouts[i]->uuid_str, uu_str);
+	
+	}
+
+}
 
 #endif

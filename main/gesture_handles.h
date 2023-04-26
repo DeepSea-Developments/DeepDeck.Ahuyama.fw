@@ -1,8 +1,12 @@
-/*
- * gesture_test.h
- *
- *  Created on: Feb 4, 2023
- *      Author: mauro
+/**
+ * @file gesture_handles.h
+ * @author Mauro (mauriciop@dsd.dev)
+ * @brief 
+ * @version 0.1
+ * @date Feb 2023
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef MAIN_GESTURE_HANDLES_H_

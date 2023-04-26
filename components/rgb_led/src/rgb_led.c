@@ -205,6 +205,31 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
             break;
 
+        case 2: // CHANGING COLORS
+            // Changing colors
+            hue += 1;
+            hue2 += 12;
+            for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+            {
+
+                // Build RGB values
+
+                hsv2rgb(hue, 100, 5, &red, &green, &blue);
+                hsv2rgb(hue2, 100, 5, &red2, &green2, &blue2);
+                // Write RGB values to strip driver
+                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+            }
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
+
+            // Flush RGB values to LEDs
+            ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+            ESP_ERROR_CHECK(rgb_notif->refresh(rgb_notif, 100));
+            vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+            // strip->clear(strip, 50);
+            // vTaskDelay(pdMS_TO_TICKS(EXAMPLE_CHASE_SPEED_MS));
+            break;
+
             // Changing colors
             hue += 1;
             hue2 += 12;

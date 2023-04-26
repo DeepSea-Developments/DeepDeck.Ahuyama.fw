@@ -1,3 +1,13 @@
+/**
+ * @file server.h
+ * @author Mauro (mauriciop@dsd.dev)
+ * @brief 
+ * @version 0.1
+ * @date April 2023
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #ifndef SERVER_H
 #define SERVER_H
 

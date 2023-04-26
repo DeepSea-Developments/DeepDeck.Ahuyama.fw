@@ -1,7 +1,7 @@
 {
     "client": "Thunder Client",
-    "collectionName": "DeepDeck_collection AP Mode",
-    "dateExported": "2023-04-20T20:15:13.713Z",
+    "collectionName": "DeepDeck_collection AP-Mode",
+    "dateExported": "2023-04-26T02:53:24.837Z",
     "version": "1.1",
     "folders": [],
     "requests": [
@@ -30,11 +30,11 @@
             "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
             "containerId": "",
             "name": "Get layer Info",
-            "url": "192.168.4.1/api/layers",
+            "url": "192.168.4.1/api/layers?uuid&pos",
             "method": "GET",
             "sortNum": 6250,
             "created": "2023-04-19T19:10:45.225Z",
-            "modified": "2023-04-20T14:10:37.311Z",
+            "modified": "2023-04-26T02:51:43.709Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -42,7 +42,18 @@
                     "isDisabled": true
                 }
             ],
-            "params": [],
+            "params": [
+                {
+                    "name": "uuid",
+                    "value": "",
+                    "isPath": false
+                },
+                {
+                    "name": "pos",
+                    "value": "",
+                    "isPath": false
+                }
+            ],
             "body": {
                 "type": "json",
                 "raw": "{\n  \"layer pos\":4\n}",
@@ -59,7 +70,7 @@
             "method": "PUT",
             "sortNum": 7500,
             "created": "2023-04-19T05:23:08.385Z",
-            "modified": "2023-04-20T04:19:40.853Z",
+            "modified": "2023-04-26T02:52:03.214Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -69,7 +80,7 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"layer name\": \"Chrome\",\n  \"layer pos\": 2,\n  \"new_name\": \"MPP\",\n  \"row0\": [\n    {\n      \"name\": \"BACK\",\n      \"key_code\": 257\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"RAISE\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"left_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"right_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "raw": "{\n  \"uuid\": \"layer uuid\",\n  \"layer pos\": 2,\n  \"new_name\": \"MPP\",\n  \"row0\": [\n    {\n      \"name\": \"BACK\",\n      \"key_code\": 257\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"RAISE\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"left_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"right_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
                 "form": []
             },
             "tests": []
@@ -97,7 +108,7 @@
             "method": "POST",
             "sortNum": 15000,
             "created": "2023-04-19T05:23:46.155Z",
-            "modified": "2023-04-20T14:12:23.572Z",
+            "modified": "2023-04-26T02:42:41.467Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -107,7 +118,7 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \n  \"layer name\": \"abcd\",\n  \"row0\": [\n    {\n      \"name\": \"X\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"Y\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"Z\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "raw": "{\n  \"name\": \"L1\",\n  \"uuid\": \"uuid\",\n  \"row0\": [\n    {\n      \"name\": \"QQQ\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
                 "form": []
             },
             "tests": []
@@ -117,13 +128,19 @@
             "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
             "containerId": "",
             "name": "Delete Layer",
-            "url": "192.168.4.1/api/layers",
+            "url": "192.168.4.1/api/layers?pos",
             "method": "DELETE",
             "sortNum": 20000,
             "created": "2023-04-19T05:22:18.327Z",
-            "modified": "2023-04-20T14:14:34.518Z",
+            "modified": "2023-04-26T02:42:53.224Z",
             "headers": [],
-            "params": [],
+            "params": [
+                {
+                    "name": "pos",
+                    "value": "",
+                    "isPath": false
+                }
+            ],
             "body": {
                 "type": "json",
                 "raw": "{\n  \n  \"layer pos\":0\n}",
@@ -136,16 +153,28 @@
             "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
             "containerId": "",
             "name": "LED_UPDATE",
-            "url": "192.168.4.1/api/led",
+            "url": "192.168.4.1/api/led?mode",
             "method": "POST",
             "sortNum": 50000,
             "created": "2023-04-19T05:23:29.392Z",
-            "modified": "2023-04-20T14:16:50.786Z",
-            "headers": [],
-            "params": [],
+            "modified": "2023-04-26T02:52:28.646Z",
+            "headers": [
+                {
+                    "name": "User-Agent",
+                    "value": "Thunder Client (https://www.thunderclient.com)",
+                    "isDisabled": true
+                }
+            ],
+            "params": [
+                {
+                    "name": "mode",
+                    "value": "",
+                    "isPath": false
+                }
+            ],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"led_mode\":0\n}",
+                "raw": "{\n  \"led_mode\":2\n}",
                 "form": []
             },
             "tests": []
@@ -155,18 +184,29 @@
             "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
             "containerId": "",
             "name": "Wifi connect",
-            "url": "192.168.4.1/api/connect",
+            "url": "192.168.4.1/api/connect?ssid=Wanda&pass=B1130615116",
             "method": "POST",
             "sortNum": 80000,
             "created": "2023-04-19T05:23:54.484Z",
-            "modified": "2023-04-19T05:23:54.484Z",
+            "modified": "2023-04-25T18:35:49.241Z",
             "headers": [
                 {
                     "name": "Content-Type",
                     "value": "application/json"
                 }
             ],
-            "params": [],
+            "params": [
+                {
+                    "name": "ssid",
+                    "value": "Wanda",
+                    "isPath": false
+                },
+                {
+                    "name": "pass",
+                    "value": "B1130615116",
+                    "isPath": false
+                }
+            ],
             "body": {
                 "type": "json",
                 "raw": "{\n  \"ssid\": \"Wanda\",\n  \"pass\":\"B1130615116\"\n}",

@@ -1,10 +1,12 @@
-/*  WiFi softAP Example
-
- This example code is in the Public Domain (or CC0 licensed, at your option.)
-
- Unless required by applicable law or agreed to in writing, this
- software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
- CONDITIONS OF ANY KIND, either express or implied.
+/**
+ * @file wifi_handles.h
+ * @author Mauro (mauriciop@dsd.dev)
+ * @brief 
+ * @version 0.1
+ * @date April 2023
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -368,7 +370,7 @@ void wifiInit(void *params)
 			}
 			else
 			{
-				ESP_LOGI(":", "NOT wifi credentials");
+				ESP_LOGI(":", "SSID NOT FOUND");
 			}
 
 			if (nvs_get_str(nvs, "pass", NULL, &passLen) == ESP_OK)
@@ -378,13 +380,13 @@ void wifiInit(void *params)
 					pass = malloc(passLen);
 					nvs_get_str(nvs, "pass", pass, &passLen);
 					ESP_LOGI(":", "save pass: %s", pass);
-					myflag = false;
+					// myflag = false;
 				}
 			}
 			else
 			{
-				ESP_LOGI(":", "NOT wifi credentials");
-				myflag = true;
+				ESP_LOGI(":", "PASSWORD NOT FOUND");
+				// myflag = true;
 			}
 
 			// wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
@@ -393,8 +395,9 @@ void wifiInit(void *params)
 			if (ssid != NULL && pass != NULL)
 			{
 				// connectSTA(ssid, pass);
-
 				wifi_init_sta(wifi_ap_mode, ssid, pass);
+			}else{
+				myflag = true;
 			}
 			if (myflag)
 			{

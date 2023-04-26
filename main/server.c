@@ -1,6 +1,7 @@
 #include <string.h>
+#include <stdlib.h>
 #include "server.h"
-// #include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/projdefs.h"
 #include "freertos/task.h"
@@ -15,7 +16,7 @@
 #include <sys/param.h>
 
 #include "esp_netif.h"
-// #include <esp_http_server.h>
+
 #include "esp_http_server.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -47,6 +48,64 @@ void json_free(void *ptr)
 
 /* An HTTP GET handler */
 
+/**
+ * @brief
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t connect_url_handler(httpd_req_t *req)
+{
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+	buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
+	if (buf_len > 1)
+	{
+		buf = malloc(buf_len);
+		if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Host: %s", buf);
+		}
+		free(buf);
+	}
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = malloc(buf_len);
+		nvs_flash_init();
+		nvs_handle_t nvs;
+		nvs_open("wifiCreds", NVS_READWRITE, &nvs);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+			char param[32];
+			if (httpd_query_key_value(buf, "ssid", param, sizeof(param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", param);
+				nvs_set_str(nvs, "ssid", param);
+			}
+			if (httpd_query_key_value(buf, "pass", param, sizeof(param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The int value = %s", param);
+				nvs_set_str(nvs, "pass", param);
+			}
+			nvs_close(nvs);
+		}
+		free(buf);
+	}
+
+	// The response
+	ESP_LOGI("nvs", "Wifi Credentials Saved");
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+	wifi_reset = true;
+	xSemaphoreGive(Wifi_initSemaphore);
+	return ESP_OK;
+}
+/*
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
 
@@ -54,6 +113,8 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
+
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	cJSON *payload = cJSON_Parse(buffer);
 
 	if (NULL == payload)
@@ -87,10 +148,8 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 			nvs_set_str(nvs, "pass", pass->valuestring);
 			nvs_close(nvs);
 			ESP_LOGI("nvs", "Wifi Credentials Saved");
-			// xTaskCreate(&resetWifi, "reset wifi", 1024 * 3, NULL, 10, NULL);
-			httpd_resp_set_status(req, "200");
+			httpd_resp_set_status(req, HTTPD_200);
 			httpd_resp_send(req, NULL, 0);
-			// vTaskDelay(1000 / portTICK_PERIOD_MS);
 			wifi_reset = true;
 			xSemaphoreGive(Wifi_initSemaphore);
 		}
@@ -105,12 +164,180 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
+
+*/
+
 /**
  * @brief Get the layer url handler object
  *
  * @param req
  * @return esp_err_t
  */
+
+esp_err_t get_layer_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char str_param[UUID_STR_LEN];
+	char int_param[3];
+	int position = 0;
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = malloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "uuid", str_param, sizeof(str_param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", str_param);
+			}
+			if (httpd_query_key_value(buf, "pos", int_param, sizeof(int_param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The int value = %s", int_param);
+				position = atoi(int_param);
+			}
+		}
+		free(buf);
+	}
+
+	if (strcmp(key_layouts[position].uuid_str, str_param) != 0)
+	{
+
+		ESP_LOGI(TAG, "key layout uuid %s", key_layouts[position].uuid_str);
+		ESP_LOGI(TAG, "The string value = %s", str_param);
+
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	char *string = NULL;
+	cJSON *encoder_item = NULL;
+	cJSON *gesture_item = NULL;
+	cJSON *is_active = NULL;
+	int index = 0;
+	int index_col = 0;
+
+	cJSON *layer_object = cJSON_CreateObject();
+	if (layer_object == NULL)
+	{
+		ESP_LOGI(TAG, "error creando layer_object");
+
+		httpd_resp_set_status(req, "500");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	cJSON *_name = cJSON_CreateString(key_layouts[position].name);
+	cJSON_AddItemToObject(layer_object, "name", _name);
+
+	// is_active = cJSON_CreateBool(key_layouts[index]->active);
+	is_active = cJSON_CreateBool(key_layouts[position].active);
+	if (is_active == NULL)
+	{
+		cJSON_Delete(layer_object);
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+	cJSON_AddItemToObject(layer_object, "active", is_active);
+
+	for (index = 0; index < MATRIX_ROWS; ++index)
+	{
+		char key_name[7] = {'\0'};
+		snprintf(key_name, sizeof(key_name), "row%d", index);
+		cJSON *row = cJSON_CreateArray();
+		if (row == NULL)
+		{
+			cJSON_Delete(layer_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(layer_object, key_name, row);
+		for (index_col = 0; index_col < MATRIX_COLS; index_col++)
+		{
+			cJSON *key = cJSON_CreateObject();
+			cJSON_AddStringToObject(key, "name", key_layouts[position].key_map_names[index][index_col]);
+			cJSON_AddNumberToObject(key, "key_code", key_layouts[position].key_map[index][index_col]);
+			cJSON_AddItemToArray(row, key);
+		}
+	}
+
+	cJSON *encoder_map = cJSON_CreateObject();
+	cJSON_AddItemToObject(layer_object, "left_encoder_map", encoder_map);
+
+	for (index = 0; index < ENCODER_SIZE; index++)
+	{
+		encoder_item = cJSON_CreateNumber(key_layouts[position].left_encoder_map[index]);
+		if (encoder_item == NULL)
+		{
+			cJSON_Delete(layer_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(encoder_map, encoder_items_names[index], encoder_item);
+	}
+
+	cJSON *r_encoder_map = cJSON_CreateObject();
+	cJSON_AddItemToObject(layer_object, "right_encoder_map", r_encoder_map);
+
+	for (index = 0; index < ENCODER_SIZE; index++)
+	{
+		encoder_item = cJSON_CreateNumber(key_layouts[position].right_encoder_map[index]);
+		if (encoder_item == NULL)
+		{
+			cJSON_Delete(layer_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(r_encoder_map, encoder_items_names[index], encoder_item);
+	}
+
+	cJSON *gesture_map = cJSON_CreateObject();
+	cJSON_AddItemToObject(layer_object, "gesture_map", gesture_map);
+
+	for (index = 0; index < GESTURE_SIZE; index++)
+	{
+		gesture_item = cJSON_CreateNumber(key_layouts[position].gesture_map[index]);
+		if (gesture_item == NULL)
+		{
+
+			cJSON_Delete(layer_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(gesture_map, gesture_items_names[index], gesture_item);
+	}
+
+	string = cJSON_Print(layer_object);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(layer_object);
+
+	return ESP_OK;
+}
+
+/*
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET --> /api/layers");
@@ -118,6 +345,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	uint8_t edit_layer = 0;
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	cJSON *payload = cJSON_Parse(buffer);
 
 	if (NULL == payload)
@@ -169,7 +397,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_object = cJSON_CreateObject();
 	if (layer_object == NULL)
 	{
-		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
@@ -182,7 +410,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	if (is_active == NULL)
 	{
 		cJSON_Delete(layer_object);
-		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
@@ -192,11 +420,11 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	if (layer_keymap == NULL)
 	{
 		cJSON_Delete(layer_object);
-		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
-	cJSON_AddItemToObject(layer_object, "Layers", layer_keymap);
+	cJSON_AddItemToObject(layer_object, "data", layer_keymap);
 
 	for (index = 0; index < MATRIX_ROWS; ++index)
 	{
@@ -204,7 +432,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		if (layer_row == NULL)
 		{
 			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -218,12 +446,12 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 			if (layer_name == NULL)
 			{
 				cJSON_Delete(layer_object);
-				httpd_resp_set_status(req, "error creting response");
+				httpd_resp_set_status(req, HTTPD_400);
 				httpd_resp_send(req, NULL, 0);
 				return ESP_OK;
 			}
-			/* after creation was successful, immediately add it to the monitor,
-			 * thereby transferring ownership of the pointer to it */
+			// after creation was successful, immediately add it to the monitor,
+			// thereby transferring ownership of the pointer to it
 			char key_name[7] = {'\0'};
 			snprintf(key_name, sizeof(key_name), "name_%d", index_col);
 			cJSON_AddItemToObject(layer_row, key_name, layer_name);
@@ -232,7 +460,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 			if (layout_pos == NULL)
 			{
 				cJSON_Delete(layer_object);
-				httpd_resp_set_status(req, "error creting response");
+				httpd_resp_set_status(req, HTTPD_400);
 				httpd_resp_send(req, NULL, 0);
 				return ESP_OK;
 			}
@@ -243,7 +471,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	}
 
 	cJSON *encoder_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "left encoder map", encoder_map);
+	cJSON_AddItemToObject(layer_object, "left_encoder_map", encoder_map);
 
 	for (index = 0; index < ENCODER_SIZE; index++)
 	{
@@ -251,7 +479,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		if (layout_pos == NULL)
 		{
 			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -259,7 +487,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	}
 
 	cJSON *r_encoder_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "right encoder map", r_encoder_map);
+	cJSON_AddItemToObject(layer_object, "right_encoder_map", r_encoder_map);
 
 	for (index = 0; index < ENCODER_SIZE; index++)
 	{
@@ -267,7 +495,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		if (layout_pos == NULL)
 		{
 			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -275,7 +503,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	}
 
 	cJSON *gesture_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "gesture map", gesture_map);
+	cJSON_AddItemToObject(layer_object, "gesture_map", gesture_map);
 
 	for (index = 0; index < GESTURE_SIZE; index++)
 	{
@@ -283,7 +511,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		if (layout_pos == NULL)
 		{
 			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -298,12 +526,15 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, "200");
+	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 	cJSON_Delete(layer_object);
 	cJSON_Delete(payload);
 	return ESP_OK;
 }
+
+*/
+
 /**
  * @brief Get the layerName url handler object
  *
@@ -320,13 +551,14 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	cJSON *layout_pos = NULL;
 	cJSON *layers = NULL;
 	cJSON *is_active = NULL;
+	cJSON *layout_uuid = NULL;
 	uint8_t layers_num = nvs_read_num_layers();
 	// int max_layers = (int) layers_num;
 
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
 	{
-		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
@@ -335,11 +567,11 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	if (layers == NULL)
 	{
 		cJSON_Delete(monitor);
-		httpd_resp_set_status(req, "error creting response");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
-	cJSON_AddItemToObject(monitor, "Layers", layers);
+	cJSON_AddItemToObject(monitor, "data", layers);
 
 	for (int index = 0; index < ((int)layers_num); ++index)
 	{
@@ -347,7 +579,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		if (layer_data == NULL)
 		{
 			cJSON_Delete(monitor);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -358,7 +590,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		if (layer_name == NULL)
 		{
 			cJSON_Delete(monitor);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -372,7 +604,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		if (layout_pos == NULL)
 		{
 			cJSON_Delete(monitor);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
@@ -383,11 +615,25 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		if (is_active == NULL)
 		{
 			cJSON_Delete(monitor);
-			httpd_resp_set_status(req, "error creting response");
+			httpd_resp_set_status(req, HTTPD_400);
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
 		cJSON_AddItemToObject(layer_data, "active", is_active);
+
+		layout_uuid = cJSON_CreateString((key_layouts[index].uuid_str));
+		if (layout_uuid == NULL)
+		{
+			cJSON_Delete(monitor);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		/* after creation was successful, immediately add it to the monitor,
+		 * thereby transferring ownership of the pointer to it */
+		// char layer_key[10] = {'\0'};
+		// snprintf(layer_key, 6, "uuid", index);
+		cJSON_AddItemToObject(layer_data, "uuid", layout_uuid);
 	}
 
 	string = cJSON_Print(monitor);
@@ -395,10 +641,10 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
-
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, "200");
+	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 	cJSON_Delete(monitor);
 	return ESP_OK;
@@ -409,6 +655,63 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
  * @param req
  * @return esp_err_t
  */
+
+esp_err_t delete_layer_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE LAYER --> /api/layers");
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char str_param[UUID_STR_LEN];
+	char int_param[3];
+	int position = 0;
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = malloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "uuid", str_param, sizeof(str_param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", str_param);
+			}
+			if (httpd_query_key_value(buf, "pos", int_param, sizeof(int_param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The int value = %s", int_param);
+				position = atoi(int_param);
+			}
+		}
+		free(buf);
+	}
+
+	if (strcmp(key_layouts[position].uuid_str, str_param) != 0)
+	{
+
+		ESP_LOGI(TAG, "key layout uuid %s", key_layouts[position].uuid_str);
+		ESP_LOGI(TAG, "The string value = %s", str_param);
+
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	nvs_delete_layer(position);
+	current_layout = 0;
+	xQueueSend(layer_recieve_q, &current_layout,
+			   (TickType_t)0);
+	httpd_resp_set_status(req, HTTPD_200);
+
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/*
 esp_err_t delete_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP DELETE --> /api/layers");
@@ -416,6 +719,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	uint8_t edit_layer = 0;
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	cJSON *payload = cJSON_Parse(buffer);
 
 	if (NULL == payload)
@@ -448,11 +752,13 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	current_layout = 0;
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
-	httpd_resp_set_status(req, "200");
+	httpd_resp_set_status(req, HTTPD_200);
 
 	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
+
+*/
 
 void fill_row(cJSON *row, char names[][10], int codes[])
 {
@@ -479,6 +785,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	int edit_layer = 0;
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	cJSON *payload = cJSON_Parse(buffer);
 	dd_layer temp_layaout;
 
@@ -495,10 +802,10 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		}
 	}
 
-	cJSON *layer_name = cJSON_GetObjectItem(payload, "layer name");
-	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
+	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
+	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
 	{
-		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
+		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 	}
 
 	cJSON *layer_pos = cJSON_GetObjectItem(payload, "layer pos");
@@ -511,7 +818,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "new_name");
 	if (cJSON_IsString(new_layer_name) && (new_layer_name->valuestring != NULL))
 	{
-		if (strcmp(layer_name->valuestring, key_layouts[edit_layer].name) == 0)
+		if (strcmp(layer_uuid->valuestring, key_layouts[edit_layer].uuid_str) == 0)
 		{
 			printf("New Layer Name = \"%s\"\n", new_layer_name->valuestring);
 			strcpy(temp_layaout.name, new_layer_name->valuestring);
@@ -607,16 +914,16 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	nvs_write_layer(temp_layaout, layer_pos->valueint);
 	cJSON_Delete(payload);
 	nvs_load_layouts();
-	printf("..\r\n");
+
 	// apds9960_free();
-	printf("=.\r\n");
+
 	current_layout = 0;
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
 	// printf("x.\r\n");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_status(req, HTTPD_200);
 
-	httpd_resp_set_status(req, "200");
-	printf("*.\r\n");
 	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
@@ -631,6 +938,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers");
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	dd_layer new_layer;
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buffer);
@@ -648,16 +956,23 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		}
 	}
 
-	cJSON *layer_name = cJSON_GetObjectItem(payload, "layer name");
+	cJSON *layer_name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
 	{
 		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
 
 		strcpy(new_layer.name, layer_name->valuestring);
-		// strcpy_s(new_layer.name, MAX_LAYOUT_NAME_LENGTH, layer_name->valuestring);
-
 		printf("ddLayer Name = \"%s\"\n", new_layer.name);
 	}
+
+	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
+	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
+	{
+		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
+		strcpy(new_layer.uuid_str, layer_uuid->valuestring);
+		printf("ddLayer uuid = \"%s\"\n", new_layer.uuid_str);
+	}
+
 
 	cJSON *is_active = cJSON_GetObjectItem(payload, "active");
 	bool active = cJSON_IsTrue(is_active);
@@ -715,8 +1030,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		cJSON_Delete(payload);
-		httpd_resp_set_status(req, "200");
-
+		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 	}
 	else
@@ -725,7 +1039,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		cJSON_Delete(payload);
-		httpd_resp_set_status(req, "error");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
 
@@ -744,12 +1058,14 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 	esp_err_t error = nvs_restore_default_layers();
 	if (error == ESP_OK)
 	{
-		httpd_resp_set_status(req, "200");
+		httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 	}
 	else
 	{
-		httpd_resp_set_status(req, "error code");
+		httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
 	current_layout = 0;
@@ -768,27 +1084,75 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST --> /api/led");
 	int mode_t;
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+	char int_param[3];
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = malloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "mode", int_param, sizeof(int_param)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "Led Mode is = %s", int_param);
+				mode_t = atoi(int_param);
+				xQueueSend(keyled_q, &mode_t, 0);
+				httpd_resp_set_status(req, HTTPD_200);
+				httpd_resp_send(req, NULL, 0);
+			}
+			else
+			{
+
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
+			}
+		}
+		free(buf);
+	}
+
+	return ESP_OK;
+}
+
+/*
+esp_err_t change_keyboard_led_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST --> /api/led");
+	int mode_t;
 
 	char buffer[100];
 	memset(&buffer, 0, sizeof(buffer));
 	httpd_req_recv(req, buffer, req->content_len);
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	cJSON *payload = cJSON_Parse(buffer);
 	cJSON *led_mode = cJSON_GetObjectItem(payload, "led_mode");
 	if (cJSON_IsNumber(led_mode))
 	{
 		mode_t = led_mode->valueint;
 		xQueueSend(keyled_q, &mode_t, 0);
-		httpd_resp_set_status(req, "200");
+		// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 	}
 	else
 	{
-		httpd_resp_set_status(req, "error");
+		// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
 
 	return ESP_OK;
 }
+
+
+*/
+
 /* This handler allows the custom error handling functionality to be
  * tested from client side. For that, when a PUT request 0 is sent to
  * URI /ctrl, the /hello and /echo URIs are unregistered and following
@@ -861,6 +1225,8 @@ httpd_handle_t start_webserver(void)
 
 	httpd_uri_t restore_default_layer_url = {.uri = "/api/layers/restore", .method = HTTP_PUT, .handler = restore_default_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_default_layer_url);
+
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 
 	return server;
 	// }

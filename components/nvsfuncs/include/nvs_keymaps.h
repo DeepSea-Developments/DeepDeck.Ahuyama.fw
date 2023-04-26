@@ -8,6 +8,7 @@
 #ifndef NVS_KEYMAPS_H_
 #define NVS_KEYMAPS_H_
 #include <keyboard_config.h>
+#include "uuid.h"
 
 
 //*************new*********
@@ -20,6 +21,7 @@ typedef struct dd_layer_str {
 	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
 	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
 	bool active;
+	char uuid_str[UUID_STR_LEN];
 } dd_layer;
 
 extern dd_layer *key_layouts;
