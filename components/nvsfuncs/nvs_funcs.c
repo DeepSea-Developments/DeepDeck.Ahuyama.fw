@@ -332,7 +332,7 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 	free(temp_layout);
 	free(aux);
 	nvs_close(nvs_handle_new);
-	nvs_load_layouts();
+	// nvs_load_layouts();
 
 	return ESP_OK;
 }
@@ -411,6 +411,7 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
  */
 void nvs_load_layouts(void)
 {
+
 	ESP_LOGV("NVS_TAG", "LOADING LAYOUTS");
 	layers_num = nvs_read_num_layers();
 	key_layouts = malloc(layers_num * sizeof(dd_layer));

@@ -961,18 +961,18 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
 	{
-		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
+		// printf("Layer Name = \"%s\"\n", layer_name->valuestring);
 
 		strcpy(new_layer.name, layer_name->valuestring);
-		printf("ddLayer Name = \"%s\"\n", new_layer.name);
+		// printf("ddLayer Name = \"%s\"\n", new_layer.name);
 	}
 
 	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
 	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
 	{
-		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
+		// printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 		strcpy(new_layer.uuid_str, layer_uuid->valuestring);
-		printf("ddLayer uuid = \"%s\"\n", new_layer.uuid_str);
+		// printf("ddLayer uuid = \"%s\"\n", new_layer.uuid_str);
 	}
 
 	cJSON *is_active = cJSON_GetObjectItem(payload, "active");
@@ -1000,46 +1000,47 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	fill_row(row3, names[3], codes[3]);
 
 	int i, j;
-	printf("Names:\n");
+	// printf("Names:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			printf("%s\t", names[i][j]);
+			// printf("%s\t", names[i][j]);
 			// strcpy(key_layouts[edit_layer]->key_map_names[i][j], names[i][j]);
 			strcpy(new_layer.key_map_names[i][j], names[i][j]);
 		}
-		printf("\n");
+		// printf("\n");
 	}
 
-	printf("\nCodes:\n");
+	// printf("\nCodes:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			printf("%d\t", codes[i][j]);
+			// printf("%d\t", codes[i][j]);
 			// key_layouts[edit_layer]->key_map[i][j] = codes[i][j];
 			new_layer.key_map[i][j] = codes[i][j];
 		}
 		printf("\n");
 	}
-
-	res = nvs_create_new_layer(new_layer);
+	cJSON_Delete(payload);
+	current_layout = 0;
+	res = nvs_create_new_layer(new_layer);	
 	if (res == ESP_OK)
 	{
-		current_layout = 0;
+		nvs_load_layouts();		
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
-		cJSON_Delete(payload);
+		// cJSON_Delete(payload);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 	}
 	else
 	{
-		current_layout = 0;
+		// current_layout = 0;
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
-		cJSON_Delete(payload);
+		// cJSON_Delete(payload);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}

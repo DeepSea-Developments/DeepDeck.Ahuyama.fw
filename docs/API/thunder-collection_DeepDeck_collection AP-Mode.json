@@ -1,20 +1,20 @@
 {
     "client": "Thunder Client",
     "collectionName": "DeepDeck_collection AP-Mode",
-    "dateExported": "2023-04-26T02:53:24.837Z",
+    "dateExported": "2023-04-26T05:01:58.581Z",
     "version": "1.1",
     "folders": [],
     "requests": [
         {
-            "_id": "840041e0-4524-46c6-9cb7-33e32868c90e",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "46453369-0ba8-4bbe-bfa9-568959266772",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Get layer Names",
             "url": "192.168.4.1/api/layers/layer_names",
             "method": "GET",
             "sortNum": 5000,
-            "created": "2023-04-19T05:23:17.152Z",
-            "modified": "2023-04-20T03:09:32.440Z",
+            "created": "2023-04-26T04:14:43.964Z",
+            "modified": "2023-04-26T04:14:43.964Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -26,15 +26,15 @@
             "tests": []
         },
         {
-            "_id": "a83bce27-9ba9-46c7-bd40-b7ec392d512e",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "77fd8930-0cfb-4e96-8e98-30b5d5fa795c",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Get layer Info",
-            "url": "192.168.4.1/api/layers?uuid&pos",
+            "url": "192.168.4.1/api/layers?uuid=e5da11fb-a29f-4f8b-b78d-436548f6dc6f&pos=2",
             "method": "GET",
             "sortNum": 6250,
-            "created": "2023-04-19T19:10:45.225Z",
-            "modified": "2023-04-26T02:51:43.709Z",
+            "created": "2023-04-26T04:14:43.965Z",
+            "modified": "2023-04-26T04:27:37.390Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -45,12 +45,12 @@
             "params": [
                 {
                     "name": "uuid",
-                    "value": "",
+                    "value": "e5da11fb-a29f-4f8b-b78d-436548f6dc6f",
                     "isPath": false
                 },
                 {
                     "name": "pos",
-                    "value": "",
+                    "value": "2",
                     "isPath": false
                 }
             ],
@@ -62,15 +62,15 @@
             "tests": []
         },
         {
-            "_id": "26d6d042-a37c-43f8-9102-c80ac086ddee",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "5ca3f276-567d-43a6-8115-32472fa62a3b",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Update Layer",
             "url": "192.168.4.1/api/layers",
             "method": "PUT",
             "sortNum": 7500,
-            "created": "2023-04-19T05:23:08.385Z",
-            "modified": "2023-04-26T02:52:03.214Z",
+            "created": "2023-04-26T04:14:43.966Z",
+            "modified": "2023-04-26T04:29:20.591Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -80,35 +80,35 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"uuid\": \"layer uuid\",\n  \"layer pos\": 2,\n  \"new_name\": \"MPP\",\n  \"row0\": [\n    {\n      \"name\": \"BACK\",\n      \"key_code\": 257\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"RAISE\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"left_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"right_encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "raw": "{\n  \"uuid\": \"e5da11fb-a29f-4f8b-b78d-436548f6dc6f\",\n  \"pos\": 2,\n  \"new_name\": \"CC1\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"dev\",\n      \"key_code\": 69\n    },\n    {\n      \"name\": \"fullscrprtscr\",\n      \"key_code\": 68\n    },\n    {\n      \"name\": \"prtscr\",\n      \"key_code\": 70\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"PTAB\",\n      \"key_code\": 266\n    },\n    {\n      \"name\": \"NTAB\",\n      \"key_code\": 265\n    },\n    {\n      \"name\": \"reopne\",\n      \"key_code\": 275\n    },\n    {\n      \"name\": \"close\",\n      \"key_code\": 270\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"back\",\n      \"key_code\": 276\n    },\n    {\n      \"name\": \"forw\",\n      \"key_code\": 277\n    },\n    {\n      \"name\": \"new\",\n      \"key_code\": 267\n    },\n    {\n      \"name\": \"incog\",\n      \"key_code\": 269\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"Tab1\",\n      \"key_code\": 271\n    },\n    {\n      \"name\": \"Tab2\",\n      \"key_code\": 272\n    },\n    {\n      \"name\": \"Tab3\",\n      \"key_code\": 273\n    },\n    {\n      \"name\": \"TabN\",\n      \"key_code\": 274\n    }\n  ],\n  \"left_encoder_map\": {\n    \"cw\": 174,\n    \"ccw\": 173,\n    \"single_press\": 290,\n    \"long_press\": 171,\n    \"double_press\": 168\n  },\n  \"right_encoder_map\": {\n    \"cw\": 277,\n    \"ccw\": 276,\n    \"single_press\": 267,\n    \"long_press\": 268,\n    \"double_press\": 270\n  },\n  \"gesture_map\": {\n    \"up\": 270,\n    \"down\": 0,\n    \"left\": 265,\n    \"right\": 266,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
                 "form": []
             },
             "tests": []
         },
         {
-            "_id": "8088db0a-2b33-46f2-84c3-7983f75d9d16",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "39c0fd8b-4a01-404c-abac-0830ad6696fb",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Restore Default Layaouts",
             "url": "192.168.4.1/api/layers/restore",
             "method": "PUT",
             "sortNum": 10000,
-            "created": "2023-04-19T05:22:04.577Z",
-            "modified": "2023-04-19T16:40:48.324Z",
+            "created": "2023-04-26T04:14:43.967Z",
+            "modified": "2023-04-26T04:14:43.967Z",
             "headers": [],
             "params": [],
             "tests": []
         },
         {
-            "_id": "ce5c6d48-57a4-41e3-9f54-1605d0d0233e",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "4b8089eb-911a-486f-9437-3cea275b767a",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Create Layer",
             "url": "192.168.4.1/api/layers",
             "method": "POST",
             "sortNum": 15000,
-            "created": "2023-04-19T05:23:46.155Z",
-            "modified": "2023-04-26T02:42:41.467Z",
+            "created": "2023-04-26T04:14:43.968Z",
+            "modified": "2023-04-26T05:01:10.805Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -118,26 +118,31 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"L1\",\n  \"uuid\": \"uuid\",\n  \"row0\": [\n    {\n      \"name\": \"QQQ\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  },\n  \"active\": true\n}",
+                "raw": "{\n  \"name\": \"L4\",\n  \"uuid\": \"c7275edb-1317-4c60-9213-2befa3f5321c\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"QQQ\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
                 "form": []
             },
             "tests": []
         },
         {
-            "_id": "2c3cb13f-139c-4dd5-af8b-eb10c1200989",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "4a7cc14e-1f76-420d-9b6c-c1f84d6f0177",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Delete Layer",
-            "url": "192.168.4.1/api/layers?pos",
+            "url": "192.168.4.1/api/layers?pos=3&uuid=400208fe-81a9-4b7a-9c27-5ee93b02f7f2",
             "method": "DELETE",
             "sortNum": 20000,
-            "created": "2023-04-19T05:22:18.327Z",
-            "modified": "2023-04-26T02:42:53.224Z",
+            "created": "2023-04-26T04:14:43.969Z",
+            "modified": "2023-04-26T04:59:59.000Z",
             "headers": [],
             "params": [
                 {
                     "name": "pos",
-                    "value": "",
+                    "value": "3",
+                    "isPath": false
+                },
+                {
+                    "name": "uuid",
+                    "value": "400208fe-81a9-4b7a-9c27-5ee93b02f7f2",
                     "isPath": false
                 }
             ],
@@ -149,15 +154,15 @@
             "tests": []
         },
         {
-            "_id": "e5808224-44d7-4947-ae11-6339459b904a",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "3230a541-29fc-4460-8fd9-35a2f2a30108",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "LED_UPDATE",
             "url": "192.168.4.1/api/led?mode",
             "method": "POST",
             "sortNum": 50000,
-            "created": "2023-04-19T05:23:29.392Z",
-            "modified": "2023-04-26T02:52:28.646Z",
+            "created": "2023-04-26T04:14:43.970Z",
+            "modified": "2023-04-26T04:14:43.970Z",
             "headers": [
                 {
                     "name": "User-Agent",
@@ -180,15 +185,15 @@
             "tests": []
         },
         {
-            "_id": "b705cf56-f939-4589-a5a0-c0072acaa007",
-            "colId": "0f4dfadb-3eb2-49a0-8c48-d4bcf00deea9",
+            "_id": "cb6d3f3a-0a0b-4413-95cc-fc819f43abde",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Wifi connect",
             "url": "192.168.4.1/api/connect?ssid=Wanda&pass=B1130615116",
             "method": "POST",
             "sortNum": 80000,
-            "created": "2023-04-19T05:23:54.484Z",
-            "modified": "2023-04-25T18:35:49.241Z",
+            "created": "2023-04-26T04:14:43.971Z",
+            "modified": "2023-04-26T04:14:43.971Z",
             "headers": [
                 {
                     "name": "Content-Type",
