@@ -167,7 +167,6 @@ void nvs_read_layers(dd_layer *layers_array)
 	for (int i = 0; i < layer_num; i++)
 	{
 		sprintf(layer_key, "layer_%d", i);
-
 		res = nvs_get_blob(nvs_layer_handle, layer_key, (void *)&layers_array[i], &dd_layer_size);
 		if (res != ESP_OK)
 		{
@@ -220,9 +219,8 @@ esp_err_t nvs_restore_default_layers()
 	}
 
 	nvs_write_default_layers(nvs_handle);
-	nvs_load_layouts();
 	nvs_close(nvs_handle);
-
+	nvs_load_layouts();
 	return ESP_OK;
 }
 
@@ -246,7 +244,8 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
 
 	nvs_close(nvs_layer_handle);
 	nvs_update_layout_position();
-	// nvs_load_layouts();
+	nvs_load_layouts();
+
 	return ESP_OK;
 }
 
@@ -256,6 +255,14 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
  * @param layer
  * @return esp_err_t
  */
+// esp_err_t nvs_create_new_layer(dd_layer layer)
+// {
+// 	layers_num = nvs_read_num_layers();
+// 	layers_num++;
+// 	nvs_write_layer(layer, layers_num);
+// 	return ESP_OK;
+// }
+
 esp_err_t nvs_create_new_layer(dd_layer layer)
 {
 	int i = 0;
@@ -321,17 +328,19 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 
 		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle_new, layer_key, &aux[i], sizeof(dd_layer)));
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle_new));
-
-		ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
+		// ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
 	}
 
 	free(temp_layout);
 	free(aux);
 	nvs_close(nvs_handle_new);
-	// nvs_load_layouts();
-
+	nvs_load_layouts();
+	
 	return ESP_OK;
 }
+
+
+
 
 /**
  * @brief
@@ -414,11 +423,8 @@ esp_err_t nvs_update_layout_position(void)
 
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
 	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI("TAG", "Layer QTY %d", layer_num);
-	}
-	else
+
+	if (error != ESP_OK)
 	{
 		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
 		return ESP_FAIL;
@@ -458,8 +464,7 @@ esp_err_t nvs_update_layout_position(void)
 
 		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle_new, layer_key, &aux[i], sizeof(dd_layer)));
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle_new));
-
-		ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
+		// ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
 	}
 
 	free(temp_layout);
@@ -475,7 +480,7 @@ esp_err_t nvs_update_layout_position(void)
 void nvs_load_layouts(void)
 {
 
-	ESP_LOGV("NVS_TAG", "LOADING LAYOUTS");
+	ESP_LOGI("NVS_TAG", "LOADING LAYOUTS");
 	layers_num = nvs_read_num_layers();
 	key_layouts = malloc(layers_num * sizeof(dd_layer));
 

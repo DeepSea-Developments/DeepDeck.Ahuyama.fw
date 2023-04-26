@@ -702,12 +702,13 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	}
 
 	nvs_delete_layer(position);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
 	current_layout = 0;
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
-	httpd_resp_set_status(req, HTTPD_200);
 
-	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
 
@@ -783,10 +784,16 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 	ESP_LOGI(TAG, "HTTP PUT --> /api/layers");
 	int position = 0;
-	char buffer[1024];
-	httpd_req_recv(req, buffer, req->content_len);
+	// char buffer[1024];
+	// httpd_req_recv(req, buffer, req->content_len);
+		char *buf;
+	size_t buf_len;
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	cJSON *payload = cJSON_Parse(buffer);
+	cJSON *payload = cJSON_Parse(buf);
 	dd_layer temp_layaout;
 
 	if (NULL == payload)
@@ -913,19 +920,17 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		temp_layaout.active = false;
 	}
 	cJSON_Delete(payload);
+	free(buf);
 	nvs_write_layer(temp_layaout, position);
-	nvs_load_layouts();
-
 	// apds9960_free();
+
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
 
 	current_layout = 0;
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
-	// printf("x.\r\n");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	httpd_resp_set_status(req, HTTPD_200);
 
-	httpd_resp_send(req, NULL, 0);
 	return ESP_OK;
 }
 /**
@@ -937,12 +942,17 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 esp_err_t create_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers");
-	char buffer[1024];
-	httpd_req_recv(req, buffer, req->content_len);
+	// char buffer[1024];
+	char *buf;
+	size_t buf_len;
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	dd_layer new_layer;
 	esp_err_t res;
-	cJSON *payload = cJSON_Parse(buffer);
+	cJSON *payload = cJSON_Parse(buf);
 
 	if (NULL == payload)
 	{
@@ -1023,23 +1033,20 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		printf("\n");
 	}
 	cJSON_Delete(payload);
+	free(buf);
 	current_layout = 0;
 	res = nvs_create_new_layer(new_layer);
 	if (res == ESP_OK)
 	{
-		nvs_load_layouts();
-		xQueueSend(layer_recieve_q, &current_layout,
-				   (TickType_t)0);
-		// cJSON_Delete(payload);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
+		xQueueSend(layer_recieve_q, &current_layout,
+				   (TickType_t)0);
 	}
 	else
 	{
-		// current_layout = 0;
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
-		// cJSON_Delete(payload);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
@@ -1196,6 +1203,7 @@ httpd_handle_t start_webserver(void)
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 	config.max_uri_handlers = 20;
+	config.stack_size = 1024 * 8;
 
 	// Start the httpd server
 	ESP_ERROR_CHECK(httpd_start(&server, &config));
