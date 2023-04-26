@@ -782,7 +782,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 {
 
 	ESP_LOGI(TAG, "HTTP PUT --> /api/layers");
-	int edit_layer = 0;
+	int position = 0;
 	char buffer[1024];
 	httpd_req_recv(req, buffer, req->content_len);
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
@@ -808,27 +808,29 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 	}
 
-	cJSON *layer_pos = cJSON_GetObjectItem(payload, "layer pos");
+	cJSON *layer_pos = cJSON_GetObjectItem(payload, "pos");
 	if (cJSON_IsNumber(layer_pos) && (layer_pos->valueint))
 	{
 		printf("Layer pos = \"%d\"\n", layer_pos->valueint);
-		edit_layer = layer_pos->valueint;
+		position = layer_pos->valueint;
 	}
+
+	if (strcmp(key_layouts[position].uuid_str, layer_uuid->valuestring) != 0)
+	{
+
+		ESP_LOGI(TAG, "key layout uuid %s", key_layouts[position].uuid_str);
+		ESP_LOGI(TAG, "The string value = %s", layer_uuid->valuestring);
+
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+	strcpy(temp_layaout.uuid_str, layer_uuid->valuestring);
 
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "new_name");
 	if (cJSON_IsString(new_layer_name) && (new_layer_name->valuestring != NULL))
 	{
-		if (strcmp(layer_uuid->valuestring, key_layouts[edit_layer].uuid_str) == 0)
-		{
-			printf("New Layer Name = \"%s\"\n", new_layer_name->valuestring);
-			strcpy(temp_layaout.name, new_layer_name->valuestring);
-		}
-		else
-		{
-			httpd_resp_set_status(req, "error layer name not match");
-			httpd_resp_send(req, NULL, 0);
-			return ESP_OK;
-		}
+		strcpy(temp_layaout.name, new_layer_name->valuestring);
 	}
 
 	cJSON *row0 = cJSON_GetObjectItemCaseSensitive(payload, "row0");
@@ -911,7 +913,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		temp_layaout.active = false;
 	}
 
-	nvs_write_layer(temp_layaout, layer_pos->valueint);
+	nvs_write_layer(temp_layaout, position);
 	cJSON_Delete(payload);
 	nvs_load_layouts();
 
@@ -972,7 +974,6 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		strcpy(new_layer.uuid_str, layer_uuid->valuestring);
 		printf("ddLayer uuid = \"%s\"\n", new_layer.uuid_str);
 	}
-
 
 	cJSON *is_active = cJSON_GetObjectItem(payload, "active");
 	bool active = cJSON_IsTrue(is_active);
