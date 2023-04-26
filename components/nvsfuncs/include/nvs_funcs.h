@@ -88,4 +88,10 @@ esp_err_t nvs_restore_default_layers();
  */
 void nvs_load_layouts(void);
 
+/**
+ * @brief 
+ * 
+ */
+esp_err_t nvs_update_layout_position(void);
+
 #endif /* NVS_FUNCS_H_ */
