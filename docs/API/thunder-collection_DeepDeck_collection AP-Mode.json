@@ -1,7 +1,7 @@
 {
     "client": "Thunder Client",
     "collectionName": "DeepDeck_collection AP-Mode",
-    "dateExported": "2023-04-26T05:01:58.581Z",
+    "dateExported": "2023-04-28T19:27:33.433Z",
     "version": "1.1",
     "folders": [],
     "requests": [
@@ -30,11 +30,11 @@
             "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Get layer Info",
-            "url": "192.168.4.1/api/layers?uuid=e5da11fb-a29f-4f8b-b78d-436548f6dc6f&pos=2",
+            "url": "192.168.4.1/api/layers?uuid=75a1bf95-2872-418d-9bd9-501760b6b5e2&pos=5",
             "method": "GET",
             "sortNum": 6250,
             "created": "2023-04-26T04:14:43.965Z",
-            "modified": "2023-04-26T04:27:37.390Z",
+            "modified": "2023-04-28T19:26:03.091Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -45,20 +45,15 @@
             "params": [
                 {
                     "name": "uuid",
-                    "value": "e5da11fb-a29f-4f8b-b78d-436548f6dc6f",
+                    "value": "75a1bf95-2872-418d-9bd9-501760b6b5e2",
                     "isPath": false
                 },
                 {
                     "name": "pos",
-                    "value": "2",
+                    "value": "5",
                     "isPath": false
                 }
             ],
-            "body": {
-                "type": "json",
-                "raw": "{\n  \"layer pos\":4\n}",
-                "form": []
-            },
             "tests": []
         },
         {
@@ -70,7 +65,7 @@
             "method": "PUT",
             "sortNum": 7500,
             "created": "2023-04-26T04:14:43.966Z",
-            "modified": "2023-04-26T04:29:20.591Z",
+            "modified": "2023-04-26T16:02:29.185Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -80,7 +75,7 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"uuid\": \"e5da11fb-a29f-4f8b-b78d-436548f6dc6f\",\n  \"pos\": 2,\n  \"new_name\": \"CC1\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"dev\",\n      \"key_code\": 69\n    },\n    {\n      \"name\": \"fullscrprtscr\",\n      \"key_code\": 68\n    },\n    {\n      \"name\": \"prtscr\",\n      \"key_code\": 70\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"PTAB\",\n      \"key_code\": 266\n    },\n    {\n      \"name\": \"NTAB\",\n      \"key_code\": 265\n    },\n    {\n      \"name\": \"reopne\",\n      \"key_code\": 275\n    },\n    {\n      \"name\": \"close\",\n      \"key_code\": 270\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"back\",\n      \"key_code\": 276\n    },\n    {\n      \"name\": \"forw\",\n      \"key_code\": 277\n    },\n    {\n      \"name\": \"new\",\n      \"key_code\": 267\n    },\n    {\n      \"name\": \"incog\",\n      \"key_code\": 269\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"Tab1\",\n      \"key_code\": 271\n    },\n    {\n      \"name\": \"Tab2\",\n      \"key_code\": 272\n    },\n    {\n      \"name\": \"Tab3\",\n      \"key_code\": 273\n    },\n    {\n      \"name\": \"TabN\",\n      \"key_code\": 274\n    }\n  ],\n  \"left_encoder_map\": {\n    \"cw\": 174,\n    \"ccw\": 173,\n    \"single_press\": 290,\n    \"long_press\": 171,\n    \"double_press\": 168\n  },\n  \"right_encoder_map\": {\n    \"cw\": 277,\n    \"ccw\": 276,\n    \"single_press\": 267,\n    \"long_press\": 268,\n    \"double_press\": 270\n  },\n  \"gesture_map\": {\n    \"up\": 270,\n    \"down\": 0,\n    \"left\": 265,\n    \"right\": 266,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
+                "raw": "{\n  \"uuid\": \"898c0d36-f366-417a-8b91-6460243c988e\",\n  \"pos\": 2,\n  \"new_name\": \"XX\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"7\",\n      \"key_code\": 36\n    },\n    {\n      \"name\": \"8\",\n      \"key_code\": 37\n    },\n    {\n      \"name\": \"9\",\n      \"key_code\": 38\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"4\",\n      \"key_code\": 33\n    },\n    {\n      \"name\": \"5\",\n      \"key_code\": 34\n    },\n    {\n      \"name\": \"6\",\n      \"key_code\": 35\n    },\n    {\n      \"name\": \"/\",\n      \"key_code\": 84\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"1\",\n      \"key_code\": 30\n    },\n    {\n      \"name\": \"2\",\n      \"key_code\": 31\n    },\n    {\n      \"name\": \"3\",\n      \"key_code\": 32\n    },\n    {\n      \"name\": \"*\",\n      \"key_code\": 85\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \".\",\n      \"key_code\": 55\n    },\n    {\n      \"name\": \"0\",\n      \"key_code\": 39\n    },\n    {\n      \"name\": \"-\",\n      \"key_code\": 86\n    },\n    {\n      \"name\": \"+\",\n      \"key_code\": 87\n    }\n  ],\n  \"left_encoder_map\": {\n    \"cw\": 80,\n    \"ccw\": 79,\n    \"single_press\": 292,\n    \"long_press\": 293,\n    \"double_press\": 293\n  },\n  \"right_encoder_map\": {\n    \"cw\": 81,\n    \"ccw\": 82,\n    \"single_press\": 40,\n    \"long_press\": 43,\n    \"double_press\": 43\n  },\n  \"gesture_map\": {\n    \"up\": 174,\n    \"down\": 173,\n    \"left\": 168,\n    \"right\": 169,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
                 "form": []
             },
             "tests": []
@@ -100,6 +95,31 @@
             "tests": []
         },
         {
+            "_id": "4a7cc14e-1f76-420d-9b6c-c1f84d6f0177",
+            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
+            "containerId": "",
+            "name": "Delete Layer",
+            "url": "192.168.4.1/api/layers?pos=2&uuid=e45627ad-4ef8-453b-98fd-8a361cc2291b",
+            "method": "DELETE",
+            "sortNum": 12500,
+            "created": "2023-04-26T04:14:43.969Z",
+            "modified": "2023-04-26T15:18:02.704Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "pos",
+                    "value": "2",
+                    "isPath": false
+                },
+                {
+                    "name": "uuid",
+                    "value": "e45627ad-4ef8-453b-98fd-8a361cc2291b",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
             "_id": "4b8089eb-911a-486f-9437-3cea275b767a",
             "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
@@ -108,7 +128,7 @@
             "method": "POST",
             "sortNum": 15000,
             "created": "2023-04-26T04:14:43.968Z",
-            "modified": "2023-04-26T05:01:10.805Z",
+            "modified": "2023-04-26T16:33:01.593Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -118,37 +138,7 @@
             "params": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"L4\",\n  \"uuid\": \"c7275edb-1317-4c60-9213-2befa3f5321c\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"QQQ\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
-                "form": []
-            },
-            "tests": []
-        },
-        {
-            "_id": "4a7cc14e-1f76-420d-9b6c-c1f84d6f0177",
-            "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
-            "containerId": "",
-            "name": "Delete Layer",
-            "url": "192.168.4.1/api/layers?pos=3&uuid=400208fe-81a9-4b7a-9c27-5ee93b02f7f2",
-            "method": "DELETE",
-            "sortNum": 20000,
-            "created": "2023-04-26T04:14:43.969Z",
-            "modified": "2023-04-26T04:59:59.000Z",
-            "headers": [],
-            "params": [
-                {
-                    "name": "pos",
-                    "value": "3",
-                    "isPath": false
-                },
-                {
-                    "name": "uuid",
-                    "value": "400208fe-81a9-4b7a-9c27-5ee93b02f7f2",
-                    "isPath": false
-                }
-            ],
-            "body": {
-                "type": "json",
-                "raw": "{\n  \n  \"layer pos\":0\n}",
+                "raw": "{\n  \"name\": \"lay\",\n  \"uuid\": \"c7275edb-1217-8860-9213-2befa3f5381c\",\n  \"active\": true,\n  \"row0\": [\n    {\n      \"name\": \"QQQ\",\n      \"key_code\": 4\n    },\n    {\n      \"name\": \"QQ\",\n      \"key_code\": 5\n    },\n    {\n      \"name\": \"c\",\n      \"key_code\": 6\n    },\n    {\n      \"name\": \"layer\",\n      \"key_code\": 258\n    }\n  ],\n  \"row1\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row2\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"row3\": [\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    },\n    {\n      \"name\": \"name\",\n      \"key_code\": 1\n    }\n  ],\n  \"encoder_map\": {\n    \"ccw\": 0,\n    \"cw\": 0,\n    \"press\": 0,\n    \"long_press\": 0\n  },\n  \"gesture_map\": {\n    \"up\": 0,\n    \"down\": 0,\n    \"left\": 0,\n    \"right\": 0,\n    \"near\": 0,\n    \"far\": 0\n  }\n}",
                 "form": []
             },
             "tests": []
@@ -158,11 +148,11 @@
             "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "LED_UPDATE",
-            "url": "192.168.4.1/api/led?mode",
+            "url": "192.168.4.1/api/led?mode=2",
             "method": "POST",
             "sortNum": 50000,
             "created": "2023-04-26T04:14:43.970Z",
-            "modified": "2023-04-26T04:14:43.970Z",
+            "modified": "2023-04-28T19:26:20.837Z",
             "headers": [
                 {
                     "name": "User-Agent",
@@ -173,15 +163,10 @@
             "params": [
                 {
                     "name": "mode",
-                    "value": "",
+                    "value": "2",
                     "isPath": false
                 }
             ],
-            "body": {
-                "type": "json",
-                "raw": "{\n  \"led_mode\":2\n}",
-                "form": []
-            },
             "tests": []
         },
         {
@@ -189,11 +174,11 @@
             "colId": "79afd10f-fb12-43ca-8cd3-f8a9cff468e0",
             "containerId": "",
             "name": "Wifi connect",
-            "url": "192.168.4.1/api/connect?ssid=Wanda&pass=B1130615116",
+            "url": "192.168.4.1/api/connect?ssid=your_ssid&pass=your_pass",
             "method": "POST",
             "sortNum": 80000,
             "created": "2023-04-26T04:14:43.971Z",
-            "modified": "2023-04-26T04:14:43.971Z",
+            "modified": "2023-04-28T19:26:52.247Z",
             "headers": [
                 {
                     "name": "Content-Type",
@@ -203,20 +188,15 @@
             "params": [
                 {
                     "name": "ssid",
-                    "value": "Wanda",
+                    "value": "your_ssid",
                     "isPath": false
                 },
                 {
                     "name": "pass",
-                    "value": "B1130615116",
+                    "value": "your_pass",
                     "isPath": false
                 }
             ],
-            "body": {
-                "type": "json",
-                "raw": "{\n  \"ssid\": \"Wanda\",\n  \"pass\":\"B1130615116\"\n}",
-                "form": []
-            },
             "tests": []
         }
     ]
