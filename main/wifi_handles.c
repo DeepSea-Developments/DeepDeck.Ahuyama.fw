@@ -38,6 +38,12 @@
 #include "esp_vfs.h"
 #include "server.h"
 
+#include "mdns.h"
+
+
+#define MDNS_INSTANCE "DeepG Web Server"
+#define MDNS_HOST_NAME "Ahuyama"
+
 extern xSemaphoreHandle Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -305,13 +311,33 @@ void wifi_scan_sta(void)
 }
 ///////////////////////////////////////////////////////////////////////////////////
 
-// void start_mdns_service()
-// {
-//   mdns_init();
-//   mdns_hostname_set("my-esp32");
-//   mdns_instance_name_set("LEARN esp32 thing");
-// }
+static void initialise_mdns(void)
+{
+  
+    //initialize mDNS
+    ESP_ERROR_CHECK( mdns_init() );
+    //set mDNS hostname (required if you want to advertise services)
+    ESP_ERROR_CHECK( mdns_hostname_set(MDNS_HOST_NAME) );
+    ESP_LOGI(TAG, "mdns hostname set to: [%s]", MDNS_HOST_NAME);
+    //set default mDNS instance name
+    ESP_ERROR_CHECK( mdns_instance_name_set(MDNS_INSTANCE) );
 
+    //structure with TXT records
+    mdns_txt_item_t serviceTxtData[3] = {
+        {"board", "esp32"},
+        {"u", "user"},
+        {"p", "password"}
+    };
+
+    //initialize service
+    ESP_ERROR_CHECK( mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, 3) );
+
+    //add another TXT item
+    ESP_ERROR_CHECK( mdns_service_txt_item_set("_http", "_tcp", "path", "/foobar") );
+    //change TXT item value
+    ESP_ERROR_CHECK( mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")) );
+
+}
 void resetWifi(void *params)
 {
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -339,6 +365,7 @@ void wifiInit(void *params)
 
 		if (xSemaphoreTake(Wifi_initSemaphore, portMAX_DELAY))
 		{
+			// initialise_mdns();
 			if (wifi_reset)
 			{
 				// server = NULL;
@@ -346,9 +373,7 @@ void wifiInit(void *params)
 				printf("Restarting now.\n");
 				fflush(stdout);
 				esp_restart();
-				// ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-				// ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
-				// ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
+
 			}
 
 			ESP_LOGI(":", "Searching for wifi credentials");
@@ -405,6 +430,7 @@ void wifiInit(void *params)
 			}
 
 			ESP_ERROR_CHECK(esp_wifi_start());
+			
 		}
 	}
 }

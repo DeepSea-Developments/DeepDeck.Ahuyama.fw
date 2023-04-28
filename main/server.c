@@ -28,6 +28,7 @@
 #include "key_definitions.h"
 #include "nvs_funcs.h"
 #include "gesture_handles.h"
+
 // #include "mdns.h"
 #include "esp_vfs.h"
 #define ROWS 4
@@ -46,6 +47,24 @@ void json_free(void *ptr)
 	heap_caps_free(ptr);
 }
 
+void json_response(char *j_response)
+{
+	cJSON *response_json = cJSON_CreateObject();
+	cJSON *item_reason = cJSON_CreateString("reason");
+	cJSON_AddItemToObject(response_json, " TO DO ", item_reason);
+	cJSON *item_message = cJSON_CreateString("message");
+	cJSON_AddItemToObject(response_json, "TO DO", item_message);
+	if (response_json != NULL)
+		j_response = cJSON_Print(response_json);
+
+	if (j_response == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+	// printf("%s",j_response);
+	cJSON_Delete(response_json);
+}
+
 /* An HTTP GET handler */
 
 /**
@@ -56,9 +75,21 @@ void json_free(void *ptr)
  */
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
+
 	// Read the URI line and get the host
+	char *string = NULL;
 	char *buf;
 	size_t buf_len;
+
+	json_response(string);
 	buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
 	if (buf_len > 1)
 	{
@@ -99,6 +130,9 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 
 	// The response
 	ESP_LOGI("nvs", "Wifi Credentials Saved");
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 	wifi_reset = true;
@@ -177,7 +211,14 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
 
 	// Read the URI line and get the host
 	char *buf;
@@ -337,204 +378,6 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-/*
-esp_err_t get_layer_url_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "HTTP GET --> /api/layers");
-
-	uint8_t edit_layer = 0;
-	char buffer[1024];
-	httpd_req_recv(req, buffer, req->content_len);
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	cJSON *payload = cJSON_Parse(buffer);
-
-	if (NULL == payload)
-	{
-		const char *err = cJSON_GetErrorPtr();
-		if (err != NULL)
-		{
-			ESP_LOGE(TAG, "Error parsing json before %s", err);
-			cJSON_Delete(payload);
-
-			httpd_resp_set_status(req, "500");
-			return -1;
-		}
-	}
-
-	cJSON *layer_name = cJSON_GetObjectItem(payload, "layer name");
-	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
-	{
-		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
-	}
-
-	cJSON *layer_pos = cJSON_GetObjectItem(payload, "layer pos");
-	if (cJSON_IsNumber(layer_pos) && (layer_pos->valueint))
-	{
-		printf("Layer pos = \"%d\"\n", layer_pos->valueint);
-		edit_layer = layer_pos->valueint;
-	}
-
-	if (edit_layer > ((int)nvs_read_num_layers()))
-	{
-
-		httpd_resp_set_status(req, "error");
-		httpd_resp_send(req, NULL, 0);
-		cJSON_Delete(payload);
-		return ESP_OK;
-	}
-
-	char *string = NULL;
-
-	cJSON *layout_pos = NULL;
-	cJSON *encoder_item = NULL;
-	cJSON *gesture_item = NULL;
-	cJSON *layer_keymap = NULL;
-	cJSON *is_active = NULL;
-	// uint8_t layers_num = nvs_read_num_layers();
-	int index = 0;
-	int index_col = 0;
-
-	cJSON *layer_object = cJSON_CreateObject();
-	if (layer_object == NULL)
-	{
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-		return ESP_OK;
-	}
-
-	cJSON *_name = cJSON_CreateString(key_layouts[edit_layer].name);
-	cJSON_AddItemToObject(layer_object, "name", _name);
-
-	// is_active = cJSON_CreateBool(key_layouts[index]->active);
-	is_active = cJSON_CreateBool(key_layouts[edit_layer].active);
-	if (is_active == NULL)
-	{
-		cJSON_Delete(layer_object);
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-		return ESP_OK;
-	}
-	cJSON_AddItemToObject(layer_object, "active", is_active);
-
-	layer_keymap = cJSON_CreateArray();
-	if (layer_keymap == NULL)
-	{
-		cJSON_Delete(layer_object);
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-		return ESP_OK;
-	}
-	cJSON_AddItemToObject(layer_object, "data", layer_keymap);
-
-	for (index = 0; index < MATRIX_ROWS; ++index)
-	{
-		cJSON *layer_row = cJSON_CreateObject();
-		if (layer_row == NULL)
-		{
-			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, HTTPD_400);
-			httpd_resp_send(req, NULL, 0);
-			return ESP_OK;
-		}
-		cJSON_AddItemToArray(layer_keymap, layer_row);
-		for (index_col = 0; index_col < MATRIX_COLS; index_col++)
-		{
-			// layer_name = cJSON_CreateString((key_layouts[index]->name));
-			char buf_map_name[7] = {0};
-			strcpy(buf_map_name, key_layouts[edit_layer].key_map_names[index][index_col]);
-			layer_name = cJSON_CreateString(buf_map_name);
-			if (layer_name == NULL)
-			{
-				cJSON_Delete(layer_object);
-				httpd_resp_set_status(req, HTTPD_400);
-				httpd_resp_send(req, NULL, 0);
-				return ESP_OK;
-			}
-			// after creation was successful, immediately add it to the monitor,
-			// thereby transferring ownership of the pointer to it
-			char key_name[7] = {'\0'};
-			snprintf(key_name, sizeof(key_name), "name_%d", index_col);
-			cJSON_AddItemToObject(layer_row, key_name, layer_name);
-
-			layout_pos = cJSON_CreateNumber(key_layouts[edit_layer].key_map[index][index_col]);
-			if (layout_pos == NULL)
-			{
-				cJSON_Delete(layer_object);
-				httpd_resp_set_status(req, HTTPD_400);
-				httpd_resp_send(req, NULL, 0);
-				return ESP_OK;
-			}
-			char key_pos[7] = {'\0'};
-			snprintf(key_pos, sizeof(key_name), "Key_%d", index_col);
-			cJSON_AddItemToObject(layer_row, key_pos, layout_pos);
-		}
-	}
-
-	cJSON *encoder_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "left_encoder_map", encoder_map);
-
-	for (index = 0; index < ENCODER_SIZE; index++)
-	{
-		encoder_item = cJSON_CreateNumber(key_layouts[edit_layer].left_encoder_map[index]);
-		if (layout_pos == NULL)
-		{
-			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, HTTPD_400);
-			httpd_resp_send(req, NULL, 0);
-			return ESP_OK;
-		}
-		cJSON_AddItemToObject(encoder_map, encoder_items_names[index], encoder_item);
-	}
-
-	cJSON *r_encoder_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "right_encoder_map", r_encoder_map);
-
-	for (index = 0; index < ENCODER_SIZE; index++)
-	{
-		encoder_item = cJSON_CreateNumber(key_layouts[edit_layer].right_encoder_map[index]);
-		if (layout_pos == NULL)
-		{
-			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, HTTPD_400);
-			httpd_resp_send(req, NULL, 0);
-			return ESP_OK;
-		}
-		cJSON_AddItemToObject(r_encoder_map, encoder_items_names[index], encoder_item);
-	}
-
-	cJSON *gesture_map = cJSON_CreateObject();
-	cJSON_AddItemToObject(layer_object, "gesture_map", gesture_map);
-
-	for (index = 0; index < GESTURE_SIZE; index++)
-	{
-		gesture_item = cJSON_CreateNumber(key_layouts[edit_layer].gesture_map[index]);
-		if (layout_pos == NULL)
-		{
-			cJSON_Delete(layer_object);
-			httpd_resp_set_status(req, HTTPD_400);
-			httpd_resp_send(req, NULL, 0);
-			return ESP_OK;
-		}
-		cJSON_AddItemToObject(gesture_map, gesture_items_names[index], gesture_item);
-	}
-
-	string = cJSON_Print(layer_object);
-	if (string == NULL)
-	{
-		fprintf(stderr, "Failed to print monitor.\n");
-	}
-
-	httpd_resp_set_type(req, "application/json");
-	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_send(req, NULL, 0);
-	cJSON_Delete(layer_object);
-	cJSON_Delete(payload);
-	return ESP_OK;
-}
-
-*/
-
 /**
  * @brief Get the layerName url handler object
  *
@@ -543,8 +386,18 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layerName_url_handler(httpd_req_t *req)
 {
+	esp_log_level_set(TAG, ESP_LOG_DEBUG);
 	ESP_LOGI(TAG, "HTTP GET  --> /api/layers/layer_names");
 
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
+
+	uint8_t layers_num = nvs_read_num_layers();
 	char *string = NULL;
 	cJSON *layer_data = NULL;
 	cJSON *layer_name = NULL;
@@ -552,9 +405,6 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	cJSON *layers = NULL;
 	cJSON *is_active = NULL;
 	cJSON *layout_uuid = NULL;
-	uint8_t layers_num = nvs_read_num_layers();
-	// int max_layers = (int) layers_num;
-
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
 	{
@@ -641,7 +491,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
@@ -649,16 +499,24 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	cJSON_Delete(monitor);
 	return ESP_OK;
 }
+
+
 /**
  * @brief
  *
  * @param req
  * @return esp_err_t
  */
-
 esp_err_t delete_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP DELETE LAYER --> /api/layers");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
 
 	// Read the URI line and get the host
 	char *buf;
@@ -702,6 +560,25 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	}
 
 	nvs_delete_layer(position);
+
+	char *string = NULL;
+	// cJSON *response_json = cJSON_CreateObject();
+	// if (response_json == NULL)
+	// {
+	// 	httpd_resp_set_status(req, HTTPD_400);
+	// 	httpd_resp_send(req, NULL, 0);
+	// 	return ESP_OK;
+	// }
+
+	// string = cJSON_Print(response_json);
+	// if (string == NULL)
+	// {
+	// 	fprintf(stderr, "Failed to print monitor.\n");
+	// }
+	json_response(string);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 
@@ -712,54 +589,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-/*
-esp_err_t delete_layer_url_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "HTTP DELETE --> /api/layers");
 
-	uint8_t edit_layer = 0;
-	char buffer[1024];
-	httpd_req_recv(req, buffer, req->content_len);
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	cJSON *payload = cJSON_Parse(buffer);
-
-	if (NULL == payload)
-	{
-		const char *err = cJSON_GetErrorPtr();
-		if (err != NULL)
-		{
-			ESP_LOGE(TAG, "Error parsing json before %s", err);
-			cJSON_Delete(payload);
-
-			httpd_resp_set_status(req, "500");
-			return -1;
-		}
-	}
-
-	cJSON *layer_name = cJSON_GetObjectItem(payload, "layer name");
-	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
-	{
-		printf("Layer Name = \"%s\"\n", layer_name->valuestring);
-	}
-
-	cJSON *layer_pos = cJSON_GetObjectItem(payload, "layer pos");
-	if (cJSON_IsNumber(layer_pos) && (layer_pos->valueint))
-	{
-		printf("Layer pos = \"%d\"\n", layer_pos->valueint);
-		edit_layer = layer_pos->valueint;
-	}
-
-	nvs_delete_layer(edit_layer);
-	current_layout = 0;
-	xQueueSend(layer_recieve_q, &current_layout,
-			   (TickType_t)0);
-	httpd_resp_set_status(req, HTTPD_200);
-
-	httpd_resp_send(req, NULL, 0);
-	return ESP_OK;
-}
-
-*/
 
 void fill_row(cJSON *row, char names[][10], int codes[])
 {
@@ -783,16 +613,28 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 {
 
 	ESP_LOGI(TAG, "HTTP PUT --> /api/layers");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
+
+	char *string = NULL;
+	json_response(string);
+
 	int position = 0;
 	// char buffer[1024];
 	// httpd_req_recv(req, buffer, req->content_len);
-		char *buf;
+	char *buf;
 	size_t buf_len;
 
 	buf_len = (req->content_len) + 1;
 	buf = malloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
 	cJSON *payload = cJSON_Parse(buf);
 	dd_layer temp_layaout;
 
@@ -924,6 +766,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	nvs_write_layer(temp_layaout, position);
 	// apds9960_free();
 
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 
@@ -933,6 +777,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
+
+
 /**
  * @brief Create a layer url handler object
  *
@@ -942,14 +788,27 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 esp_err_t create_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers");
+	// 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
 	// char buffer[1024];
 	char *buf;
 	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
 
 	buf_len = (req->content_len) + 1;
 	buf = malloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
 	dd_layer new_layer;
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
@@ -1038,6 +897,8 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	res = nvs_create_new_layer(new_layer);
 	if (res == ESP_OK)
 	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 		xQueueSend(layer_recieve_q, &current_layout,
@@ -1053,6 +914,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
+
 /**
  * @brief
  *
@@ -1063,16 +925,28 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST  Restore Default Layouts --> /api/layers/restore");
 
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
+
+	char *string = NULL;
+	json_response(string);
 	esp_err_t error = nvs_restore_default_layers();
 	if (error == ESP_OK)
 	{
-		httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
 	}
 	else
 	{
-		httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
@@ -1082,6 +956,7 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
+
 /**
  * @brief
  *
@@ -1090,14 +965,40 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
  */
 esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 {
-	ESP_LOGI(TAG, "HTTP POST --> /api/led");
+	ESP_LOGI(TAG, "HTTP POST  CHANGE LED MODE --> /api/led");
 	int mode_t;
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
+
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
 
 	// Read the URI line and get the host
 	char *buf;
 	size_t buf_len;
 	char int_param[3];
+	char *string = NULL;
+
+	// cJSON *monitor = cJSON_CreateObject();
+	// if (monitor == NULL)
+	// {
+	// 	httpd_resp_set_status(req, HTTPD_400);
+	// 	httpd_resp_send(req, NULL, 0);
+	// 	return ESP_OK;
+	// }
+
+	// cJSON *_name = cJSON_CreateString("success");
+	// cJSON_AddItemToObject(monitor, "name", _name);
+	// string = cJSON_Print(monitor);
+
+	json_response(string);
+
 	// Read the URI line and get the parameters
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
@@ -1112,6 +1013,9 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 				ESP_LOGI(TAG, "Led Mode is = %s", int_param);
 				mode_t = atoi(int_param);
 				xQueueSend(keyled_q, &mode_t, 0);
+
+				httpd_resp_set_type(req, "application/json");
+				httpd_resp_sendstr(req, string);
 				httpd_resp_set_status(req, HTTPD_200);
 				httpd_resp_send(req, NULL, 0);
 			}
@@ -1124,42 +1028,10 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 		}
 		free(buf);
 	}
-
+	// cJSON_Delete(monitor);
 	return ESP_OK;
 }
 
-/*
-esp_err_t change_keyboard_led_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "HTTP POST --> /api/led");
-	int mode_t;
-
-	char buffer[100];
-	memset(&buffer, 0, sizeof(buffer));
-	httpd_req_recv(req, buffer, req->content_len);
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	cJSON *payload = cJSON_Parse(buffer);
-	cJSON *led_mode = cJSON_GetObjectItem(payload, "led_mode");
-	if (cJSON_IsNumber(led_mode))
-	{
-		mode_t = led_mode->valueint;
-		xQueueSend(keyled_q, &mode_t, 0);
-		// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-		httpd_resp_set_status(req, HTTPD_200);
-		httpd_resp_send(req, NULL, 0);
-	}
-	else
-	{
-		// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-	}
-
-	return ESP_OK;
-}
-
-
-*/
 
 /* This handler allows the custom error handling functionality to be
  * tested from client side. For that, when a PUT request 0 is sent to
@@ -1204,6 +1076,7 @@ httpd_handle_t start_webserver(void)
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 	config.max_uri_handlers = 20;
 	config.stack_size = 1024 * 8;
+	config.uri_match_fn = httpd_uri_match_wildcard;
 
 	// Start the httpd server
 	ESP_ERROR_CHECK(httpd_start(&server, &config));
@@ -1219,6 +1092,8 @@ httpd_handle_t start_webserver(void)
 	////////LED
 	httpd_uri_t change_led_color_url = {.uri = "/api/led", .method = HTTP_POST, .handler = change_keyboard_led_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &change_led_color_url);
+	httpd_uri_t change_led_color_url__ = {.uri = "/api/led", .method = HTTP_OPTIONS, .handler = change_keyboard_led_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &change_led_color_url__);
 
 	///////LAYERS
 	httpd_uri_t get_layer_url = {.uri = "/api/layers", .method = HTTP_GET, .handler = get_layer_url_handler, .user_ctx = NULL};
@@ -1229,6 +1104,9 @@ httpd_handle_t start_webserver(void)
 	httpd_register_uri_handler(server, &delete_layer_url);
 	httpd_uri_t create_layer_url = {.uri = "/api/layers", .method = HTTP_POST, .handler = create_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &create_layer_url);
+	httpd_uri_t create_layer_url__ = {.uri = "/api/layers", .method = HTTP_OPTIONS, .handler = create_layer_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &create_layer_url__);
+
 	httpd_uri_t update_layer_url = {.uri = "/api/layers", .method = HTTP_PUT, .handler = update_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &update_layer_url);
 
