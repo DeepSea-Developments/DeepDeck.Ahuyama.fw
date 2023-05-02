@@ -38,6 +38,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req);
 esp_err_t get_layerName_url_handler(httpd_req_t *req);
 esp_err_t get_layer_url_handler(httpd_req_t *req);
 esp_err_t connect_url_handler(httpd_req_t *req);
+esp_err_t config_url_handler(httpd_req_t *req);
 esp_err_t test_url_handler(httpd_req_t *req);
 esp_err_t hello_get_handler(httpd_req_t *req);
 
