@@ -81,3 +81,8 @@ void uuid_unparse(const uuid_t uu, char *out)
              uu[0], uu[1], uu[2], uu[3], uu[4], uu[5], uu[6], uu[7], uu[8], uu[9], uu[10], uu[11],
              uu[12], uu[13], uu[14], uu[15]);
 }
+
+void short_uuid_unparse(const uuid_t uu, char *out)
+{
+    snprintf(out, SHORT_UUID_STR_LEN, "%02x%02x%02x", uu[13], uu[14], uu[15]);
+}

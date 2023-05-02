@@ -73,6 +73,8 @@ void json_response(char *j_response)
  * @param req
  * @return esp_err_t
  */
+
+/*
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "connect handler");
@@ -142,8 +144,76 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	xSemaphoreGive(Wifi_initSemaphore);
 	return ESP_OK;
 }
+*/
 
+esp_err_t connect_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "connect handler");
+	char *buffer;
+	char *string = NULL;
+	json_response(string);
+	size_t buf_len;
+	buf_len = (req->content_len) + 1;
+	buffer = malloc(buf_len);
+	httpd_req_recv(req, buffer, req->content_len);
 
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	cJSON *payload = cJSON_Parse(buffer);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+
+			httpd_resp_set_status(req, "500");
+			return -1;
+		}
+	}
+
+	cJSON *ssid = cJSON_GetObjectItem(payload, "ssid");
+	cJSON *pass = cJSON_GetObjectItem(payload, "pass");
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+
+	if (cJSON_IsString(ssid) && (ssid->valuestring != NULL))
+	{
+		printf("WIFI SSID \"%s\"\n", ssid->valuestring);
+
+		if (cJSON_IsString(pass) && (pass->valuestring != NULL))
+		{
+			printf("WIFI PASS \"%s\"\n", pass->valuestring);
+
+			nvs_flash_init();
+			nvs_handle_t nvs;
+			nvs_open("wifiCreds", NVS_READWRITE, &nvs);
+			nvs_set_str(nvs, "ssid", ssid->valuestring);
+			nvs_set_str(nvs, "pass", pass->valuestring);
+			nvs_close(nvs);
+			ESP_LOGI("nvs", "Wifi Credentials Saved");
+			httpd_resp_set_status(req, HTTPD_200);
+			httpd_resp_send(req, NULL, 0);
+		}
+	}
+
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		free(buffer);
+		return ESP_OK;
+	}
+
+	free(buffer);
+	wifi_reset = true;
+	xSemaphoreGive(Wifi_initSemaphore);
+	return ESP_OK;
+	
+}
 
 esp_err_t config_url_handler(httpd_req_t *req)
 {
@@ -177,7 +247,6 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	cJSON_AddItemToObject(monitor, "FWVersion", cJSON_CreateString(FIRMWARE_VERSION));
 	cJSON_AddItemToObject(monitor, "Mac", cJSON_CreateString("MAC"));
 
-
 	string = cJSON_Print(monitor);
 	if (string == NULL)
 	{
@@ -191,68 +260,6 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	cJSON_Delete(monitor);
 	return ESP_OK;
 }
-
-/*
-esp_err_t connect_url_handler(httpd_req_t *req)
-{
-
-	ESP_LOGI(TAG, "connect handler");
-
-	char buffer[1024];
-	httpd_req_recv(req, buffer, req->content_len);
-
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	cJSON *payload = cJSON_Parse(buffer);
-
-	if (NULL == payload)
-	{
-		const char *err = cJSON_GetErrorPtr();
-		if (err != NULL)
-		{
-			ESP_LOGE(TAG, "Error parsing json before %s", err);
-			cJSON_Delete(payload);
-
-			httpd_resp_set_status(req, "500");
-			return -1;
-		}
-	}
-
-	cJSON *ssid = cJSON_GetObjectItem(payload, "ssid");
-	cJSON *pass = cJSON_GetObjectItem(payload, "pass");
-
-	if (cJSON_IsString(ssid) && (ssid->valuestring != NULL))
-	{
-		printf("WIFI SSID \"%s\"\n", ssid->valuestring);
-
-		if (cJSON_IsString(pass) && (pass->valuestring != NULL))
-		{
-			printf("WIFI PASS \"%s\"\n", pass->valuestring);
-
-			nvs_flash_init();
-			nvs_handle_t nvs;
-			nvs_open("wifiCreds", NVS_READWRITE, &nvs);
-			nvs_set_str(nvs, "ssid", ssid->valuestring);
-			nvs_set_str(nvs, "pass", pass->valuestring);
-			nvs_close(nvs);
-			ESP_LOGI("nvs", "Wifi Credentials Saved");
-			httpd_resp_set_status(req, HTTPD_200);
-			httpd_resp_send(req, NULL, 0);
-			wifi_reset = true;
-			xSemaphoreGive(Wifi_initSemaphore);
-		}
-	}
-
-	else
-	{
-		httpd_resp_set_status(req, "error");
-		httpd_resp_send(req, NULL, 0);
-	}
-
-	return ESP_OK;
-}
-
-
-*/
 
 /**
  * @brief Get the layer url handler object
@@ -277,7 +284,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	char *buf;
 	size_t buf_len;
 
-	char str_param[UUID_STR_LEN];
+	char str_param[SHORT_UUID_STR_LEN];
 	char int_param[3];
 	int position = 0;
 
@@ -553,7 +560,6 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-
 /**
  * @brief
  *
@@ -575,7 +581,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	char *buf;
 	size_t buf_len;
 
-	char str_param[UUID_STR_LEN];
+	char str_param[SHORT_UUID_STR_LEN];
 	char int_param[3];
 	int position = 0;
 
@@ -641,8 +647,6 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
-
-
 
 void fill_row(cJSON *row, char names[][10], int codes[])
 {
@@ -830,7 +834,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
-
 
 /**
  * @brief Create a layer url handler object
@@ -1085,7 +1088,6 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-
 /* This handler allows the custom error handling functionality to be
  * tested from client side. For that, when a PUT request 0 is sent to
  * URI /ctrl, the /hello and /echo URIs are unregistered and following
@@ -1141,7 +1143,6 @@ httpd_handle_t start_webserver(void)
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
 	// ESP_LOGI(TAG, "Registering URI handlers --> /connect");
 	httpd_register_uri_handler(server, &connect_url);
-
 
 	httpd_uri_t get_config_url = {.uri = "/api/config", .method = HTTP_GET, .handler = config_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &get_config_url);

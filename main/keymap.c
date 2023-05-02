@@ -273,12 +273,12 @@ uint8_t current_layout = 0;
 void generate_uuid()
 {
 	uuid_t uu;
-	char uu_str[UUID_STR_LEN];
+	char uu_str[SHORT_UUID_STR_LEN];
 
 	for (int i = 0; i < LAYERS; i++)
 	{
 		uuid_generate(uu);
-		uuid_unparse(uu, uu_str);
+		short_uuid_unparse(uu, uu_str);
 		strcpy(	default_layouts[i]->uuid_str, uu_str);
 	
 	}

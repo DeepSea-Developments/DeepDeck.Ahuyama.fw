@@ -21,7 +21,7 @@ typedef struct dd_layer_str {
 	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
 	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
 	bool active;
-	char uuid_str[UUID_STR_LEN];
+	char uuid_str[SHORT_UUID_STR_LEN];
 } dd_layer;
 
 extern dd_layer *key_layouts;
