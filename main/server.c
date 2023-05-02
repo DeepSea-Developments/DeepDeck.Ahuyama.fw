@@ -499,9 +499,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		}
 		/* after creation was successful, immediately add it to the monitor,
 		 * thereby transferring ownership of the pointer to it */
-		char layer_key[10] = {'\0'};
-		snprintf(layer_key, sizeof(layer_key), "layer_%d", index);
-		cJSON_AddItemToObject(layer_data, layer_key, layer_name);
+		cJSON_AddItemToObject(layer_data, "name", layer_name);
 
 		layout_pos = cJSON_CreateNumber(index);
 		if (layout_pos == NULL)
