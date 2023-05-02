@@ -432,5 +432,6 @@ void wifiInit(void *params)
 			ESP_ERROR_CHECK(esp_wifi_start());
 			
 		}
+		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }

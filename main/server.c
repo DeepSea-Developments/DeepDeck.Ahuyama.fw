@@ -75,6 +75,7 @@ void json_response(char *j_response)
  */
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
+	ESP_LOGI(TAG, "connect handler");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
 	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
@@ -115,11 +116,13 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 			char param[32];
 			if (httpd_query_key_value(buf, "ssid", param, sizeof(param)) == ESP_OK)
 			{
+				ESP_LOGI(TAG, "Saving SSID");
 				ESP_LOGI(TAG, "The string value = %s", param);
 				nvs_set_str(nvs, "ssid", param);
 			}
 			if (httpd_query_key_value(buf, "pass", param, sizeof(param)) == ESP_OK)
 			{
+				ESP_LOGI(TAG, "Saving pass");
 				ESP_LOGI(TAG, "The int value = %s", param);
 				nvs_set_str(nvs, "pass", param);
 			}
@@ -129,7 +132,7 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	}
 
 	// The response
-	ESP_LOGI("nvs", "Wifi Credentials Saved");
+	ESP_LOGI(TAG, "Wifi Credentials Saved");
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
@@ -139,6 +142,56 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	xSemaphoreGive(Wifi_initSemaphore);
 	return ESP_OK;
 }
+
+
+
+esp_err_t config_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET  --> /api/config");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
+	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
+	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
+	// httpd_resp_set_hdr(req, "Vary", "Origin");
+
+	uint8_t layers_num = nvs_read_num_layers();
+	char *string = NULL;
+	cJSON *layer_data = NULL;
+	cJSON *layer_name = NULL;
+	cJSON *layout_pos = NULL;
+	cJSON *layers = NULL;
+	cJSON *is_active = NULL;
+	cJSON *layout_uuid = NULL;
+	cJSON *monitor = cJSON_CreateObject();
+	if (monitor == NULL)
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	cJSON_AddItemToObject(monitor, "ssid", cJSON_CreateString("ssid"));
+	cJSON_AddItemToObject(monitor, "FWVersion", cJSON_CreateString(FIRMWARE_VERSION));
+	cJSON_AddItemToObject(monitor, "Mac", cJSON_CreateString("MAC"));
+
+
+	string = cJSON_Print(monitor);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(monitor);
+	return ESP_OK;
+}
+
 /*
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
@@ -1088,6 +1141,10 @@ httpd_handle_t start_webserver(void)
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
 	// ESP_LOGI(TAG, "Registering URI handlers --> /connect");
 	httpd_register_uri_handler(server, &connect_url);
+
+
+	httpd_uri_t get_config_url = {.uri = "/api/config", .method = HTTP_GET, .handler = config_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_config_url);
 
 	////////LED
 	httpd_uri_t change_led_color_url = {.uri = "/api/led", .method = HTTP_POST, .handler = change_keyboard_led_handler, .user_ctx = NULL};
