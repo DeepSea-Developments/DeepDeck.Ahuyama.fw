@@ -658,6 +658,8 @@ void fill_row(cJSON *row, char names[][10], int codes[])
 		strcpy(names[i], cJSON_GetObjectItem(item, "name")->valuestring);
 		codes[i] = cJSON_GetObjectItem(item, "key_code")->valueint;
 	}
+	// cJSON_Delete(item);
+	// cJSON_free(item);
 }
 
 /**
