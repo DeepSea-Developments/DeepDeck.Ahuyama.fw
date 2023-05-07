@@ -359,7 +359,7 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGE(TAG, "LAYER_NAMESPACE  open ---OK");
+		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
 	}
 	else
 	{
@@ -369,7 +369,7 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
 	if (error == ESP_OK)
 	{
-		ESP_LOGE(TAG, "LAYER KEY FOUND ---OK");
+		ESP_LOGI(TAG, "LAYER KEY FOUND ---OK");
 	}
 	else
 	{
