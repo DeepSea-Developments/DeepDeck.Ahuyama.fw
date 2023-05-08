@@ -167,6 +167,17 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 
 };
 
+char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
+							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
+							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
+							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
+							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
+							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
+							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
+							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
+							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
+							  "KC_SPECIAL_LINK"};
+
 // Fillers to make layering more clear
 #define _______ KC_TRNS
 #define XXXXXXX KC_NO
@@ -270,6 +281,18 @@ dd_layer user_layer[3] = {
 dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2]};
 uint8_t current_layout = 0;
 
+dd_macros macro1 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro1", 100};
+dd_macros macro2 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro2", 100};
+dd_macros macro3 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro3", 100};
+dd_macros macro4 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro4", 100};
+dd_macros macro5 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro5", 100};
+dd_macros macro6 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro6", 100};
+
+// dd_macros *default_macros[USER_MACROS_NUM] = {&macro1, &macro2, &macro3, &macro4, &macro5, &macro6};
+
+dd_macros default_macros[USER_MACROS_NUM]={0};
+dd_macros *ptr_default_macros [USER_MACROS_NUM];; 
+
 void generate_uuid()
 {
 	uuid_t uu;
@@ -279,10 +302,43 @@ void generate_uuid()
 	{
 		uuid_generate(uu);
 		short_uuid_unparse(uu, uu_str);
-		strcpy(	default_layouts[i]->uuid_str, uu_str);
-	
+		strcpy(default_layouts[i]->uuid_str, uu_str);
+	}
+}
+
+void init_default_macros()
+{
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < MACROS_NUM; i++)
+	{
+		ptr_default_macros[i] = &default_macros[i];
+		for(j= 0; j < (MACRO_LEN-1); j++){
+		default_macros[i].key[j] = macros[i][j];
+		}
+		strcpy(default_macros[i].name, default_macro_name[i]);
+		default_macros[i].keycode= MACRO_BASE_VAL+i;	
 	}
 
 }
+
+// void init_default_macros()
+// {
+// 	ptr_default_macros = &default_macros;
+// 	int i=0;
+// 	int j=0;
+// 	memset(&default_macros, 0, sizeof(default_macros));
+// 	for(i= 0; i < USER_MACROS_NUM; i++){
+// 		default_macros.keycode[i] =MACRO_BASE_VAL+i;
+// 		if(i<MACROS_NUM){
+// 			// strcpy(default_macros.name[i], default_macro_name[i]);
+// 			for(j = 0; j < MACROS_NUM; j++){
+// 				default_macros.key[i][j] = macros[i][j];
+// 			}
+// 		}
+
+// 	}
+
+// }
 
 #endif

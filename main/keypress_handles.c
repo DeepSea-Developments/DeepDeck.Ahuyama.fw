@@ -284,7 +284,10 @@ uint8_t *check_key_state(dd_layer *keymap)
 					{
 						for (uint8_t i = 0; i < MACRO_LEN; i++)
 						{
-							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+
+
 							if (key == KC_NO)
 							{
 								// ESP_LOGI("BREAK", "BREAK");
@@ -343,7 +346,9 @@ uint8_t *check_key_state(dd_layer *keymap)
 					{
 						for (uint8_t i = 0; i < MACRO_LEN; i++)
 						{
-							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+
 							// ESP_LOGI("releaseMacro", "macroid: %d", keycode - MACRO_BASE_VAL);
 							current_report[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
 							// ESP_LOGI("releaseMacro", "report_id: %d", i+2);

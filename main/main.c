@@ -136,8 +136,10 @@ void app_main()
 	esp_log_level_set("*", ESP_LOG_INFO);
 
 	generate_uuid();//generate uuid for each keymap layoutS
+	init_default_macros();//init default macros
 	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
+	nvs_load_macros();
 
 	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
@@ -215,6 +217,7 @@ void app_main()
 
 	ESP_LOGI("Main", "Main sequence done!");
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
+	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 
 #ifdef WIFI_ENABLE
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);

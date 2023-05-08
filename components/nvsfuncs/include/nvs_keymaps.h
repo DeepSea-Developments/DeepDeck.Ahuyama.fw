@@ -24,11 +24,26 @@ typedef struct dd_layer_str {
 	char uuid_str[SHORT_UUID_STR_LEN];
 } dd_layer;
 
+
+// typedef struct dd_macros_str {
+// 	uint16_t key[USER_MACROS_NUM][MACRO_LEN];  				//200 keys ---> MACRO_LEN = 5       
+// 	char name[USER_MACROS_NUM][USER_MACRO_NAME_LEN];       //  200 macros ---> Name of each macro up to 32 characters
+// 	int keycode[USER_MACROS_NUM];
+// } dd_macros;
+
+typedef struct dd_macros_str {
+	uint16_t key[MACRO_LEN];  				//200 keys ---> MACRO_LEN = 5       
+	char name[USER_MACRO_NAME_LEN];       //  200 macros ---> Name of each macro up to 32 characters
+	int keycode;
+} dd_macros;
+
+
+extern dd_macros *user_macros;
 extern dd_layer *key_layouts;
 
 //amount of arrays
 extern uint8_t layers_num;
-
+extern int total_macros;
 
 #endif /* NVS_KEYMAPS_H_ */
 
