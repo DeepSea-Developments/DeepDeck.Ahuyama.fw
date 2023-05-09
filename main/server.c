@@ -458,13 +458,66 @@ esp_err_t delete_macro_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-esp_err_t delete_all_macro_url_handler(httpd_req_t *req)
+esp_err_t update_macro_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP DELETE ALL MACRO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
 	char *string = NULL;
 	json_response(string);
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_macros new_macro;
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			httpd_resp_set_status(req, "500");
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		strcpy(new_macro.name, name->valuestring);
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_macro.keycode = keycode->valueint;
+	}
+	cJSON *key = cJSON_GetObjectItem(payload, "key");
+	if (cJSON_IsArray(key))
+	{
+		for (int i = 0; i < MACRO_LEN; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_macro.key[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d, new_macro.key:{%d,%d,%d,%d,%d} ", new_macro.name, new_macro.keycode, new_macro.key[0], new_macro.key[1], new_macro.key[2], new_macro.key[3], new_macro.key[4]);
+
+	nvs_update_macro(new_macro);
+
+	cJSON_Delete(payload);
+	free(buf);
+
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
@@ -1422,7 +1475,7 @@ httpd_handle_t start_webserver(void)
 	httpd_uri_t delete_macro_url = {.uri = "/api/macros", .method = HTTP_DELETE, .handler = delete_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_macro_url);
 
-	httpd_uri_t delete_all_macro_url = {.uri = "/api/macros/all", .method = HTTP_DELETE, .handler = delete_all_macro_url_handler, .user_ctx = NULL};
+	httpd_uri_t delete_all_macro_url = {.uri = "/api/macros", .method = HTTP_PUT, .handler = update_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_all_macro_url);
 
 	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};

@@ -99,7 +99,6 @@ esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle);
 esp_err_t nvs_create_new_macro(dd_macros macros);
 esp_err_t nvs_update_macro(dd_macros macro);
 esp_err_t nvs_delete_macro(dd_macros macro);
-esp_err_t nvs_delete_all_macros(void);
 esp_err_t nvs_restore_default_macros(void);
 
 #endif /* NVS_FUNCS_H_ */

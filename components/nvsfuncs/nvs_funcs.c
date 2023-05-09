@@ -535,7 +535,7 @@ void nvs_macros_state(void)
  */
 void nvs_load_macros(void)
 {
-	ESP_LOGI("MACROS", "LOADING USER MACROS");
+	ESP_LOGI("--", "LOADING USER MACROS");
 	nvs_handle_t nvs_handle;
 	size_t dd_macros_size;
 	esp_err_t error;
@@ -553,31 +553,31 @@ void nvs_load_macros(void)
 	}
 
 	error = nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num);
-	user_macros = malloc(macro_num * sizeof(dd_macros));
+
 	switch (error)
 	{
 	case ESP_ERR_NVS_NOT_FOUND:
-		ESP_LOGE("MACROS", "Value not set yet. Running routine to write default values");
+		ESP_LOGE("--", "Value not set yet. Running routine to write default values");
 		nvs_write_default_macros(nvs_handle);
-		// ESP_ERROR_CHECK(nvs_get_blob(nvs_handle, MACROS_KEY, (void *)user_macros, &dd_macros_size));
+		ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num));
 		break;
 	case ESP_OK:
 
-		ESP_LOGI("MACROS", "%d Macros loaded", macro_num);
+		ESP_LOGI("--", "%d Macros loaded", macro_num);
 
 		break;
 	default:
-		ESP_LOGE("MACROS", "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
+		ESP_LOGE("--", "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
 		break;
 	}
-
+	user_macros = malloc((macro_num+1) * sizeof(dd_macros));
 	for (int i = 0; i < macro_num; i++)
 	{
-		sprintf(macro_key, "macro_%d", i);
+		sprintf(macro_key, "macro_%hu", (i+1));
 		res = nvs_get_blob(nvs_handle, macro_key, (void *)&user_macros[i], &dd_macros_size);
 		if (res != ESP_OK)
 		{
-			ESP_LOGE("MACROS", "Error (%s) reading Macro %s!\n", esp_err_to_name(res), macro_key);
+			ESP_LOGE("--", "Error (%s) reading Macro %s!\n", esp_err_to_name(res), macro_key);
 		}
 	}
 	total_macros = macro_num;
@@ -604,7 +604,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("MACROS", "MACROS_NAMESPACE OK");
+		ESP_LOGI("--", "MACROS_NAMESPACE OK");
 	}
 	else
 	{
@@ -614,12 +614,12 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	error = nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("MACROS", "MACRO KEY FOUND ---OK");
-		ESP_LOGI("MACROS", "MACRO QTY %d", macro_num);
+		ESP_LOGI("--", "MACRO KEY FOUND ---OK");
+		ESP_LOGI("--", "MACRO QTY %d", macro_num);
 	}
 	else
 	{
-		ESP_LOGE("MACROS", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
+		ESP_LOGE("--", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
 		return ESP_FAIL;
 	}
 	int i = 0;
@@ -629,7 +629,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 
 	for (i = 0; i < macro_num - 1; i++)
 	{
-		sprintf(temp_key, "macro_%d", i);
+		sprintf(temp_key, "macro_%d", (i+1));
 		error = nvs_get_blob(nvs_handle, temp_key, (void *)&temp_macro[i], &dd_macros_size);
 		if (error != ESP_OK)
 		{
@@ -645,7 +645,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 
 	for (i = 0; i < macro_num; i++)
 	{
-		sprintf(macro_key, "macro_%d", i);
+		sprintf(macro_key, "macro_%hu", (i+1));
 		error = nvs_set_blob(nvs_handle, macro_key, (void *)&temp_macro[i], dd_macros_size);
 		if (error != ESP_OK)
 		{
@@ -670,10 +670,27 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 
 esp_err_t nvs_update_macro(dd_macros macro)
 {
+	ESP_LOGI("--", "UPDATING MACRO");
 	nvs_handle_t nvs_handle;
+	dd_macros temp;
+	esp_err_t error;
+	size_t dd_macros_size;
 	char macro_key[10];
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
-	sprintf(macro_key, "macro_%d", (macro.keycode - MACRO_BASE_VAL));
+	ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle));
+
+	sprintf(macro_key, "macro_%hu", (1 + macro.keycode - MACRO_BASE_VAL));
+	ESP_LOGI("--", "Reading  %s", macro_key);
+	error = nvs_get_blob(nvs_handle, macro_key, (void *)&temp, &dd_macros_size);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE("--", "Error (%s) reading Macro %s!\n", esp_err_to_name(error), macro_key);
+	}
+	else
+	{
+		ESP_LOGI("--", "Macro Name  %s, Macro Keycode %d", temp.name, temp.keycode);
+	}
+
+	ESP_LOGI("--", "updating  %s", macro_key);
 	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	nvs_close(nvs_handle);
@@ -686,7 +703,7 @@ esp_err_t nvs_delete_macro(dd_macros macro)
 	nvs_handle_t nvs_handle;
 	char macro_key[10];
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
-	sprintf(macro_key, "macro_%d", (macro.keycode - MACRO_BASE_VAL));
+	sprintf(macro_key, "macro_%hu", (macro.keycode - MACRO_BASE_VAL));
 	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	nvs_close(nvs_handle);
@@ -694,7 +711,6 @@ esp_err_t nvs_delete_macro(dd_macros macro)
 
 	return ESP_OK;
 }
-
 
 esp_err_t nvs_restore_default_macros(void)
 {
@@ -704,11 +720,11 @@ esp_err_t nvs_restore_default_macros(void)
 	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("MACROS", "MACROS_NAMESPACE OK");
+		ESP_LOGI("--", "MACROS_NAMESPACE OK");
 	}
 	else
 	{
-		ESP_LOGE("MACROS", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		ESP_LOGE("--", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
 	}
 	ESP_ERROR_CHECK(nvs_erase_key(nvs_handle, MACROS_KEY));
 	ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
@@ -729,7 +745,7 @@ esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, MACROS_KEY, MACROS_NUM));
 	for (int i = 0; i < MACROS_NUM; i++)
 	{
-		sprintf(macro_key, "macro_%d", i);
+		sprintf(macro_key, "macro_%hu", (i+1));
 		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)ptr_default_macros[i], sizeof(dd_macros)));
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	}

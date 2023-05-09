@@ -110,8 +110,10 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 
 #define PLUGIN_BASE_VAL 0x135
 #define LAYER_HOLD_MAX_VAL 0x134
-#define LAYER_HOLD_BASE_VAL 0x123
-#define MACRO_BASE_VAL 0x103
+#define LAYER_HOLD_BASE_VAL 0x123 //0x123 default value. 
+#define MACRO_BASE_VAL 0x103 //0x103
+#define MACRO_HOLD_MAX_VAL 0x300
+#define MACRO_BASE_VAL_INT 259
 #define LAYERS_BASE_VAL 0xFF
 
 #define ENCODER_SIZE 5 //Number of actions that the encoder has
