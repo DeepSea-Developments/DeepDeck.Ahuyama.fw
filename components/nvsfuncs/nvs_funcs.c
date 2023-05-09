@@ -668,9 +668,33 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 //////////////////////////////////
 /////////////////////////////
 
-esp_err_t nvs_delete_macro(void) { return ESP_OK; }
+esp_err_t nvs_update_macro(dd_macros macro)
+{
+	nvs_handle_t nvs_handle;
+	char macro_key[10];
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	sprintf(macro_key, "macro_%d", (macro.keycode - MACRO_BASE_VAL));
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	nvs_close(nvs_handle);
+	nvs_load_macros();
+	return ESP_OK;
+}
 
-esp_err_t nvs_delete_all_macros(void) { return ESP_OK; }
+esp_err_t nvs_delete_macro(dd_macros macro)
+{
+	nvs_handle_t nvs_handle;
+	char macro_key[10];
+	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	sprintf(macro_key, "macro_%d", (macro.keycode - MACRO_BASE_VAL));
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	nvs_close(nvs_handle);
+	nvs_load_macros();
+
+	return ESP_OK;
+}
+
 
 esp_err_t nvs_restore_default_macros(void)
 {
