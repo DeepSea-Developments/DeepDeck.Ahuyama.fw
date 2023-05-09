@@ -1,8 +1,12 @@
-/*
- * gesture_test.h
- *
- *  Created on: Feb 4, 2023
- *      Author: mauro
+/**
+ * @file gesture_handles.h
+ * @author Mauro (mauriciop@dsd.dev)
+ * @brief 
+ * @version 0.1
+ * @date Feb 2023
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef MAIN_GESTURE_HANDLES_H_
@@ -17,12 +21,6 @@
 #include "keyboard_config.h"
 
 //#define APDS9960_VL_IO                       (gpio_num_t)19
-#define APDS9960_I2C_MASTER_SCL_IO           (gpio_num_t)22          /*!< gpio number for I2C master clock */
-#define APDS9960_I2C_MASTER_SDA_IO           (gpio_num_t)21          /*!< gpio number for I2C master data  */
-#define APDS9960_I2C_MASTER_NUM              I2C_NUM_0   /*!< I2C port number for master dev */
-#define APDS9960_I2C_MASTER_TX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
-#define APDS9960_I2C_MASTER_RX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
-#define APDS9960_I2C_MASTER_FREQ_HZ          400000      /*!< I2C master clock frequency */
 
 #define INTERRUPT_GPIO 19
 #define APDS9960_INT_PIN     19
@@ -34,6 +32,7 @@ extern TaskHandle_t xOledTask;
 extern SemaphoreHandle_t xSemaphore;
 //extern dd_layer *key_layouts;
 
+extern apds9960_handle_t apds9960;
 
 //interrup callback to handle apds9960 pint interrup
 void IRAM_ATTR gesture_isr_handler(void *arg);
@@ -60,7 +59,8 @@ void apds9960_deinit();
 // test to free apds9960 after Ole-menu-config
 void apds9960_free();
 // Config and startup  gesture sensor
-void apds9960_init();
+//void apds9960_init();
+void apds9960_init(i2c_bus_handle_t *i2cbus);
 // read  apds9960 gesture
 void read_gesture();
 //configure interrup input pin for gesture detection

@@ -15,6 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
+#define FIRMWARE_VERSION "0.5.2_beta"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
@@ -30,7 +31,7 @@
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4 // For split keyboards, define columns for one side only.
 
-#define LAYERS 3 // number of layers defined
+#define LAYERS 6 // number of layers defined
 
 // Select diode direction
 #define COL2ROW
@@ -39,11 +40,15 @@
 //Encoder definitions
 #define R_ENCODER_1 // undefine if no rotary encoder is used
 //#define R_ENCODER_SLAVE // undefine if no rotary encoder is used on slave pad
-#define ENCODER1_A_PIN GPIO_NUM_26 // encoder phase A pin
-#define ENCODER1_B_PIN GPIO_NUM_25// encoder phase B pin
-#define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
-#define ENCODER1_S_ACTIVE_LOW 0	  // encoder switch is active_low=1 active_high=0
+// #define ENCODER1_A_PIN GPIO_NUM_26 // encoder phase A pin
+// #define ENCODER1_B_PIN GPIO_NUM_25// encoder phase B pin
+// #define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
 
+#define ENCODER1_A_PIN GPIO_NUM_25 // encoder phase A pin
+#define ENCODER1_B_PIN GPIO_NUM_26// encoder phase B pin
+#define ENCODER1_S_PIN GPIO_NUM_34// encoder switch pin
+
+#define ENCODER1_S_ACTIVE_LOW 0	  // encoder switch is active_low=1 active_high=0
 
 #define R_ENCODER_2 // undefine if no rotary encoder is used
 #define ENCODER2_A_PIN GPIO_NUM_33// encoder phase A pin
@@ -54,12 +59,16 @@
 #define RGB_LEDS
 
 // Gesture sensor. Comment to disable
-#define GESTURE_ENABLE //ToDo, needs to be fixed to not damage the screen
+#define GESTURE_ENABLE
+
+// Wifi. Comment to disable
+#define WIFI_ENABLE
+
 
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
 // every time you make a modification, or uncomment this line.
-#define LAYER_MODIFICATION_MODE
+// #define LAYER_MODIFICATION_MODE5
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used.
@@ -121,6 +130,15 @@ extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 
 extern TaskHandle_t xKeyreportTask;
+
+
+
+#define I2C_MASTER_SCL_IO           (gpio_num_t)22          /*!< gpio number for I2C master clock */
+#define I2C_MASTER_SDA_IO           (gpio_num_t)21          /*!< gpio number for I2C master data  */
+#define I2C_MASTER_NUM              I2C_NUM_0   /*!< I2C port number for master dev */
+#define I2C_MASTER_TX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
+#define I2C_MASTER_FREQ_HZ          400000      /*!< I2C master clock frequency */
 
 #endif
 //
