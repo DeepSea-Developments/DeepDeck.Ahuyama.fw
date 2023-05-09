@@ -46,4 +46,10 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req);
 
 esp_err_t change_keyboard_led_handler(httpd_req_t *req);
 
+
+esp_err_t get_macros_url_handler(httpd_req_t *req);
+esp_err_t create_macro_url_handler(httpd_req_t *req);
+esp_err_t delete_macro_url(httpd_req_t *req);       
+esp_err_t delete_all_macro_url(httpd_req_t *req);                                            
+
 #endif

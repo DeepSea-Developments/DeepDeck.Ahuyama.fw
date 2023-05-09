@@ -146,6 +146,12 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 }
 */
 
+/**
+ * @brief Handler for Wifi Connection
+ * 
+ * @param req 
+ * @return esp_err_t 
+ */
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "connect handler");
@@ -212,7 +218,6 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	wifi_reset = true;
 	xSemaphoreGive(Wifi_initSemaphore);
 	return ESP_OK;
-	
 }
 
 esp_err_t config_url_handler(httpd_req_t *req)
@@ -222,19 +227,9 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
 	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
-	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
-	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
-	// httpd_resp_set_hdr(req, "Vary", "Origin");
 
 	uint8_t layers_num = nvs_read_num_layers();
 	char *string = NULL;
-	cJSON *layer_data = NULL;
-	cJSON *layer_name = NULL;
-	cJSON *layout_pos = NULL;
-	cJSON *layers = NULL;
-	cJSON *is_active = NULL;
-	cJSON *layout_uuid = NULL;
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
 	{
@@ -261,13 +256,349 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
+
+
+
+/**
+ *
+ *
+ * API MACROS
+ *
+ *
+ *
+ */
+
+/**
+ * @brief Read DeepDeck macros
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t get_macros_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *string = NULL;
+	int index = 0;
+	cJSON *macro_data = NULL;
+	cJSON *macro_name = NULL;
+	cJSON *macro_keycode = NULL;
+	cJSON *macro_key = NULL;
+
+	cJSON *macro_object = cJSON_CreateObject();
+	if (macro_object == NULL)
+	{
+		ESP_LOGI(TAG, "error creando macro_object");
+
+		httpd_resp_set_status(req, "500");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	cJSON *array = cJSON_CreateArray();
+	if (array == NULL)
+	{
+		cJSON_Delete(macro_object);
+		ESP_LOGI(TAG, "error creando array");
+		httpd_resp_set_status(req, "500");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+	cJSON_AddItemToObject(macro_object, "macros", array);
+
+	for (index = 0; index < total_macros; ++index)
+	{
+		macro_data = cJSON_CreateObject();
+		if (macro_data == NULL)
+		{
+			ESP_LOGI(TAG, "error creando macro_data");
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToArray(array, macro_data);
+
+		macro_name = cJSON_CreateString((user_macros[index].name));
+		if (macro_name == NULL)
+		{
+			ESP_LOGI(TAG, "error creando macro_name");
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(macro_data, "name", macro_name);
+
+		macro_keycode = cJSON_CreateNumber(user_macros[index].keycode);
+		if (macro_keycode == NULL)
+		{
+			ESP_LOGI(TAG, "error creando macro_keycode");
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(macro_data, "keycode", macro_keycode);
+
+		macro_key = cJSON_CreateArray();
+		if (macro_key == NULL)
+		{
+			ESP_LOGI(TAG, "error creando macro_key");
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		cJSON_AddItemToObject(macro_data, "key", macro_key);
+		for (int i = 0; i < MACRO_LEN; i++)
+		{
+			cJSON_AddItemToArray(macro_key, cJSON_CreateNumber(user_macros[index].key[i]));
+		}
+	}
+
+	string = cJSON_Print(macro_object);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(macro_object);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Create new macro 
+ * 
+ * @param req 
+ * @return esp_err_t 
+ */
+esp_err_t create_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST CREATE MACRO --> /api/macros");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_macros new_macro;
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			httpd_resp_set_status(req, "500");
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		strcpy(new_macro.name, name->valuestring);
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_macro.keycode = keycode->valueint;
+	}
+	cJSON *key = cJSON_GetObjectItem(payload, "key");
+	if (cJSON_IsArray(key))
+	{
+		for (int i = 0; i < MACRO_LEN; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_macro.key[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d, new_macro.key:{%d,%d,%d,%d,%d} ", new_macro.name, new_macro.keycode, new_macro.key[0], new_macro.key[1], new_macro.key[2], new_macro.key[3], new_macro.key[4]);
+
+	esp_err_t error;
+	error = nvs_create_new_macro(new_macro);
+		if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_new_macro error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	cJSON_Delete(payload);
+	free(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/**
+ * @brief Delete a macro 
+ * 
+ * @param req 
+ * @return esp_err_t 
+ */
+esp_err_t delete_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE MACRO --> /api/macros");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+	char *string = NULL;
+	json_response(string);
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/**
+ * @brief Update a macro url handler object
+ * 
+ * @param req 
+ * @return esp_err_t 
+ */
+esp_err_t update_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE ALL MACRO --> /api/macros");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_macros new_macro;
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			httpd_resp_set_status(req, "500");
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		strcpy(new_macro.name, name->valuestring);
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_macro.keycode = keycode->valueint;
+	}
+	cJSON *key = cJSON_GetObjectItem(payload, "key");
+	if (cJSON_IsArray(key))
+	{
+		for (int i = 0; i < MACRO_LEN; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_macro.key[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d, new_macro.key:{%d,%d,%d,%d,%d} ", new_macro.name, new_macro.keycode, new_macro.key[0], new_macro.key[1], new_macro.key[2], new_macro.key[3], new_macro.key[4]);
+	esp_err_t error;
+	error = nvs_update_macro(new_macro);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_update_macro error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(payload);
+	free(buf);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Restore default macros
+ *  
+ * @param req 
+ * @return esp_err_t 
+ */
+esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP RESTORE DEFAULT MACROS --> /api/macros/restore");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	esp_err_t error = nvs_restore_default_macros();
+	if (error == ESP_OK)
+	{
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	httpd_resp_send(req, NULL, 0);
+
+	return ESP_OK;
+}
+
+/**
+ * API LAYERS
+ *
+ */
+
 /**
  * @brief Get the layer url handler object
  *
  * @param req
  * @return esp_err_t
  */
-
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
@@ -576,7 +907,7 @@ static void json_error_generator(char * string, char * error_str)
 }
 
 /**
- * @brief
+ * @brief Delete layer
  *
  * @param req
  * @return esp_err_t
@@ -714,7 +1045,7 @@ void fill_row(cJSON *row, char names[][10], int codes[])
 }
 
 /**
- * @brief
+ * @brief Update layer
  *
  * @param req
  * @return esp_err_t
@@ -899,7 +1230,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief Create a layer url handler object
+ * @brief Create a new layer
  *
  * @param req
  * @return esp_err_t
@@ -1039,7 +1370,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief
+ * @brief Restore Default Layouts 
  *
  * @param req
  * @return esp_err_t
@@ -1081,7 +1412,7 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief
+ * @brief Change Keyboard LED Color
  *
  * @param req
  * @return esp_err_t
@@ -1197,7 +1528,7 @@ httpd_handle_t start_webserver(void)
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 	config.max_uri_handlers = 20;
-	config.stack_size = 1024 * 8;
+	config.stack_size = 1024 * 10;
 	config.uri_match_fn = httpd_uri_match_wildcard;
 
 	// Start the httpd server
@@ -1208,7 +1539,6 @@ httpd_handle_t start_webserver(void)
 	// {
 	// Set URI handlers
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
-	// ESP_LOGI(TAG, "Registering URI handlers --> /connect");
 	httpd_register_uri_handler(server, &connect_url);
 
 	httpd_uri_t get_config_url = {.uri = "/api/config", .method = HTTP_GET, .handler = config_url_handler, .user_ctx = NULL};
@@ -1241,13 +1571,23 @@ httpd_handle_t start_webserver(void)
 	httpd_uri_t layer_restore_options_url = {.uri = "/api/layers/restore", .method = HTTP_OPTIONS, .handler = options_restore_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &layer_restore_options_url);
 
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	// MACROS
+	httpd_uri_t get_macros_url = {.uri = "/api/macros", .method = HTTP_GET, .handler = get_macros_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_macros_url);
+
+	httpd_uri_t create_macro_url = {.uri = "/api/macros", .method = HTTP_POST, .handler = create_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &create_macro_url);
+
+	httpd_uri_t delete_macro_url = {.uri = "/api/macros", .method = HTTP_DELETE, .handler = delete_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &delete_macro_url);
+
+	httpd_uri_t delete_all_macro_url = {.uri = "/api/macros", .method = HTTP_PUT, .handler = update_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &delete_all_macro_url);
+
+	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &restore_all_macro_url);
 
 	return server;
-	// }
-
-	// ESP_LOGI(TAG, "Error starting server!");
-	// return NULL;
 }
 /**
  * @brief

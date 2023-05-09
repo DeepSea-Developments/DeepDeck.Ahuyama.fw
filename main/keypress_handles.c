@@ -231,7 +231,7 @@ uint8_t *check_key_state(dd_layer *keymap)
 				uint16_t report_index = (2 + col + row * KEYMAP_COLS);
 
 				keycode = keymap->key_map[row][col];
-
+				// ESP_LOGW("---", "keycode: %d", keycode);
 				// //checking if the keycode is transparent
 				// if (keycode == KC_TRNS) {
 				// 	if (current_layout == 0) {
@@ -246,12 +246,15 @@ uint8_t *check_key_state(dd_layer *keymap)
 				if (matrix_state[row][col - MATRIX_COLS * pad] == 1)
 				{
 
-					// checking for function
-					if (keycode >= PLUGIN_BASE_VAL)
-					{
-						plugin_launcher(keycode);
-						continue;
-					}
+					//DISABLE PLUGIN_LAUNCHER. -> TODO ADJUST PLUGIN_BASE_VAL.
+					// // checking for function
+					// if (keycode >= PLUGIN_BASE_VAL)
+					// {
+					// 	plugin_launcher(keycode);
+					// 	continue;
+					// }
+
+					
 					// checking for layer hold
 					if ((keycode >= LAYER_HOLD_BASE_VAL) && (keycode <= LAYER_HOLD_MAX_VAL))
 					{
@@ -273,33 +276,38 @@ uint8_t *check_key_state(dd_layer *keymap)
 					}
 
 					// checking for layer adjust keycodes
-					if ((keycode >= LAYERS_BASE_VAL) && (keycode < MACRO_BASE_VAL))
+					// if ((keycode >= LAYERS_BASE_VAL) && (keycode < MACRO_BASE_VAL))
+					if ((keycode >LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
 					{
+						// ESP_LOGW("---", "adjust");
 						layer_adjust(keycode);
 						continue;
 					}
 
 					// checking for macros
-					if ((keycode >= MACRO_BASE_VAL) && (keycode <= LAYER_HOLD_BASE_VAL))
+					// if ((keycode >= MACRO_BASE_VAL) && (keycode <= LAYER_HOLD_BASE_VAL))
+					if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
 					{
 						for (uint8_t i = 0; i < MACRO_LEN; i++)
 						{
-							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+
 							if (key == KC_NO)
 							{
 								// ESP_LOGI("BREAK", "BREAK");
 								break;
 							}
-							// ESP_LOGI("PressMacro", "macroid: %d", keycode - MACRO_BASE_VAL);
+							// ESP_LOGI("PressMacro", "keycode: %d", keycode - MACRO_BASE_VAL);
 							// current_report[REPORT_LEN - 1 - i] = key;
 							current_report[i + 2] = key; // 2 is an offset, as 0 and 1 are used for other reasons
-							// ESP_LOGI("PressMacro", "report_id: %d", i+2);
+							// ESP_LOGI("PressMacro", "report_id: %d", i + 2);
 							modifier |= check_modifier(key);
 							// ESP_LOGI("PressMacro", "Key: %d", key);
 							// printf("\nmodifier:%d", modifier);
 						}
 
-						// ESP_LOGI("MACRO", "Macro selected");
+						// ESP_LOGI("--", "Macro selected");
 						continue;
 					}
 
@@ -339,18 +347,21 @@ uint8_t *check_key_state(dd_layer *keymap)
 					}
 
 					// checking if macro was released
-					if ((keycode >= MACRO_BASE_VAL) && (keycode <= LAYER_HOLD_BASE_VAL))
+					// if ((keycode >= MACRO_BASE_VAL) && (keycode <= LAYER_HOLD_BASE_VAL))
+					if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
 					{
 						for (uint8_t i = 0; i < MACRO_LEN; i++)
 						{
-							uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
-							// ESP_LOGI("releaseMacro", "macroid: %d", keycode - MACRO_BASE_VAL);
+							// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
+							uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+
+							// ESP_LOGI("releaseMacro", "keycode: %d", keycode - MACRO_BASE_VAL);
 							current_report[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
-							// ESP_LOGI("releaseMacro", "report_id: %d", i+2);
+							// ESP_LOGI("releaseMacro", "report_id: %d", i + 2);
 							modifier &= ~check_modifier(key);
 							// ESP_LOGI("releaseMacro", "Key: %d", key);
 						}
-						// ESP_LOGI("MACRO", "Macro selected. KEYCODE: %d", keycode);
+						// ESP_LOGI("--", "Macro selected. KEYCODE: %d", keycode);
 					}
 
 					if (current_report[report_index] != 0)
