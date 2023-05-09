@@ -839,7 +839,9 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		}
 		// printf("\n");
 	}
+
 	cJSON *item;
+	i = 0;
 	cJSON *left_encoder_map = cJSON_GetObjectItem(payload, "left_encoder_map");
 	if (left_encoder_map == NULL)
 	{
