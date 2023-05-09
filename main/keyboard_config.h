@@ -108,13 +108,17 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define REPORT_LEN (MOD_LED_BYTES+MACRO_LEN+MATRIX_ROWS*KEYMAP_COLS) //size of hid reports with NKRO and room for 3 key macro
 #define REPORT_COUNT_BYTES (MATRIX_ROWS*KEYMAP_COLS+MACRO_LEN)
 
-#define PLUGIN_BASE_VAL 0x135
-#define LAYER_HOLD_MAX_VAL 0x134
-#define LAYER_HOLD_BASE_VAL 0x123 //0x123 default value. 
-#define MACRO_BASE_VAL 0x103 //0x103
-#define MACRO_HOLD_MAX_VAL 0x300
+#define PLUGIN_BASE_VAL 0x135 // 0x135 default value. -->309
+#define LAYER_HOLD_MAX_VAL 0x134 //0x134 default value. -->308
+#define LAYER_HOLD_BASE_VAL 0x123 //0x123 default value. -->291
+#define MACRO_BASE_VAL 500 //0x103 default value. -->259
+#define MACRO_HOLD_MAX_VAL 600
 #define MACRO_BASE_VAL_INT 259
-#define LAYERS_BASE_VAL 0xFF
+#define LAYERS_BASE_VAL 0xFF // 0xFF default value. -->255
+
+#define LAYER_ADJUST_MIN 400
+#define LAYER_ADJUST_MAX 410
+
 
 #define ENCODER_SIZE 5 //Number of actions that the encoder has
 #define GESTURE_SIZE 6 //Number of actions gesture sensor has
