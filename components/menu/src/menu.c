@@ -17,10 +17,12 @@
 #include "esp_compiler.h"
 #include "esp_log.h"
 #include "menu.h"
+#include "keyboard_config.h"
 
 #define true 1
 #define false 0
 
+#define MAIN_MENU_TITLE "Main Menu " FIRMWARE_VERSION
 #define MY_BORDER_SIZE 1
 //#define U8G2_REF_MAN_PIC
 //static const char *TAG = "menu";
@@ -58,7 +60,6 @@ enum {
 } menu_list;
 
 // Titles array
-
 char menu_titles[menu_num][MENU_CHAR_NUM] =
 {
     "Main Menu v0.5.1",

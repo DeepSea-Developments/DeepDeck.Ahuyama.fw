@@ -39,6 +39,7 @@ void vTimerCallback(TimerHandle_t pxTimer) {
 //	ESP_LOGI(".", "vTimerCallback");
 	flag = true;
 }
+
 //////////////////////////////////
 esp_err_t set_timer(void) {
 	xTimer = xTimerCreate("Timer", // Just a text name, not used by the kernel.
@@ -79,18 +80,11 @@ void IRAM_ATTR gesture_isr_handler(void *arg) {
 /**
  * @brief i2c master initialization
  */
-void apds9960_init() {
+void apds9960_init(i2c_bus_handle_t *i2cbus) {
+	
 	set_timer();
 	config_interrup_pin();
-	//TO DO -improve this.
-	// this is also for oled  initialization. 
-	int i2c_master_port = APDS9960_I2C_MASTER_NUM;
-	i2c_config_t conf = { .mode = I2C_MODE_MASTER, .sda_io_num =
-	APDS9960_I2C_MASTER_SDA_IO, .sda_pullup_en = GPIO_PULLUP_ENABLE,
-			.scl_io_num = APDS9960_I2C_MASTER_SCL_IO, .scl_pullup_en =
-					GPIO_PULLUP_ENABLE, .master.clk_speed =
-			APDS9960_I2C_MASTER_FREQ_HZ, };
-	i2c_bus = i2c_bus_create(i2c_master_port, &conf);
+	i2c_bus = *i2cbus;
 	apds9960 = apds9960_create(i2c_bus, APDS9960_I2C_ADDRESS);
 
 	apds9960_gesture_init(apds9960);
@@ -180,7 +174,7 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE]) {
 				break;
 
 			case KC_MEDIA_PREV_TRACK:
-				media_state[1] = 111;
+				media_state[1] = 11;
 				break;
 
 			case KC_MEDIA_STOP:
@@ -338,12 +332,12 @@ void config_interrup_pin(void) {
 
 ///////////////
 
-void test() {
+// void test() {
 
-	apds9960_init();
-//	apds9960_gesture_init(apds9960);
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	apds9960_test_gesture();
-	apds9960_deinit();
-}
+// 	apds9960_init();
+// //	apds9960_gesture_init(apds9960);
+// 	vTaskDelay(pdMS_TO_TICKS(1000));
+// 	apds9960_test_gesture();
+// 	apds9960_deinit();
+// }
 

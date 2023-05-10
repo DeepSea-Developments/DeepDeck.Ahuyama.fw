@@ -206,7 +206,6 @@ void rgb_leds_task(void *pvParameters) {
 	rgb_notification_led_init();
 	while (1) {
 		key_led_modes();
-		vTaskDelay(pdMS_TO_TICKS(200));
 	}
 }
 

@@ -14,12 +14,11 @@
 #include <esp_log.h>
 #include "u8g2.h"
 
-//rotation defines
+// rotation defines
 #define LANDSCAPE U8G2_R0
 #define DEG90 U8G2_R1
 #define DEG180 U8G2_R2
 #define DEG270 U8G2_R3
-
 
 extern u8g2_t u8g2; // a structure which will contain all the data for one display
 
@@ -45,6 +44,12 @@ void ble_connected_oled(void);
  * */
 void ble_slave_oled(void);
 
+/**
+ * @brief
+ *
+ */
+void wifi_connected_oled(char *ip_char);
+
 /** @brief running oled task
  * */
 void update_oled(void);
@@ -52,7 +57,6 @@ void update_oled(void);
 /** @brief Generate Splash Screen
  * */
 void splashScreen(void);
-
 
 /** @brief Queue for sending layer to oled
  **/
@@ -69,6 +73,6 @@ extern QueueHandle_t led_recieve_q;
  * This bitmap from the file 'DeepDeck.png'
  */
 
-#define SPLASH_BMPWIDTH  128
+#define SPLASH_BMPWIDTH 128
 
 #endif /* OLED_TASKS_H_ */

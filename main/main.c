@@ -5,20 +5,20 @@
  * @version 0.2
  * @date 2022-12-08
  * @copyright Copyright (c) 2022
- * 
+ *
  * MIT License
  * Copyright (c) 2022
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,11 +26,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
+ *
  * DeepDeck, a product by DeepSea Developments.
  * More info on DeepDeck @ www.deepdeck.co
  * DeepseaDev.com
- * 
+ *
  */
 
 #include <stdio.h>
@@ -58,11 +58,12 @@
 #include "esp_sleep.h"
 #include "esp_pm.h"
 
-//HID Ble functions
+// HID Ble functions
 #include "hal_ble.h"
 
-//Deepdeck functions
+// Deepdeck functions
 #include "matrix.h"
+#include "keymap.h"
 #include "keyboard_config.h"
 #include "battery_monitor.h"
 #include "nvs_funcs.h"
@@ -74,36 +75,40 @@
 #include "plugins.h"
 #include "deepdeck_tasks.h"
 #include "gesture_handles.h"
-
+#include "wifi_handles.h"
+#include "server.h"
 
 #define BASE_PRIORITY 5
 
-//plugin functions
+// plugin functions
 static config_data_t config;
 
 // xSemaphore for i2C shared resource
 SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t Wifi_initSemaphore = NULL;
 
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
- * 
+ *
  * This task init all the basic hardware and then init the tasks needed to run DeepDeck
  */
-void app_main() 
+void app_main()
 {
 	xSemaphore = xSemaphoreCreateBinary();
 
-	//Reset the rtc GPIOS
+	// Reset the rtc GPIOS
 	rtc_matrix_deinit();
 	// Setup keys matrix
 	matrix_setup();
-	
+
+	// init keymap
+
 	// Initialize NVS (non volatile storage).
 	esp_err_t ret;
 	ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES) // If no space available, erase NVS and init it again
 	{
-		ESP_ERROR_CHECK (nvs_flash_erase());
+		ESP_ERROR_CHECK(nvs_flash_erase());
 		ret = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK(ret);
@@ -112,60 +117,77 @@ void app_main()
 	nvs_handle my_handle;
 	ESP_LOGI("MAIN", "loading configuration from NVS");
 	ret = nvs_open("config_c", NVS_READWRITE, &my_handle);
-	
+
 	if (ret != ESP_OK)
 		ESP_LOGE("MAIN", "error opening NVS");
-	
+
 	size_t available_size = MAX_BT_DEVICENAME_LENGTH;
 	strcpy(config.bt_device_name, GATTS_TAG);
 	nvs_get_str(my_handle, "btname", config.bt_device_name, &available_size);
-	if (ret != ESP_OK) {
+	if (ret != ESP_OK)
+	{
 		ESP_LOGE("MAIN", "error reading NVS - bt name, setting to default");
 		strcpy(config.bt_device_name, GATTS_TAG);
-	} else
+	}
+	else
 		ESP_LOGI("MAIN", "bt device name is: %s", config.bt_device_name);
-
 
 	// Set log level of the progam
 	esp_log_level_set("*", ESP_LOG_INFO);
 
-	//Loading layouts from nvs (if found)
+	generate_uuid();//generate uuid for each keymap layoutS
+	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
 
-	//activate keyboard BT stack
+	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
 
+	// init i2c
+	int i2c_master_port = I2C_MASTER_NUM;
+	i2c_config_t conf = {
+		.mode = I2C_MODE_MASTER,
+		.sda_io_num =
+			I2C_MASTER_SDA_IO,
+		.sda_pullup_en = GPIO_PULLUP_ENABLE,
+		.scl_io_num = I2C_MASTER_SCL_IO,
+		.scl_pullup_en =
+			GPIO_PULLUP_ENABLE,
+		.master.clk_speed =
+			I2C_MASTER_FREQ_HZ,
+	};
+	i2c_bus_handle_t i2c_bus = i2c_bus_create(i2c_master_port, &conf);
+
+	// activate gesture
 #ifdef GESTURE_ENABLE
-	apds9960_init();
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1),	&xGesture);
+	apds9960_init(&i2c_bus);
+	vTaskDelay(pdMS_TO_TICKS(200));
+	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1), &xGesture);
 	ESP_LOGI("Gesture", "initialized");
 #endif
 
-
-	//activate oled
-#ifdef	OLED_ENABLE
+	// activate oled
+#ifdef OLED_ENABLE
 	init_oled(ROTATION);
-	
+
 	splashScreen();
 	vTaskDelay(pdMS_TO_TICKS(1000));
 
-	xTaskCreate(oled_task, "oled task", 1024*4, NULL,
-			BASE_PRIORITY, &xOledTask);
+	xTaskCreate(oled_task, "oled task", 1024 * 4, NULL,
+				BASE_PRIORITY, &xOledTask);
 	ESP_LOGI("Oled", "initialized");
 #endif
 
-	//activate encoder functions
-#ifdef	R_ENCODER_1
+	// activate encoder functions
+#ifdef R_ENCODER_1
 	xTaskCreate(encoder_report, "encoder report", 4096, NULL,
-			BASE_PRIORITY, NULL);
+				BASE_PRIORITY, NULL);
 	ESP_LOGI("Encoder 1", "initialized");
 #endif
 
 #ifdef RGB_LEDS
 	xTaskCreate(rgb_leds_task, "rgb_leds_task", 4096, NULL,
-			BASE_PRIORITY, NULL);
+				BASE_PRIORITY, NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
 #endif
 
@@ -174,27 +196,31 @@ void app_main()
 #ifdef MASTER
 	BLE_EN = 1;
 	xTaskCreate(key_reports, "key report task", 8192,
-			xKeyreportTask, BASE_PRIORITY, NULL);
+				xKeyreportTask, BASE_PRIORITY, NULL);
 	ESP_LOGI("Keyboard task", "initialized");
 #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
-		xTaskCreate(battery_reports, "battery reporst", 4096, NULL,
-			BASE_PRIORITY, NULL);
+	xTaskCreate(battery_reports, "battery reporst", 4096, NULL,
+				BASE_PRIORITY, NULL);
 	ESP_LOGI("Battery monitor", "initialized");
 #endif
 
 #ifdef SLEEP_MINS
 	xTaskCreate(deep_sleep, "deep sleep task", 4096, NULL,
-			BASE_PRIORITY, NULL);
+				BASE_PRIORITY, NULL);
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
-
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
+
+#ifdef WIFI_ENABLE
+	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
+	// wifi_app_main();
+	Wifi_initSemaphore = xSemaphoreCreateBinary();
+	xTaskCreate(&wifiInit, "init comms", 1024 * 3, NULL, 10, NULL);
+	xSemaphoreGive(Wifi_initSemaphore);
+#endif
 }
-
-
-
