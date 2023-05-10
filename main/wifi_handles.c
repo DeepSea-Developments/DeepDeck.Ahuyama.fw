@@ -39,6 +39,7 @@
 #include "server.h"
 
 #include "mdns.h"
+#include "spiffs.h"
 
 #define MDNS_INSTANCE "DeepG Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
@@ -74,7 +75,7 @@ static void connect_handler(void *arg, esp_event_base_t event_base,
 	if (*server == NULL)
 	{
 		ESP_LOGI(TAG, "Starting webserver");
-		*server = start_webserver();
+		*server = start_webserver(CONFIG_EXAMPLE_WEB_MOUNT_POINT);
 	}
 }
 
@@ -431,6 +432,7 @@ void wifiInit(void *params)
 			}
 
 			ESP_ERROR_CHECK(esp_wifi_start());
+			init_fs();
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}

@@ -34,8 +34,27 @@
 #define ROWS 4
 #define COLS 4
 
+static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
 extern xSemaphoreHandle Wifi_initSemaphore;
+
+#define REST_CHECK(a, str, goto_tag, ...)                                              \
+	do                                                                                 \
+	{                                                                                  \
+		if (!(a))                                                                      \
+		{                                                                              \
+			ESP_LOGE(REST_TAG, "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+			goto goto_tag;                                                             \
+		}                                                                              \
+	} while (0)
+
+#define CHECK_FILE_EXTENSION(filename, ext) (strcasecmp(&filename[strlen(filename) - strlen(ext)], ext) == 0)
+
+typedef struct rest_server_context
+{
+	char base_path[ESP_VFS_PATH_MAX + 1];
+	char scratch[SCRATCH_BUFSIZE];
+} rest_server_context_t;
 
 void *json_malloc(size_t size)
 {
@@ -64,6 +83,12 @@ void json_response(char *j_response)
 	// printf("%s",j_response);
 	cJSON_Delete(response_json);
 }
+
+static void json_error_generator(char *string, char *error_str)
+{
+	sprintf(string, "{\"error\":\"%s\"}", error_str);
+}
+
 
 /* An HTTP GET handler */
 
@@ -148,9 +173,9 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 
 /**
  * @brief Handler for Wifi Connection
- * 
- * @param req 
- * @return esp_err_t 
+ *
+ * @param req
+ * @return esp_err_t
  */
 esp_err_t connect_url_handler(httpd_req_t *req)
 {
@@ -255,9 +280,6 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	cJSON_Delete(monitor);
 	return ESP_OK;
 }
-
-
-
 
 /**
  *
@@ -376,10 +398,10 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief Create new macro 
- * 
- * @param req 
- * @return esp_err_t 
+ * @brief Create new macro
+ *
+ * @param req
+ * @return esp_err_t
  */
 esp_err_t create_macro_url_handler(httpd_req_t *req)
 {
@@ -438,7 +460,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 
 	esp_err_t error;
 	error = nvs_create_new_macro(new_macro);
-		if (error != ESP_OK)
+	if (error != ESP_OK)
 	{
 		ESP_LOGE(TAG, "nvs_create_new_macro error %s", esp_err_to_name(error));
 		httpd_resp_set_status(req, HTTPD_400);
@@ -457,10 +479,10 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief Delete a macro 
- * 
- * @param req 
- * @return esp_err_t 
+ * @brief Delete a macro
+ *
+ * @param req
+ * @return esp_err_t
  */
 esp_err_t delete_macro_url_handler(httpd_req_t *req)
 {
@@ -479,9 +501,9 @@ esp_err_t delete_macro_url_handler(httpd_req_t *req)
 
 /**
  * @brief Update a macro url handler object
- * 
- * @param req 
- * @return esp_err_t 
+ *
+ * @param req
+ * @return esp_err_t
  */
 esp_err_t update_macro_url_handler(httpd_req_t *req)
 {
@@ -560,9 +582,9 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 
 /**
  * @brief Restore default macros
- *  
- * @param req 
- * @return esp_err_t 
+ *
+ * @param req
+ * @return esp_err_t
  */
 esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
 {
@@ -603,7 +625,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); 
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
 	// Read the URI line and get the host
@@ -646,22 +668,21 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	int found_flag = 0;
 	int pos = 0;
-	for(pos=0; pos < layers_num; pos++)
+	for (pos = 0; pos < layers_num; pos++)
 	{
-		if( strcmp(key_layouts[pos].uuid_str, uuid_param) ==0 ) //If both are equal
+		if (strcmp(key_layouts[pos].uuid_str, uuid_param) == 0) // If both are equal
 		{
-			found_flag = 1; //activate found flag
-			break;			//Get off the for loop
+			found_flag = 1; // activate found flag
+			break;			// Get off the for loop
 		}
 	}
-	if(!found_flag) //IF not found, return http error
+	if (!found_flag) // IF not found, return http error
 	{
 		ESP_LOGE(TAG, "UUID not found");
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
-
 
 	char *string = NULL;
 	cJSON *encoder_item = NULL;
@@ -900,12 +921,6 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-
-static void json_error_generator(char * string, char * error_str)
-{
-	sprintf(string, "{\"error\":\"%s\"}", error_str);
-}
-
 /**
  * @brief Delete layer
  *
@@ -925,7 +940,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	size_t buf_len;
 
 	char uuid_param[SHORT_UUID_STR_LEN];
-	
+
 	uint8_t layers_num = nvs_read_num_layers();
 
 	if (layers_num == 1)
@@ -952,7 +967,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 			else
 			{
 				ESP_LOGE(TAG, "There is no uuid parameter in the query");
-				
+
 				// ToDo - Tested this but did not work. have to check more.
 				// json_error_generator(string,"There is no uuid parameter in the query");
 				// httpd_resp_set_type(req, "application/json");
@@ -962,7 +977,6 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 				httpd_resp_send(req, NULL, 0);
 				return ESP_OK;
 			}
-			
 		}
 		else
 		{
@@ -976,15 +990,15 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 
 	int found_flag = 0;
 	int pos = 0;
-	for(pos=0; pos < layers_num; pos++)
+	for (pos = 0; pos < layers_num; pos++)
 	{
-		if( strcmp(key_layouts[pos].uuid_str, uuid_param) ==0 ) //If both are equal
+		if (strcmp(key_layouts[pos].uuid_str, uuid_param) == 0) // If both are equal
 		{
-			found_flag = 1; //activate found flag
-			break;			//Get off the for loop
+			found_flag = 1; // activate found flag
+			break;			// Get off the for loop
 		}
 	}
-	if(!found_flag) //IF not found, return http error
+	if (!found_flag) // IF not found, return http error
 	{
 		ESP_LOGE(TAG, "UUID of element to delete not found");
 		httpd_resp_set_status(req, HTTPD_400);
@@ -992,7 +1006,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 		return ESP_OK;
 	}
 
-	nvs_delete_layer(pos); //Deletes the layer found
+	nvs_delete_layer(pos); // Deletes the layer found
 
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
@@ -1004,30 +1018,32 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-esp_err_t options_handler(httpd_req_t *req) {
-    // Set CORS headers
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+esp_err_t options_handler(httpd_req_t *req)
+{
+	// Set CORS headers
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
-    // Respond with a 204 status (No Content)
-    httpd_resp_set_status(req, "204");
-    httpd_resp_send(req, NULL, 0);
+	// Respond with a 204 status (No Content)
+	httpd_resp_set_status(req, "204");
+	httpd_resp_send(req, NULL, 0);
 
-    return ESP_OK;
+	return ESP_OK;
 }
 
-esp_err_t options_restore_handler(httpd_req_t *req) {
-    // Set CORS headers
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "PUT");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+esp_err_t options_restore_handler(httpd_req_t *req)
+{
+	// Set CORS headers
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "PUT");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
-    // Respond with a 204 status (No Content)
-    httpd_resp_set_status(req, "204");
-    httpd_resp_send(req, NULL, 0);
+	// Respond with a 204 status (No Content)
+	httpd_resp_set_status(req, "204");
+	httpd_resp_send(req, NULL, 0);
 
-    return ESP_OK;
+	return ESP_OK;
 }
 
 void fill_row(cJSON *row, char names[][10], int codes[])
@@ -1093,18 +1109,17 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 	}
 
-
 	int found_flag = 0;
 	int pos = 0;
-	for(pos=0; pos < layers_num; pos++)
+	for (pos = 0; pos < layers_num; pos++)
 	{
-		if( strcmp(key_layouts[pos].uuid_str, layer_uuid->valuestring) ==0 ) //If both are equal
+		if (strcmp(key_layouts[pos].uuid_str, layer_uuid->valuestring) == 0) // If both are equal
 		{
-			found_flag = 1; //activate found flag
-			break;			//Get off the for loop
+			found_flag = 1; // activate found flag
+			break;			// Get off the for loop
 		}
 	}
-	if(!found_flag) //IF not found, return http error
+	if (!found_flag) // IF not found, return http error
 	{
 		ESP_LOGE(TAG, "UUID not found");
 		httpd_resp_set_status(req, HTTPD_400);
@@ -1176,7 +1191,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *left_encoder_map = cJSON_GetObjectItem(payload, "left_encoder_map");
 	if (left_encoder_map == NULL)
 	{
-		ESP_LOGE(TAG,"left_encoder_map not found");
+		ESP_LOGE(TAG, "left_encoder_map not found");
 		return 1;
 	}
 	cJSON_ArrayForEach(item, left_encoder_map)
@@ -1360,6 +1375,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 	else
 	{
+		//TODO: Handle error -> maximum number of layers reached
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		httpd_resp_set_status(req, HTTPD_400);
@@ -1370,7 +1386,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 }
 
 /**
- * @brief Restore Default Layouts 
+ * @brief Restore Default Layouts
  *
  * @param req
  * @return esp_err_t
@@ -1518,13 +1534,126 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 	// httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Some 404 error message");
 	// return ESP_FAIL;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/* Set HTTP response content type according to file extension */
+static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filepath)
+{
+	const char *type = "text/plain";
+	if (CHECK_FILE_EXTENSION(filepath, ".html"))
+	{
+		type = "text/html";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".js"))
+	{
+		type = "application/javascript";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".css"))
+	{
+		type = "text/css";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".png"))
+	{
+		type = "image/png";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".ico"))
+	{
+		type = "image/x-icon";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".svg"))
+	{
+		type = "text/xml";
+	}
+	else if (CHECK_FILE_EXTENSION(filepath, ".gzip"))
+	{
+		type = "application/x-gzip";
+	}
+
+	return httpd_resp_set_type(req, type);
+}
+
+/* Send HTTP response with the contents of the requested file */
+static esp_err_t rest_common_get_handler(httpd_req_t *req)
+{
+
+	char filepath[FILE_PATH_MAX];
+
+	rest_server_context_t *rest_context = (rest_server_context_t *)req->user_ctx;
+	strlcpy(filepath, rest_context->base_path, sizeof(filepath));
+
+	ESP_LOGI(REST_TAG, "URI %s", req->uri);
+
+	if (req->uri[strlen(req->uri) - 1] == '/')
+	{
+		strlcat(filepath, "/index.html", sizeof(filepath));
+	}
+	else
+	{
+		strlcat(filepath, req->uri, sizeof(filepath));
+	}
+
+	set_content_type_from_file(req, filepath);
+
+	int fd = open(filepath, O_RDONLY, 0);
+	if (fd == -1)
+	{
+		strlcat(filepath, ".gz", sizeof(filepath));
+		fd = open(filepath, O_RDONLY, 0);
+		if (fd == -1)
+		{
+			ESP_LOGE(REST_TAG, "Failed to open file : %s", filepath);
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
+			return ESP_FAIL;
+		}
+		httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+	}
+
+	char *chunk = rest_context->scratch;
+	ssize_t read_bytes;
+	do
+	{
+		/* Read file in chunks into the scratch buffer */
+		read_bytes = read(fd, chunk, SCRATCH_BUFSIZE);
+		if (read_bytes == -1)
+		{
+			ESP_LOGE(REST_TAG, "Failed to read file : %s", filepath);
+		}
+		else if (read_bytes > 0)
+		{
+			/* Send the buffer contents as HTTP response chunk */
+			if (httpd_resp_send_chunk(req, chunk, read_bytes) != ESP_OK)
+			{
+				close(fd);
+				ESP_LOGE(REST_TAG, "File sending failed!");
+				/* Abort sending file */
+				httpd_resp_sendstr_chunk(req, NULL);
+				/* Respond with 500 Internal Server Error */
+				httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
+				return ESP_FAIL;
+			}
+		}
+	} while (read_bytes > 0);
+	/* Close file after sending complete */
+	close(fd);
+	ESP_LOGI(REST_TAG, "File sending complete");
+	/* Respond with an empty chunk to signal HTTP response completion */
+	httpd_resp_send_chunk(req, NULL, 0);
+	return ESP_OK;
+}
+
 /**
  * @brief
  *
  * @return httpd_handle_t
  */
-httpd_handle_t start_webserver(void)
+httpd_handle_t start_webserver(const char *base_path)
 {
+	REST_CHECK(base_path, "wrong base path", err);
+	rest_server_context_t *rest_context = calloc(1, sizeof(rest_server_context_t));
+	REST_CHECK(rest_context, "No memory for rest context", err);
+	strlcpy(rest_context->base_path, base_path, sizeof(rest_context->base_path));
+
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 	config.max_uri_handlers = 20;
@@ -1532,12 +1661,19 @@ httpd_handle_t start_webserver(void)
 	config.uri_match_fn = httpd_uri_match_wildcard;
 
 	// Start the httpd server
-	ESP_ERROR_CHECK(httpd_start(&server, &config));
+	// ESP_ERROR_CHECK(httpd_start(&server, &config));
+	REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
 
 	ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-	// if (httpd_start(&server, &config) == ESP_OK)
-	// {
-	// Set URI handlers
+
+	/* URI handler for getting web server files */
+	httpd_uri_t common_get_uri = {
+		.uri = "/*",
+		.method = HTTP_GET,
+		.handler = rest_common_get_handler,
+		.user_ctx = rest_context};
+	httpd_register_uri_handler(server, &common_get_uri);
+
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &connect_url);
 
@@ -1551,7 +1687,7 @@ httpd_handle_t start_webserver(void)
 	httpd_register_uri_handler(server, &change_led_color_url__);
 
 	///////LAYERS
-	
+
 	httpd_uri_t get_layer_url = {.uri = "/api/layers", .method = HTTP_GET, .handler = get_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &get_layer_url);
 	httpd_uri_t get_layerName_url = {.uri = "/api/layers/layer_names", .method = HTTP_GET, .handler = get_layerName_url_handler, .user_ctx = NULL};
@@ -1588,6 +1724,10 @@ httpd_handle_t start_webserver(void)
 	httpd_register_uri_handler(server, &restore_all_macro_url);
 
 	return server;
+err_start:
+	free(rest_context);
+err:
+	return NULL;
 }
 /**
  * @brief

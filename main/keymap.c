@@ -167,16 +167,27 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 
 };
 
-char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
-							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
-							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
-							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
-							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
-							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
-							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
-							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
-							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
-							  "KC_SPECIAL_LINK"};
+// char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
+// 							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
+// 							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
+// 							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
+// 							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
+// 							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
+// 							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
+// 							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
+// 							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
+// 							  "KC_SPECIAL_LINK"};
+
+char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
+							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
+							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
+							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
+							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
+							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
+							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
+							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
+							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
+							  "macro_90"};
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
@@ -281,15 +292,6 @@ dd_layer user_layer[3] = {
 dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2]};
 uint8_t current_layout = 0;
 
-dd_macros macro1 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro1", 100};
-dd_macros macro2 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro2", 100};
-dd_macros macro3 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro3", 100};
-dd_macros macro4 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro4", 100};
-dd_macros macro5 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro5", 100};
-dd_macros macro6 = {{KC_LCTRL, KC_LALT, KC_NO}, "macro6", 100};
-
-// dd_macros *default_macros[USER_MACROS_NUM] = {&macro1, &macro2, &macro3, &macro4, &macro5, &macro6};
-
 dd_macros default_macros[USER_MACROS_NUM]={0};
 dd_macros *ptr_default_macros [USER_MACROS_NUM];; 
 
@@ -321,24 +323,5 @@ void init_default_macros()
 	}
 
 }
-
-// void init_default_macros()
-// {
-// 	ptr_default_macros = &default_macros;
-// 	int i=0;
-// 	int j=0;
-// 	memset(&default_macros, 0, sizeof(default_macros));
-// 	for(i= 0; i < USER_MACROS_NUM; i++){
-// 		default_macros.keycode[i] =MACRO_BASE_VAL+i;
-// 		if(i<MACROS_NUM){
-// 			// strcpy(default_macros.name[i], default_macro_name[i]);
-// 			for(j = 0; j < MACROS_NUM; j++){
-// 				default_macros.key[i][j] = macros[i][j];
-// 			}
-// 		}
-
-// 	}
-
-// }
 
 #endif

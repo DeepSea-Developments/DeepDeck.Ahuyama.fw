@@ -100,7 +100,7 @@
 #define MACRO_LEN 5 //keys for macros
 #define MACROS_NUM 36 //Available macro lenght
 #define USER_MACROS_NUM 200
-#define USER_MACRO_NAME_LEN 32
+#define USER_MACRO_NAME_LEN 10
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 
@@ -134,6 +134,7 @@ extern uint16_t default_encoder_map[LAYERS][ENCODER_SIZE];
 extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 
 #define MAX_LAYOUT_NAME_LENGTH 15
+#define MAX_LAYOUT_NUMBER 10
 // array to hold names of layouts for oled
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 

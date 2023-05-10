@@ -290,10 +290,14 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 	else
 	{
 		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
-		return ESP_FAIL;
+		return error;
 	}
 
 	layer_num++;
+
+	if(layer_num > MAX_LAYOUT_NUMBER){
+		return ESP_ERR_NO_MEM;
+	}
 	ESP_LOGI("TAG", "New layer QTY %d", layer_num);
 	ESP_LOGI("TAG", " Name:%s", layer.name);
 	dd_layer *aux = malloc((layers_num + 1) * sizeof(dd_layer));
@@ -601,6 +605,10 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	char macro_key[10];
 	char temp_key[10];
 
+	if(macro.keycode>MACRO_HOLD_MAX_VAL){
+		return ESP_ERR_INVALID_ARG;
+	}
+
 	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
@@ -627,6 +635,10 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	}
 	int i = 0;
 	macro_num++;
+	if(macro_num>(MACRO_HOLD_MAX_VAL-MACRO_BASE_VAL)){
+		nvs_close(nvs_handle);
+		return ESP_ERR_NVS_NOT_ENOUGH_SPACE;
+	}
 	dd_macros *temp_macro = malloc((macro_num + 1) * sizeof(dd_macros));
 	user_macros = realloc(user_macros, (macro_num + 1) * sizeof(dd_macros));
 
