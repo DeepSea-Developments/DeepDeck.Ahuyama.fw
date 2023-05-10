@@ -77,6 +77,7 @@
 #include "gesture_handles.h"
 #include "wifi_handles.h"
 #include "server.h"
+#include "spiffs.h"
 
 #define BASE_PRIORITY 5
 
@@ -135,8 +136,8 @@ void app_main()
 	// Set log level of the progam
 	esp_log_level_set("*", ESP_LOG_INFO);
 
-	generate_uuid();//generate uuid for each keymap layoutS
-	init_default_macros();//init default macros
+	generate_uuid();	   // generate uuid for each keymap layoutS
+	init_default_macros(); // init default macros
 	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
 	nvs_load_macros();
@@ -220,6 +221,7 @@ void app_main()
 	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 
 #ifdef WIFI_ENABLE
+	// spiffs_init();
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();

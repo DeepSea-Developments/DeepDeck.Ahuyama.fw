@@ -1668,7 +1668,8 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	/* URI handler for getting web server files */
 	httpd_uri_t common_get_uri = {
-		.uri = "/*",
+		// .uri = "/*",
+		.uri = "/esp-portal/*",
 		.method = HTTP_GET,
 		.handler = rest_common_get_handler,
 		.user_ctx = rest_context};
@@ -1710,16 +1711,12 @@ httpd_handle_t start_webserver(const char *base_path)
 	// MACROS
 	httpd_uri_t get_macros_url = {.uri = "/api/macros", .method = HTTP_GET, .handler = get_macros_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &get_macros_url);
-
 	httpd_uri_t create_macro_url = {.uri = "/api/macros", .method = HTTP_POST, .handler = create_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &create_macro_url);
-
 	httpd_uri_t delete_macro_url = {.uri = "/api/macros", .method = HTTP_DELETE, .handler = delete_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_macro_url);
-
 	httpd_uri_t delete_all_macro_url = {.uri = "/api/macros", .method = HTTP_PUT, .handler = update_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_all_macro_url);
-
 	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_all_macro_url);
 

@@ -9,7 +9,7 @@
 #include "stdlib.h"
 
 // A bit different from QMK, default returns you to the first layer, LOWER and raise increase/lower layer by order.
-#define DEFAULT 400 // 0x100
+#define DEFAULT 400 // 0x100 ->
 #define LOWER 401 // 0x101
 #define RAISE 402 // 0x102
 

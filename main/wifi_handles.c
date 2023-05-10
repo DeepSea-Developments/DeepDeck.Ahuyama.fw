@@ -348,7 +348,7 @@ void resetWifi(void *params)
 
 void wifiInit(void *params)
 {
-
+	init_fs();
 	nvs_handle_t nvs;
 	nvs_open("wifiCreds", NVS_READWRITE, &nvs);
 	nvs_set_str(nvs, "ssid", "Wanda");
@@ -432,7 +432,6 @@ void wifiInit(void *params)
 			}
 
 			ESP_ERROR_CHECK(esp_wifi_start());
-			init_fs();
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}

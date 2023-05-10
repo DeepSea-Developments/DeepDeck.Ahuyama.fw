@@ -7,4 +7,7 @@ app0,     app,  ota_0,   ,        1500k,
 app1,     app,  ota_1,   ,        1500k,
 www_0,   data, spiffs,  ,        600K,
 
+# Old config
+# factory,    0,      0,        ,    2M,
+# www_0,      data, spiffs,  ,        1M,
 
