@@ -1,15 +1,14 @@
-# Congratulations!
+# Thank you very much for supporting DeepDeck!!
 
-You now have DeepDeck! Now what?
+DeepDeck started as a small project and now we have a succesfull crowdfunding campaign! And this is just the start.
 
-[![Deepdecl](https://res.cloudinary.com/marcomontalbano/image/upload/v1678461580/video_to_markdown/images/youtube--WS0yqG_PsY4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=WS0yqG_PsY4 "Deepdecl")
+DeepDeck is a live project, we will be continue releasing new features and want to create a community so all of us (including you) can help improve it, with ideas for features, new ways of using it, new layers ideas!
 
-First step is to connect it to the computer or phone.
+The core of our community is our [discord channel](https://discord.gg/9cMr75TA8k). There you can ask for help, share layers, etc.
 
-To do so, browse in the bluetooth functionality of your device, and look for "Ahuyama". After pairing is ready to go!
+To get started you can visit the quick start guide section to:
+- Update DeepDeck firmware (A must to take all the advantage of it)
+- Download the UI so you can configure your DeepDeck
+- Review other things like code, other applications, so you can get inspired :D
 
-## First test
-
-The easiest way to test is to move the left knob. You should be able to see the volume of your device change.
-
-The other keys might not do anything, or just weird things. To configure, go first to the [installing](vscode-setup.md) section to set up the environment, and after that, explore the [configuration](deepdeck-configuration.md) to set your own layers, macros and shortcuts.
+To see other resources we have, social media, etc, you can visit [this link](https://linktr.ee/deepdeck).
