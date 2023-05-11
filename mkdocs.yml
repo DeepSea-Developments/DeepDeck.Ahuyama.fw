@@ -127,8 +127,7 @@ markdown_extensions:
   # Page tree
 nav:
   - Home: index.md
-  - Getting started:
-    - Connecting DeepDeck: connection.md
+  - Documentation:
     - Installation: vscode-setup.md
     - Configuration: 
       - deepdeck-configuration.md
@@ -136,7 +135,8 @@ nav:
       - Macro: macro-configuration.md
       - Knob: knob-configuration.md
   - Quick Start Guide: 
-      - qsg.md
+      - Quick start guide: qsg.md
+      - Connecting DeepDeck: connection.md
       - Thank you!: thankyou.md
   - Known issues: known-issues.md
   - Support and docs: support.md
