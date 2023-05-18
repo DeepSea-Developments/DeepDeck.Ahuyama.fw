@@ -351,8 +351,8 @@ void wifiInit(void *params)
 	init_fs();
 	nvs_handle_t nvs;
 	nvs_open("wifiCreds", NVS_READWRITE, &nvs);
-	nvs_set_str(nvs, "ssid", "Wanda");
-	nvs_set_str(nvs, "pass", "B1130615116");
+	nvs_set_str(nvs, "ssid", "KURO 2.4ETB");
+	nvs_set_str(nvs, "pass", "TururuTuru");
 	nvs_close(nvs);
 
 	static httpd_handle_t server = NULL;
