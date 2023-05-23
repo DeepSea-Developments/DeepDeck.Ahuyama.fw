@@ -385,7 +385,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	string = cJSON_Print(macro_object);
 	if (string == NULL)
 	{
-		fprintf(stderr, "Failed to print monitor.\n");
+		ESP_LOGE(TAG,"cJSON_Print(macro_object) equals NULL");
 	}
 
 	httpd_resp_set_type(req, "application/json");
@@ -507,7 +507,7 @@ esp_err_t delete_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t update_macro_url_handler(httpd_req_t *req)
 {
-	ESP_LOGI(TAG, "HTTP DELETE ALL MACRO --> /api/macros");
+	ESP_LOGI(TAG, "HTTP UPDATE MACRO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
 
@@ -1708,8 +1708,10 @@ httpd_handle_t start_webserver(const char *base_path)
 	httpd_register_uri_handler(server, &create_macro_url);
 	httpd_uri_t delete_macro_url = {.uri = "/api/macros", .method = HTTP_DELETE, .handler = delete_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_macro_url);
-	httpd_uri_t delete_all_macro_url = {.uri = "/api/macros", .method = HTTP_PUT, .handler = update_macro_url_handler, .user_ctx = NULL};
-	httpd_register_uri_handler(server, &delete_all_macro_url);
+	httpd_uri_t update_macro_url = {.uri = "/api/macros", .method = HTTP_PUT, .handler = update_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &update_macro_url);
+	httpd_uri_t option_macros_url = {.uri = "/api/macros", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &option_macros_url);
 	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_all_macro_url);
 
