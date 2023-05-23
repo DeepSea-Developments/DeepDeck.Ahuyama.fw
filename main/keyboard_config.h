@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define FIRMWARE_VERSION "0.5.2_beta"
+#define FIRMWARE_VERSION "0.5.4"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
@@ -98,7 +98,9 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 40 //Available macro lenght
+#define MACROS_NUM 36 //Available macro lenght
+#define USER_MACROS_NUM 200
+#define USER_MACRO_NAME_LEN 10
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 
@@ -106,11 +108,17 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define REPORT_LEN (MOD_LED_BYTES+MACRO_LEN+MATRIX_ROWS*KEYMAP_COLS) //size of hid reports with NKRO and room for 3 key macro
 #define REPORT_COUNT_BYTES (MATRIX_ROWS*KEYMAP_COLS+MACRO_LEN)
 
-#define PLUGIN_BASE_VAL 0x135
-#define LAYER_HOLD_MAX_VAL 0x134
-#define LAYER_HOLD_BASE_VAL 0x123
-#define MACRO_BASE_VAL 0x103
-#define LAYERS_BASE_VAL 0xFF
+#define PLUGIN_BASE_VAL 0x135 // 0x135 default value. -->309
+#define LAYER_HOLD_MAX_VAL 0x134 //0x134 default value. -->308
+#define LAYER_HOLD_BASE_VAL 0x123 //0x123 default value. -->291
+#define MACRO_BASE_VAL 500 //0x103 default value. -->259
+#define MACRO_HOLD_MAX_VAL 600
+#define MACRO_BASE_VAL_INT 259
+#define LAYERS_BASE_VAL 0xFF // 0xFF default value. -->255
+
+#define LAYER_ADJUST_MIN 400
+#define LAYER_ADJUST_MAX 410
+
 
 #define ENCODER_SIZE 5 //Number of actions that the encoder has
 #define GESTURE_SIZE 6 //Number of actions gesture sensor has
@@ -126,6 +134,7 @@ extern uint16_t default_encoder_map[LAYERS][ENCODER_SIZE];
 extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 
 #define MAX_LAYOUT_NAME_LENGTH 15
+#define MAX_LAYOUT_NUMBER 10
 // array to hold names of layouts for oled
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 

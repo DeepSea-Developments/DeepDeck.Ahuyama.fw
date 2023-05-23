@@ -1,12 +1,12 @@
 /**
  * @file wifi_handles.h
  * @author Mauro (mauriciop@dsd.dev)
- * @brief 
+ * @brief
  * @version 0.1
  * @date April 2023
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -39,7 +39,7 @@
 #include "server.h"
 
 #include "mdns.h"
-
+#include "spiffs.h"
 
 #define MDNS_INSTANCE "DeepG Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
@@ -75,7 +75,7 @@ static void connect_handler(void *arg, esp_event_base_t event_base,
 	if (*server == NULL)
 	{
 		ESP_LOGI(TAG, "Starting webserver");
-		*server = start_webserver();
+		*server = start_webserver(CONFIG_EXAMPLE_WEB_MOUNT_POINT);
 	}
 }
 
@@ -106,7 +106,7 @@ void wifi_init_softap(void)
 	// ESP_ERROR_CHECK(esp_netif_init());
 	// ESP_ERROR_CHECK(esp_event_loop_create_default());
 	esp_netif_create_default_wifi_ap();
-	
+
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -313,30 +313,28 @@ void wifi_scan_sta(void)
 
 static void initialise_mdns(void)
 {
-  
-    //initialize mDNS
-    ESP_ERROR_CHECK( mdns_init() );
-    //set mDNS hostname (required if you want to advertise services)
-    ESP_ERROR_CHECK( mdns_hostname_set(MDNS_HOST_NAME) );
-    ESP_LOGI(TAG, "mdns hostname set to: [%s]", MDNS_HOST_NAME);
-    //set default mDNS instance name
-    ESP_ERROR_CHECK( mdns_instance_name_set(MDNS_INSTANCE) );
 
-    //structure with TXT records
-    mdns_txt_item_t serviceTxtData[3] = {
-        {"board", "esp32"},
-        {"u", "user"},
-        {"p", "password"}
-    };
+	// initialize mDNS
+	ESP_ERROR_CHECK(mdns_init());
+	// set mDNS hostname (required if you want to advertise services)
+	ESP_ERROR_CHECK(mdns_hostname_set(MDNS_HOST_NAME));
+	ESP_LOGI(TAG, "mdns hostname set to: [%s]", MDNS_HOST_NAME);
+	// set default mDNS instance name
+	ESP_ERROR_CHECK(mdns_instance_name_set(MDNS_INSTANCE));
 
-    //initialize service
-    ESP_ERROR_CHECK( mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, 3) );
+	// structure with TXT records
+	mdns_txt_item_t serviceTxtData[3] = {
+		{"board", "esp32"},
+		{"u", "user"},
+		{"p", "password"}};
 
-    //add another TXT item
-    ESP_ERROR_CHECK( mdns_service_txt_item_set("_http", "_tcp", "path", "/foobar") );
-    //change TXT item value
-    ESP_ERROR_CHECK( mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")) );
+	// initialize service
+	ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, 3));
 
+	// add another TXT item
+	ESP_ERROR_CHECK(mdns_service_txt_item_set("_http", "_tcp", "path", "/foobar"));
+	// change TXT item value
+	ESP_ERROR_CHECK(mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")));
 }
 void resetWifi(void *params)
 {
@@ -350,6 +348,13 @@ void resetWifi(void *params)
 
 void wifiInit(void *params)
 {
+	init_fs();
+	nvs_handle_t nvs;
+	// nvs_open("wifiCreds", NVS_READWRITE, &nvs);
+	// nvs_set_str(nvs, "ssid", "ssid");
+	// nvs_set_str(nvs, "pass", "pass");
+	// nvs_close(nvs);
+
 	static httpd_handle_t server = NULL;
 	wifi_ap_mode = false;
 
@@ -373,7 +378,6 @@ void wifiInit(void *params)
 				printf("Restarting now.\n");
 				fflush(stdout);
 				esp_restart();
-
 			}
 
 			ESP_LOGI(":", "Searching for wifi credentials");
@@ -411,17 +415,15 @@ void wifiInit(void *params)
 			else
 			{
 				ESP_LOGI(":", "PASSWORD NOT FOUND");
-				// myflag = true;
 			}
-
-			// wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
-			// ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
 
 			if (ssid != NULL && pass != NULL)
 			{
 				// connectSTA(ssid, pass);
 				wifi_init_sta(wifi_ap_mode, ssid, pass);
-			}else{
+			}
+			else
+			{
 				myflag = true;
 			}
 			if (myflag)
@@ -430,7 +432,6 @@ void wifiInit(void *params)
 			}
 
 			ESP_ERROR_CHECK(esp_wifi_start());
-			
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
