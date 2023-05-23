@@ -213,7 +213,7 @@ dd_layer layer1 =
 			{KC_MPLY, KC_MNXT, KC_AUDIO_MUTE, RAISE},		 // row0
 			{KC_ALT_TAB, KC_ALT_SHIFT_TAB, KC_F11, KC_PSCR}, // row1
 			{KC_APP_COPY, KC_APP_PASTE, KC_UP, KC_ENTER},
-			{KC_LGUI, KC_LEFT, KC_DOWN, KC_SPECIAL_LINK}},
+			{KC_LGUI, KC_LEFT, KC_DOWN, KC_RIGHT}},
 		.key_map_names = {{"Play", "next", "mute", "layer"}, {"nWind", "PWind", "F11", "PrtSC"}, {"Copy", "Paste", "up", "Enter"}, {"window", "left", "down", "right"}},
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK},
