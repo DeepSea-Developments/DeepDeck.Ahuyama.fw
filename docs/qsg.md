@@ -5,9 +5,10 @@ Congratulations! You now have DeepDeck! Now what?
 [![Deepdeck](https://res.cloudinary.com/marcomontalbano/image/upload/v1678461580/video_to_markdown/images/youtube--WS0yqG_PsY4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=WS0yqG_PsY4 "Deepdecl")
 
 In this guide we will show you how to:
+
 1. Connect your DeepDeck to you PC/Laptop/smartphone using bluetooth and do a basic test
-2. Update the firmware of your DeepDeck so you can have the latest version with firmware
-3. Explore the DeepDeck Webserver to program and customize it!
+1. Update the firmware of your DeepDeck so you can have the latest version with firmware
+1. Explore the DeepDeck Webserver to program and customize it!
 
 ## Connect DeepDeck via Bluetooth
 
@@ -26,13 +27,8 @@ In this guide we will show you how to:
 3. Move the left knob and see how it lowers and rises the volume of your device!
 
 <p align="center">
-  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/3a1f4be4-7675-40fe-88cf-3d0ff67a73f1?raw=true" alt="Sublime's custom image" width="30%"/>
+  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/3a1f4be4-7675-40fe-88cf-3d0ff67a73f1?raw=true" alt="DeepDeck basic test" width="35%"/>
 </p>
-
-![first_test](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/3a1f4be4-7675-40fe-88cf-3d0ff67a73f1)
-
-![first_test_2](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/a2bbe40b-08b6-404f-a576-1c5ae328aef2)
-
 
 First step is to connect it to the computer or phone.
 
