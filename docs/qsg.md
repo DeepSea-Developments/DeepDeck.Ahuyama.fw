@@ -12,12 +12,22 @@ In this guide we will show you how to:
 ## Connect DeepDeck via Bluetooth
 
 1. Connect DeepDeck to the USB-C cable. it will turn on and shows the message "waiting for connection"
-![test](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/55b27d12-48ca-461f-948b-dfd339eaefde)
+
+<p align="center">
+  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/55b27d12-48ca-461f-948b-dfd339eaefde?raw=true" alt="Connect DeepDeck"/>
+</p>
 
 2. On your device, go to bluetooth settings and select Ahuyama. Now the message on the screen of your DeepDeck should disappear and show the layers.
-![SelectingBluetooth](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/64ecf965-aa20-495f-a333-fdb86c663273)
+
+<p align="center">
+  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/64ecf965-aa20-495f-a333-fdb86c663273?raw=true" alt="Search DeepDeck bluetooth connection"/>
+</p>
 
 3. Move the left knob and see how it lowers and rises the volume of your device!
+
+<p align="center">
+  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/3a1f4be4-7675-40fe-88cf-3d0ff67a73f1?raw=true" alt="Sublime's custom image" width="30%"/>
+</p>
 
 ![first_test](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/3a1f4be4-7675-40fe-88cf-3d0ff67a73f1)
 
