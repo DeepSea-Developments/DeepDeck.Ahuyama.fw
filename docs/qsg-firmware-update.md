@@ -73,7 +73,7 @@ To make sure the firmware is updated, open the onboard menu on the DeepDeck. To 
 - The title should tell you the version of the firmware and must be the same selected on the DeepDeck installer program.
 
 <p align="center">
-  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/2be958e3-d27d-44b8-a864-ff7a46ee1447?raw=true" alt="DeepDeck version check" width="80%"/>
+  <img src="https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/2be958e3-d27d-44b8-a864-ff7a46ee1447?raw=true" alt="DeepDeck version check" width="60%"/>
 </p>
 
 ### Troubleshooting and additional information  
