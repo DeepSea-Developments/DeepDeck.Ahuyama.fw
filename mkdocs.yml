@@ -134,7 +134,7 @@ nav:
       - Thank you!: thankyou.md
   - Documentation:
     - Installation: vscode-setup.md
-    - DeepDeck programmer: installer.md
+    - DeepDeck installer: installer.md
     - Configuration: 
       - deepdeck-configuration.md
       - Layer: layer-configuration.md
