@@ -139,5 +139,7 @@ nav:
       - Layer: layer-configuration.md
       - Macro: macro-configuration.md
       - Knob: knob-configuration.md
-  - Known issues: known-issues.md
-  - Support and docs: support.md
+  - Resources: support.md
+    - Source Code: source_code.md
+    - 3d print accesories: 3dprint.md
+    - Other accesories: accessories.md
