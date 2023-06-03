@@ -41,6 +41,7 @@ Download [CP210x Universal Windows Driver](https://www.silabs.com/developers/usb
 </p>
 
 To install the drivers:
+
 - Uncompress the drivers. 
 - Right click on the unknown device on the *Device Manager*, and select **"install/update driver"**. 
 - On the window that will pop up, select **Browse my computer for drivers**. 
