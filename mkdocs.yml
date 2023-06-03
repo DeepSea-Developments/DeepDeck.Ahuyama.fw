@@ -128,8 +128,9 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quick Start Guide: 
-      - Quick start guide: qsg.md
-      - Connecting DeepDeck: connection.md
+      - First steps: qsg.md
+      - Firmware update: qsg-firmware-update.md
+      - Configurations: qsg-webserver.md
       - Thank you!: thankyou.md
   - Documentation:
     - Installation: vscode-setup.md
