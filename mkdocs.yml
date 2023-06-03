@@ -140,7 +140,7 @@ nav:
       - Macro: macro-configuration.md
       - Knob: knob-configuration.md
   - Resources: 
-    support.md
     - Source Code: source_code.md
     - 3d print accesories: 3dprint.md
     - Other accesories: accessories.md
+    - Support: support.md
