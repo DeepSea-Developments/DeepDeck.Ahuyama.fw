@@ -2,7 +2,19 @@
 
 Congratulations! You now have DeepDeck! Now what?
 
-[![Deepdecl](https://res.cloudinary.com/marcomontalbano/image/upload/v1678461580/video_to_markdown/images/youtube--WS0yqG_PsY4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=WS0yqG_PsY4 "Deepdecl")
+[![Deepdeck](https://res.cloudinary.com/marcomontalbano/image/upload/v1678461580/video_to_markdown/images/youtube--WS0yqG_PsY4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=WS0yqG_PsY4 "Deepdecl")
+
+In this guide we will show you how to:
+1. Connect your DeepDeck to you PC/Laptop/smartphone using bluetooth and do a basic test
+2. Update the firmware of your DeepDeck so you can have the latest version with firmware
+3. Explore the DeepDeck Webserver to program and customize it!
+
+## Connect DeepDeck via Bluetooth
+
+1. Connect DeepDeck to the USB-C cable
+![test](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/assets/5274871/55b27d12-48ca-461f-948b-dfd339eaefde)
+
+2. 
 
 First step is to connect it to the computer or phone.
 
