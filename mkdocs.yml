@@ -130,7 +130,7 @@ nav:
   - Quick Start Guide: 
       - First steps: qsg.md
       - Firmware update: qsg-firmware-update.md
-      - Configurations: qsg-webserver.md
+      - WebServer: qsg-webserver.md
       - Thank you!: thankyou.md
   - Documentation:
     - Installation: vscode-setup.md
