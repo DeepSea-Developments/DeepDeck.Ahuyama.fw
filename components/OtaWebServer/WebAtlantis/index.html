@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>ESP32 OTA Update</title>
+    <script>
+        function startUpload() {
+            var otafile = document.getElementById("otafile").files;
+
+            if (otafile.length == 0) {
+                alert("No file selected!");
+            } else {
+                document.getElementById("otafile").disabled = true;
+                document.getElementById("upload").disabled = true;
+
+                var file = otafile[0];
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200) {
+                            document.open();
+                            document.write(xhr.responseText);
+                            document.close();
+                        } else if (xhr.status == 0) {
+                            alert("Server closed the connection abruptly!");
+                            location.reload()
+                        } else {
+                            alert(xhr.status + " Error!\n" + xhr.responseText);
+                            location.reload()
+                        }
+                    }
+                };
+
+                xhr.upload.onprogress = function (e) {
+                    var progress = document.getElementById("progress");
+                    progress.textContent = "Progress: " + (e.loaded / e.total * 100).toFixed(0) + "%";
+                };
+                xhr.open("POST", "/update", true);
+                xhr.send(file);
+            }
+        }
+    </script>
+
+        <style>
+            .button{
+                background-color: #FF7200;
+                color: white;
+                padding: 6px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 4px;
+                border: 2px solid #FF9D3A;
+                margin: 4px 2px;
+                cursor: pointer;
+                width: 106px;
+            }
+            .button:hover{
+                background-color: #1c3564;
+                border: 2px solid #7083b9;
+            }
+            .center{
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+                width: 50%;
+                line-height: 1.5;
+                color: white;
+                color:#1C3564;
+                padding-top: 6px;
+                padding-bottom: 16px;
+            }
+            .mobile{
+                text-align: left;
+                font-size: 18px;
+                font-weight: 300;
+                font-style: normal;
+                font-family: oswald, sans-serif;
+                cursor: pointer;
+                color: #1C3564;
+            }
+    
+    
+            .wrapper{
+                width: 100%;
+                padding-top: 0px;
+                padding-right: 20px;
+                padding-bottom: 0px;
+                padding-left: 20px;
+            }
+    
+            .other{
+                padding-top: 10px;
+            }
+    
+            .sectionAddress{
+                text-align: left;
+                line-height: 1.4em;
+                margin-top: 5px;
+                margin-right: 0px;
+                margin-bottom: 15px;
+                margin-left: 0px;
+                padding-top: 16px;
+            }
+            body{
+                font-family: Arial, Verdana, Trebuchet, sans-serif;
+                font-size: 14px;
+            }
+            ::selection{
+                color: white;
+                background: #1C3564;
+            }
+    
+            nav#catNavMenu{
+                background: #1c3564;
+                min-height: 30px;
+                line-height: 24px;
+            }
+    
+            ul#menuBar{
+                font-family: oswald,sans-serif;
+                color: white;
+                display: block;
+                position: relative;
+                text-transform: none;
+    
+                padding-left: 0px;
+    
+                font-size: 20px;
+                list-style: none;
+                text-align: center;
+                margin: 0;
+    
+    
+            }
+    
+            ul#menuBar li{
+                display: inline-block;
+                position: relative;
+                padding: 16px;
+    
+            }
+    
+            ul#menuBar li:hover{
+                background-color: #FF7200;
+                padding: 16px;
+            }
+    
+            ul#menuBar li a{
+                font-size: 16px;
+                cursor: pointer;
+            }
+    
+            .page_headers {
+                font-size: 28px;
+                font-weight: 800;
+                color: #ff7200;
+                padding-left: 18px;
+            }
+    
+            .firmVerLabel{
+                padding-left: 20px;
+                padding-right: 20px;
+                float: left;
+                width: 120px;
+            }
+    
+            .firmFileLabel{
+                padding-left: 20px;
+                float: left;
+                width: 120px;
+            }
+    
+            .firmware_content{
+                padding-left: 40px;
+            }
+    
+            .firmware_content-result{
+                padding-left: 164px;
+                padding-top: 20px;
+                padding-bottom: 100px;
+            }
+    
+            .myPadding{
+                padding-bottom: 40px;
+            }
+    
+            .uploadBtn{
+                padding-top: 20px;
+                padding-left: 120px;
+            }
+    
+            h1 {
+                font-size: 1.5em;
+                margin-block-start: 0.83em;
+                margin-block-end: 0.83em;
+    
+                display: block;
+                font-size: 2em;
+                margin-block-start: 0.67em;
+                margin-block-end: 0.67em;
+                margin-inline-start: 0px;
+                margin-inline-end: 0px;
+                font-weight: bold;
+            }
+    
+            h3{
+                padding-left: 20px;
+                display: block;
+            }
+    
+            div{
+                display: block;
+            }
+    
+    
+            input#otafile{
+                display: none;
+            }
+    
+            input#otafile + label{
+                background-color: #4d8cf2;
+                padding: 6px;
+                color: white;
+                border: 2px solid #9ec3ff;
+                border-radius: 4px;
+    
+            }
+    
+            input#otafile + label:hover{
+                background-color: #3b73ce;
+                border-color: #729fe7;
+                cursor: pointer;
+            }
+    
+    
+            footer .wrapper{
+                background: #1c3564;
+                padding: 0 20px;
+            }
+    
+            footer .ftr-col{
+                padding-top: 4px;
+                padding-bottom: 10px;
+            }
+    
+            footer h2{
+                color: white;
+                font-family: oswald,sans-serif;
+                font-size: 20px;
+                font-weight: 300;
+                text-transform: uppercase;
+                line-height: 22px;
+                display: block;
+                margin: 25px 0 10px;
+            }
+    
+            p.footerText{
+                color: white;
+    
+            }
+    
+            p {
+                line-height: 1.5;
+                margin: 0 0 1em;
+            }
+    
+            a[href^="tel:"] {
+                color: #fff;
+                text-decoration: none;
+            }
+    
+            #copyright {
+                width: 45%;
+                float: left;
+                color: #1c3564;
+                margin: 15px 0;
+                line-height: 30px;
+            }
+    
+            .bottomBar .wrapper {
+                border-top: 4px solid #1c3564;
+                margin: 15px auto 0;
+            }
+    
+            .footer {
+                font-size: 10px;
+                color: #fff;
+                font-weight: 400;
+                text-transform: none;
+            }
+    
+            body {
+                font-family: Arial,Verdana,Trebuchet,sans-serif;
+                font-size: 14px;
+                color: #000;
+                background: #fff;
+                font-weight: 400;
+                padding: 0;
+                margin: 0;
+            }
+    
+    
+            *{
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+            }
+    
+        </style>
+    
+</head>
+<body>
+<div id="mainContainer">
+    <div class="wrapper other">
+        <b class="mobile" href="tel:+57300 3073164">(+57)300 3073164</b>
+    </div>
+    <header>
+        <hr size="1" color=#1C3564>
+        <div class="center">
+            <div id="logo">
+                <img src="DSDlogo.png" alt="DSD logo">
+
+        </div>
+    </header>
+
+    <nav id="catNavMenu">
+        <div class="wrapper">
+            <ul id="menuBar">
+                <li>
+                    <a class="cat">Update</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="wrapper">
+        <div id="mainContent" style="width: 999px;">
+            <section id="otaSection">
+               <div class="sectionAddress">
+                   <a itemprop="item">
+                       <span itemprop="name">DEV TEST</span>
+                   </a>
+                   <a>&gt</a>
+                   <a itemprop="item">Update</a>
+               </div>
+            </section>
+        </div>
+    </div>
+
+    <h1 class="page_headers">ESP32 Firmware Update</h1>
+    <h3 class="firmware_header">Current Firmware</h3>
+    <div class="firmware_content">
+        <label class="firmVerLabel">Version:</label>
+        <label >1.00</label>
+    </div>
+    <div>
+        <br>
+    </div>
+    <div class="firmware_content">
+        <label class="firmVerLabel">Date:</label>
+        <label>30/05/2023</label>
+    </div>
+    <div class="myPadding"> </div>
+    <h3 class="firmware_header">New Firmware</h3>
+
+    <div class="firmware_content">
+        <label class="firmFileLabel" >File (.bin):</label>
+        <input type="file" id="otafile" name="otafile" />
+        <label for="otafile">Choose a file...</label>
+        <span>
+            <strong>Chosen file:</strong>
+            <span id="file-name">None</span>
+        </span>
+
+        <div class="uploadBtn" >
+            <button id="upload" type="button" class="button" onclick="startUpload()">Upload</button>
+        </div>
+
+    </div>
+
+
+    <div class="firmware_content-result" id="progress" ></div>
+
+    <footer>
+        <div class="wrapper">
+            <div class="ftr-col">
+                <h2>Contact us</h2>
+                <p class="footerText">
+                    Deepsea Developments SAS <br>
+                    Atlantis<br> <br>
+                    <a href="tel:1-1-1-1-1">
+                        Phone: 1-1-1-1-1 <br>
+                    </a>
+                    Hours: Mon - Fri 8:00 am to 5:00 pm GMT(-5)
+                </p>
+            </div>
+        </div>
+    </footer>
+    <div class="bottomBar">
+        <div class="wrapper">
+            <div id="copyright" class="footer">
+                Copyright Deepsea Developments SAS. All Rights Reserved.
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let inputFile = document.getElementById('otafile');
+        let fileNameField = document.getElementById('file-name');
+        inputFile.addEventListener('change', function(event){
+            let uploadedFileName = event.target.files[0].name;
+            fileNameField.textContent = uploadedFileName;
+        })
+    
+    </script>
+
+</div>
+</body>
+</html>

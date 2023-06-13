@@ -78,6 +78,7 @@
 #include "wifi_handles.h"
 #include "server.h"
 #include "spiffs.h"
+#include "ota.h"
 
 #define BASE_PRIORITY 5
 
@@ -95,6 +96,7 @@ SemaphoreHandle_t Wifi_initSemaphore = NULL;
  */
 void app_main()
 {
+	ota_init();
 	xSemaphore = xSemaphoreCreateBinary();
 
 	// Reset the rtc GPIOS

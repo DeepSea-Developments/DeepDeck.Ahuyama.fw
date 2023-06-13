@@ -8,7 +8,7 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 add_compile_options(-Wno-error=missing-braces)
 add_compile_options(-Wno-unused-variable)
-
-project(DeepDeck)
+set(PROJECT_VER "2.0")
+project(DeepDeck1)
 
 message(STATUS "Building: root")

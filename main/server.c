@@ -31,8 +31,15 @@
 
 // #include "mdns.h"
 #include "esp_vfs.h"
+#include "ota.h"
+
 #define ROWS 4
 #define COLS 4
+
+
+
+extern const uint8_t index_html_start[] asm("_binary_index_html_start");
+extern const uint8_t index_html_end[] asm("_binary_index_html_end");
 
 static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
@@ -88,7 +95,6 @@ static void json_error_generator(char *string, char *error_str)
 {
 	sprintf(string, "{\"error\":\"%s\"}", error_str);
 }
-
 
 /* An HTTP GET handler */
 
@@ -385,7 +391,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	string = cJSON_Print(macro_object);
 	if (string == NULL)
 	{
-		ESP_LOGE(TAG,"cJSON_Print(macro_object) equals NULL");
+		ESP_LOGE(TAG, "cJSON_Print(macro_object) equals NULL");
 	}
 
 	httpd_resp_set_type(req, "application/json");
@@ -1375,7 +1381,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 	else
 	{
-		//TODO: Handle error -> maximum number of layers reached
+		// TODO: Handle error -> maximum number of layers reached
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		httpd_resp_set_status(req, HTTPD_400);
@@ -1642,6 +1648,69 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
+/*
+ *OTA
+ */
+
+esp_err_t get_handler(httpd_req_t *req)
+{
+	/* Send a simple response */
+	httpd_resp_send(req, (const char *)index_html_start, index_html_end - index_html_start);
+	return ESP_OK;
+}
+
+esp_err_t post_handler(httpd_req_t *req)
+{
+
+	char buf[1000];
+	esp_ota_handle_t ota_handle;
+	int remaining = req->content_len;
+
+	const esp_partition_t *ota_partition = esp_ota_get_next_update_partition(NULL);
+	ESP_ERROR_CHECK(esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle));
+
+	while (remaining > 0)
+	{
+		int recv_len = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
+
+		// Timeout Error: Just retry
+		if (recv_len == HTTPD_SOCK_ERR_TIMEOUT)
+		{
+			continue;
+
+			// Serious Error: Abort OTA
+		}
+		else if (recv_len <= 0)
+		{
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Protocol Error");
+			return ESP_FAIL;
+		}
+
+		// Successful Upload: Flash firmware chunk
+		if (esp_ota_write(ota_handle, (const void *)buf, recv_len) != ESP_OK)
+		{
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash Error");
+			return ESP_FAIL;
+		}
+
+		remaining -= recv_len;
+	}
+
+	// Validate and switch to new OTA image and reboot
+	if (esp_ota_end(ota_handle) != ESP_OK || esp_ota_set_boot_partition(ota_partition) != ESP_OK)
+	{
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Validation / Activation Error");
+		return ESP_FAIL;
+	}
+
+	httpd_resp_sendstr(req, "Firmware update complete, rebooting now!\n");
+
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	esp_restart();
+
+	return ESP_OK;
+}
+
 /**
  * @brief
  *
@@ -1665,8 +1734,6 @@ httpd_handle_t start_webserver(const char *base_path)
 	REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
 
 	ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-
-	
 
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &connect_url);
@@ -1715,9 +1782,28 @@ httpd_handle_t start_webserver(const char *base_path)
 	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_all_macro_url);
 
+	// OTA URI
+	/* URI handler structure for GET /uri */
+	httpd_uri_t uri_get = {
+		.uri = "/",
+		.method = HTTP_GET,
+		.handler = get_handler,
+		.user_ctx = NULL};
+	httpd_register_uri_handler(server, &uri_get);
+
+	/* URI handler structure for POST /uri */
+	httpd_uri_t uri_post = {
+		.uri = "/update",
+		.method = HTTP_POST,
+		.handler = post_handler,
+		.user_ctx = NULL};
+
+	httpd_register_uri_handler(server, &uri_post);
+	//////
+
 	/* URI handler for getting web server files */
 	httpd_uri_t common_get_uri = {
-		.uri = "/*",
+		.uri = "/test/*",
 		//.uri = "/esp-portal/*",
 		.method = HTTP_GET,
 		.handler = rest_common_get_handler,
