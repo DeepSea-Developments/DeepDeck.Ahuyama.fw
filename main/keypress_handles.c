@@ -30,6 +30,8 @@
 #include "nvs_funcs.h"
 #include "plugin_manager.h"
 #include "rgb_led.h"
+#include "gesture_handles.h"
+
 
 #define KEY_PRESS_TAG "KEY_PRESS"
 

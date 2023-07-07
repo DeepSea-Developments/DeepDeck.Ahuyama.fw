@@ -89,7 +89,6 @@ static void json_error_generator(char *string, char *error_str)
 	sprintf(string, "{\"error\":\"%s\"}", error_str);
 }
 
-
 /* An HTTP GET handler */
 
 /**
@@ -385,7 +384,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	string = cJSON_Print(macro_object);
 	if (string == NULL)
 	{
-		ESP_LOGE(TAG,"cJSON_Print(macro_object) equals NULL");
+		ESP_LOGE(TAG, "cJSON_Print(macro_object) equals NULL");
 	}
 
 	httpd_resp_set_type(req, "application/json");
@@ -436,7 +435,10 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 	cJSON *name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(name) && (name->valuestring != NULL))
 	{
-		strcpy(new_macro.name, name->valuestring);
+		if (strlen(name->valuestring) < 6)
+			strcpy(new_macro.name, name->valuestring);
+		else
+			strcpy(new_macro.name, "  ");
 	}
 	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
 	if (cJSON_IsNumber(keycode))
@@ -451,7 +453,10 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 			cJSON *item = cJSON_GetArrayItem(key, i);
 			if (cJSON_IsNumber(item))
 			{
-				new_macro.key[i] = item->valueint;
+				if (item->valueint >= 0 || item->valueint <= 1000)
+					new_macro.key[i] = item->valueint;
+				else
+					new_macro.key[i] = 0;
 			}
 		}
 	}
@@ -538,7 +543,10 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	cJSON *name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(name) && (name->valuestring != NULL))
 	{
-		strcpy(new_macro.name, name->valuestring);
+		if (strlen(name->valuestring) < 6)
+			strcpy(new_macro.name, name->valuestring);
+		else
+			strcpy(new_macro.name, "  ");
 	}
 	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
 	if (cJSON_IsNumber(keycode))
@@ -553,7 +561,10 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 			cJSON *item = cJSON_GetArrayItem(key, i);
 			if (cJSON_IsNumber(item))
 			{
-				new_macro.key[i] = item->valueint;
+				if (item->valueint >= 0 || item->valueint <= 1000)
+					new_macro.key[i] = item->valueint;
+				else
+					new_macro.key[i] = 0;
 			}
 		}
 	}
@@ -1053,7 +1064,10 @@ void fill_row(cJSON *row, char names[][10], int codes[])
 	for (i = 0; i < COLS; i++)
 	{
 		item = cJSON_GetArrayItem(row, i);
-		strcpy(names[i], cJSON_GetObjectItem(item, "name")->valuestring);
+		if (strlen(cJSON_GetObjectItem(item, "name")->valuestring) < 6)
+			strcpy(names[i], cJSON_GetObjectItem(item, "name")->valuestring);
+		else
+			strcpy(names[i], "__");
 		codes[i] = cJSON_GetObjectItem(item, "key_code")->valueint;
 	}
 	// cJSON_Delete(item);
@@ -1149,7 +1163,10 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(new_layer_name) && (new_layer_name->valuestring != NULL))
 	{
-		strcpy(temp_layout.name, new_layer_name->valuestring);
+		if (strlen(new_layer_name->valuestring) < 6)
+			strcpy(temp_layout.name, new_layer_name->valuestring);
+		else
+			strcpy(temp_layout.name, "__");
 	}
 
 	cJSON *row0 = cJSON_GetObjectItemCaseSensitive(payload, "row0");
@@ -1294,10 +1311,11 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(layer_name) && (layer_name->valuestring != NULL))
 	{
-		// printf("Layer Name = \"%s\"\n", layer_name->valuestring);
 
-		strcpy(new_layer.name, layer_name->valuestring);
-		// printf("ddLayer Name = \"%s\"\n", new_layer.name);
+		if (strlen(layer_name->valuestring) < 15)
+			strcpy(new_layer.name, layer_name->valuestring);
+		else
+			strcpy(new_layer.name, "__");
 	}
 
 	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
@@ -1375,7 +1393,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 	else
 	{
-		//TODO: Handle error -> maximum number of layers reached
+		// TODO: Handle error -> maximum number of layers reached
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
 		httpd_resp_set_status(req, HTTPD_400);
@@ -1469,7 +1487,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 
 	json_response(string);
 
-	// Read the URI line and get the parameters
+	// Read the URI line and get the parametersk
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
 	{
@@ -1665,8 +1683,6 @@ httpd_handle_t start_webserver(const char *base_path)
 	REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
 
 	ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-
-	
 
 	httpd_uri_t connect_url = {.uri = "/api/connect", .method = HTTP_POST, .handler = connect_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &connect_url);

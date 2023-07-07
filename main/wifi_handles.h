@@ -59,5 +59,5 @@ void wifi_init_softap(void);
 void wifi_scan_sta(void);
 void wifiInit(void *params);
 void start_mdns_service();
-void resetWifi(void *params);
+void resetWifi(void);
 #endif

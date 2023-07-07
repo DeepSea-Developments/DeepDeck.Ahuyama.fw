@@ -283,13 +283,13 @@ dd_layer layer3 =
 		.active = true,
 };
 
-dd_layer user_layer[3] = {
-	DD_LAYER_INIT("USER1"),
-	DD_LAYER_INIT("USER2"),
-	DD_LAYER_INIT("USER3"),
-};
+// dd_layer user_layer[3] = {
+// 	DD_LAYER_INIT("USER1"),
+// 	DD_LAYER_INIT("USER2"),
+// 	DD_LAYER_INIT("USER3"),
+// };
 
-dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2]};
+dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
 uint8_t current_layout = 0;
 
 dd_macros default_macros[USER_MACROS_NUM]={0};

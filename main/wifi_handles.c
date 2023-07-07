@@ -65,6 +65,7 @@ static void disconnect_handler(void *arg, esp_event_base_t event_base,
 		ESP_LOGI(TAG, "Stopping webserver");
 		stop_webserver(*server);
 		*server = NULL;
+		void resetWifi();
 	}
 }
 
@@ -311,6 +312,7 @@ void wifi_scan_sta(void)
 }
 ///////////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_MDNS
 static void initialise_mdns(void)
 {
 
@@ -336,14 +338,15 @@ static void initialise_mdns(void)
 	// change TXT item value
 	ESP_ERROR_CHECK(mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")));
 }
-void resetWifi(void *params)
+#endif
+
+void resetWifi(void)
 {
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	ESP_ERROR_CHECK(esp_wifi_stop());
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
 	xSemaphoreGive(Wifi_initSemaphore);
-
-	vTaskDelete(NULL);
+	// vTaskDelete(NULL);
 }
 
 void wifiInit(void *params)
@@ -370,7 +373,9 @@ void wifiInit(void *params)
 
 		if (xSemaphoreTake(Wifi_initSemaphore, portMAX_DELAY))
 		{
-			// initialise_mdns();
+#ifdef USE_MDNS
+			initialise_mdns();
+#endif
 			if (wifi_reset)
 			{
 				// server = NULL;

@@ -225,7 +225,7 @@ void app_main()
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
-	xTaskCreate(&wifiInit, "init comms", 1024 * 3, NULL, 10, NULL);
+	xTaskCreate(&wifiInit, "init comms", 1024 * 4, NULL, 10, NULL);
 	xSemaphoreGive(Wifi_initSemaphore);
 #endif
 }
