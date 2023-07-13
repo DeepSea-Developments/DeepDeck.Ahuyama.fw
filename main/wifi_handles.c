@@ -59,7 +59,9 @@ static const char *TAG = "wifi_handler";
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
 							   int32_t event_id, void *event_data)
 {
+	
 	httpd_handle_t *server = (httpd_handle_t *)arg;
+	ESP_LOGE(TAG,"disconnect_handler");
 	if (*server)
 	{
 		ESP_LOGI(TAG, "Stopping webserver");

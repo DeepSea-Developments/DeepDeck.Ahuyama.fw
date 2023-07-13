@@ -82,8 +82,8 @@ void update_oled(void)
 	{
 
 		erase_area(0, 13, 128, 22);
-		u8g2_SetFont(&u8g2, u8g2_font_courB24_tf);
-		u8g2_DrawStr(&u8g2, 0, 35, key_layouts[curr_layout].name);
+		u8g2_SetFont(&u8g2, u8g2_font_courB18_tf);
+		u8g2_DrawStr(&u8g2, 0, 33, key_layouts[curr_layout].name);
 
 		erase_area(0, 35, 128, 28);
 		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
@@ -178,8 +178,8 @@ void ble_connected_oled(void)
 	u8g2_DrawGlyph(&u8g2, 110 + offset_x_batt, 8 + offset_y_batt, BATT_ICON);
 	u8g2_DrawGlyph(&u8g2, 120 + offset_x_batt, 8 + offset_y_batt, BT_ICON);
 
-	u8g2_SetFont(&u8g2, u8g2_font_courB24_tf);
-	u8g2_DrawStr(&u8g2, 0, 35, key_layouts[curr_layout].name);
+	u8g2_SetFont(&u8g2, u8g2_font_courB18_tn);
+	u8g2_DrawStr(&u8g2, 0, 33, key_layouts[curr_layout].name);
 
 	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
 	for (int i = 0; i < MATRIX_COLS; i++)

@@ -259,14 +259,6 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
  * @param layer
  * @return esp_err_t
  */
-// esp_err_t nvs_create_new_layer(dd_layer layer)
-// {
-// 	layers_num = nvs_read_num_layers();
-// 	layers_num++;
-// 	nvs_write_layer(layer, layers_num);
-// 	return ESP_OK;
-// }
-
 esp_err_t nvs_create_new_layer(dd_layer layer)
 {
 	int i = 0;
@@ -499,19 +491,6 @@ void nvs_load_layouts(void)
 	// ESP_LOGI("NVS_TAG","Layer names %s, %s, %s",key_layouts[0].name,key_layouts[1].name,key_layouts[2].name);
 	ESP_LOGI(NVS_TAG, "Layouts loaded");
 }
-/*****
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
 
 /*******
  * MACROS
@@ -590,12 +569,6 @@ void nvs_load_macros(void)
 	nvs_check_memory_status();
 	nvs_macros_state();
 }
-
-////////////////////////////////////
-//////////////////////////////////
-/////////////////////////////////////
-//////////////////////////////////
-/////////////////////////////
 
 esp_err_t nvs_create_new_macro(dd_macros macro)
 {
@@ -683,12 +656,6 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	free(temp_macro);
 	return ESP_OK;
 }
-
-////////////////////////////////////
-//////////////////////////////////
-/////////////////////////////////////
-//////////////////////////////////
-/////////////////////////////
 
 esp_err_t nvs_update_macro(dd_macros macro)
 {
