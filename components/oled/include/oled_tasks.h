@@ -40,9 +40,9 @@ void waiting_oled(void);
  * */
 void ble_connected_oled(void);
 
-/** @brief connected graphic
- * */
-void ble_slave_oled(void);
+// /** @brief connected graphic
+//  * */
+// void ble_slave_oled(void);
 
 /**
  * @brief
@@ -57,6 +57,10 @@ void update_oled(void);
 /** @brief Generate Splash Screen
  * */
 void splashScreen(void);
+
+/** @brief Generate Berlin Dance
+ * */
+void berlinDance(void);
 
 /** @brief Queue for sending layer to oled
  **/

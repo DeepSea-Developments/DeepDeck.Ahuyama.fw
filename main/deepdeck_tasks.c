@@ -55,12 +55,13 @@ TaskHandle_t xKeyreportTask;
 bool DEEP_SLEEP = true; // flag to check if we need to go to deep sleep
 
 void oled_task(void *pvParameters) {
-	deepdeck_status = S_NORMAL;
+	deepdeck_status = S_NORMAL; //sSet the status of the screen.
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
+	
 	while (1) {
 		switch (deepdeck_status) {
-		case S_NORMAL:
+		case S_NORMAL: //Normal mode, showing the keys 
 			if (halBLEIsConnected() == 0) {
 				if (CON_LOG_FLAG == false) {
 					ESP_LOGI(TAG, "Not connected, waiting for connection ");
@@ -76,7 +77,7 @@ void oled_task(void *pvParameters) {
 				CON_LOG_FLAG = false;
 			}
 			break;
-		case S_SETTINGS:
+		case S_SETTINGS: //Settings mode, showing the internal menu
 			menu_init();
 
 			vTaskDelay(pdMS_TO_TICKS(200));
@@ -89,7 +90,7 @@ void oled_task(void *pvParameters) {
 			apds9960_free();
 			break;
 		}
-		vTaskDelay(pdMS_TO_TICKS(250));
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 
 }
