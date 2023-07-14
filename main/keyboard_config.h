@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define FIRMWARE_VERSION "0.5.4"
+#define FIRMWARE_VERSION "0.5.5"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
@@ -31,7 +31,7 @@
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4 // For split keyboards, define columns for one side only.
 
-#define LAYERS 6 // number of layers defined
+#define LAYERS 3 // number of layers defined
 
 // Select diode direction
 #define COL2ROW
@@ -64,6 +64,8 @@
 // Wifi. Comment to disable
 #define WIFI_ENABLE
 
+// MDNS. Comment to disable
+// #define USE_MDNS
 
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash

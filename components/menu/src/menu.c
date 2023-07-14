@@ -30,10 +30,6 @@
 volatile menu_event_t menu_event;
 
 
-
-
-
-
 // typedef struct menu_item_str_t{
 //     char * description; //String of the menu item
 //     menu_item_action action;        //Action if the item. It can take to a new menu or run a function
@@ -53,7 +49,7 @@ volatile menu_event_t menu_event;
 enum {
     NONE = -1,
     MAIN_MENU = 0,
-    BLUETOOTH_MENU,
+    // BLUETOOTH_MENU,
     LED_MODE_MENU,
     menu_num
 	
@@ -62,50 +58,49 @@ enum {
 // Titles array
 char menu_titles[menu_num][MENU_CHAR_NUM] =
 {
-    "Main Menu v0.5.4",
-    "Bluetooth",
+    MAIN_MENU_TITLE,
+    // "Bluetooth",
     "LED modes"
 };
 
 char menu_subtitles[menu_num][MENU_CHAR_NUM] =
 {
     "DeepSea",
-    "DeepDeck",
+    // "DeepDeck",
     "DeepDeck"
 };
 
 // --------------------Main Menu!-------------------------------
 char menu_main_description[5][MENU_CHAR_NUM] =
 {
-    "Bluetooth",
+    //"Bluetooth",
     "LED configuration",
-    "DeepDeck Configuration",
-    "Go to Sleep",
+    "DancingBerlin",
+    //"Go to Sleep",
     "Exit"
 };
 menu_item_t m_main_array[] =
 {
     //Descripción                 //Acción             //Siguiente menu      ó     //Función
-    {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
-    {menu_main_description[1],    MA_MENU,                LED_MODE_MENU,              0},
-    {menu_main_description[2],    MA_FUNCTION,            NONE,                       &splashScreen},
-    {menu_main_description[3],    MA_FUNCTION,            NONE,                       &menu_goto_sleep},
-    {menu_main_description[4],    MA_FUNCTION,            NONE,                       &menu_exit},
+    // {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
+    {menu_main_description[0],    MA_MENU,                LED_MODE_MENU,              0},
+    {menu_main_description[1],    MA_FUNCTION,            NONE,                       &berlinDance},
+    {menu_main_description[2],    MA_FUNCTION,            NONE,                       &menu_exit},
     {0,                           MA_END,                 0,                          0}
 };
 // ------------------Bluetooth Menu-------------------------------
-char menu_bt_description[2][MENU_CHAR_NUM] =
-{
-    "Bluetooth 1",
-    "Bluetooth 2"
-};
-menu_item_t m_bluetooth_array[] = 
-{
-    //Descripción                 //Acción             //Siguiente menu      ó     //Función
-    {menu_bt_description[0],      MA_FUNCTION,            NONE,                       &splashScreen},
-    {menu_bt_description[1],      MA_FUNCTION,            NONE,                       &splashScreen},
-    {0,                           MA_END,                 0,                          0}
-};
+// char menu_bt_description[2][MENU_CHAR_NUM] =
+// {
+//     "Bluetooth 1",
+//     "Bluetooth 2"
+// };
+// menu_item_t m_bluetooth_array[] = 
+// {
+//     //Descripción                 //Acción             //Siguiente menu      ó     //Función
+//     {menu_bt_description[0],      MA_FUNCTION,            NONE,                       &splashScreen},
+//     {menu_bt_description[1],      MA_FUNCTION,            NONE,                       &splashScreen},
+//     {0,                           MA_END,                 0,                          0}
+// };
 
 // ------------------LED modes -------------------------------
 char menu_led_mode[5][MENU_CHAR_NUM] =
@@ -133,7 +128,7 @@ menu_t menu_array[menu_num] =
  {
     // Title                      //Subtitle                      //Item array
     {menu_titles[MAIN_MENU],      menu_subtitles[MAIN_MENU],      &m_main_array},
-    {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
+    //{menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
     {menu_titles[LED_MODE_MENU],  menu_subtitles[LED_MODE_MENU],  &m_led_array},
  };
 
@@ -448,11 +443,11 @@ void menu_command(encoder_state_t encoder_action)
 {
     switch (encoder_action)
     {
-    case ENC_UP:
+    case ENC_DOWN:
         menu_event = MENU_UP;
         ESP_LOGI("MENU_COMMAND","UP");
     break;
-    case ENC_DOWN:
+    case ENC_UP:
         menu_event = MENU_DOWN;
         ESP_LOGI("MENU_COMMAND","DOWN");
     break;

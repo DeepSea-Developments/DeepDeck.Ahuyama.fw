@@ -273,7 +273,7 @@ dd_layer layer3 =
 			{KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_REOPEN_TABS, KC_APP_CHROME_CLOSE_TAB},
 			{KC_APP_CHROME_BACKWARD, KC_APP_CHROME_FORWARD, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_N_INC_WINDOW},
 			{KC_APP_CHROME_TAB1, KC_APP_CHROME_TAB2, KC_APP_CHROME_TAB3, KC_APP_CHROME_TAB_LAST}},
-		.key_map_names = {{"dev", "fullscr", "prtscr", "layer"}, {"PTAB", "NTAB", "reopne", "close"}, {"back", "forw", "new", "incog"}, {"Tab1", "Tab2", "Tab3", "TabN"}},
+		.key_map_names = {{"dev", "fulscr", "prtscr", "layer"}, {"PTAB", "NTAB", "reopne", "close"}, {"back", "forw", "new", "incog"}, {"Tab1", "Tab2", "Tab3", "TabN"}},
 
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK},
@@ -283,13 +283,13 @@ dd_layer layer3 =
 		.active = true,
 };
 
-dd_layer user_layer[3] = {
-	DD_LAYER_INIT("USER1"),
-	DD_LAYER_INIT("USER2"),
-	DD_LAYER_INIT("USER3"),
-};
+// dd_layer user_layer[3] = {
+// 	DD_LAYER_INIT("USER1"),
+// 	DD_LAYER_INIT("USER2"),
+// 	DD_LAYER_INIT("USER3"),
+// };
 
-dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3, &user_layer[0], &user_layer[1], &user_layer[2]};
+dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
 uint8_t current_layout = 0;
 
 dd_macros default_macros[USER_MACROS_NUM]={0};
