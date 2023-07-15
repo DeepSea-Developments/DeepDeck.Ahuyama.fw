@@ -121,19 +121,27 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
-plugins:
-  - social
+# plugins:
+#   - social
 
   # Page tree
 nav:
   - Home: index.md
-  - Getting started:
-    - Connecting DeepDeck: connection.md
+  - Quick Start Guide: 
+      - First steps: qsg.md
+      - Firmware update: qsg-firmware-update.md
+      - WebServer: qsg-webserver.md
+      - Thank you!: thankyou.md
+  - Documentation:
     - Installation: vscode-setup.md
+    - DeepDeck installer: installer.md
     - Configuration: 
       - deepdeck-configuration.md
       - Layer: layer-configuration.md
       - Macro: macro-configuration.md
       - Knob: knob-configuration.md
-  - Known issues: known-issues.md
-  - Support and docs: support.md
+  - Resources: 
+    - Source Code: source_code.md
+    - 3d print accesories: 3dprint.md
+    - Other accesories: accessories.md
+    - Support: support.md

@@ -96,8 +96,7 @@ void media_control_send(uint16_t keycode)
 	{
 		media_state[1] = 10;
 	}
-	if (keycode == KC_MEDIA_PREV_TRACK)
-	{
+	if (keycode == KC_MEDIA_PREV_TRACK) {
 		media_state[1] = 11;
 	}
 	if (keycode == KC_MEDIA_STOP)

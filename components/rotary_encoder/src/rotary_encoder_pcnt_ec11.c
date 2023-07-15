@@ -345,7 +345,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
                 break;
 
                 case KC_MEDIA_PREV_TRACK:
-                    media_state[1] = 111;
+                    media_state[1] = 11;
                 break;
 
                 case KC_MEDIA_STOP:
