@@ -73,7 +73,7 @@ void json_response(char *j_response)
 	cJSON_AddItemToObject(response_json, " TO DO ", item_reason);
 	cJSON *item_message = cJSON_CreateString("message");
 	cJSON_AddItemToObject(response_json, "TO DO", item_message);
-	
+
 	j_response = cJSON_Print(response_json);
 	if (j_response == NULL)
 	{
@@ -277,7 +277,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
-	
+
 	cJSON_Delete(monitor);
 	free(string);
 
@@ -347,15 +347,15 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 		}
 	}
 
-	char* string = cJSON_Print(macro_object);
+	char *string = cJSON_Print(macro_object);
 	if (string == NULL)
 		abort();
-	
+
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
-	
+
 	free(string);
 	cJSON_Delete(macro_object);
 
@@ -674,7 +674,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_object = cJSON_CreateObject();
 	if (layer_object == NULL)
 		abort();
-	
+
 	cJSON *_name = cJSON_CreateString(key_layouts[pos].name);
 	cJSON_AddItemToObject(layer_object, "name", _name);
 
@@ -745,8 +745,8 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
-	
-	//Clean before ending the function
+
+	// Clean before ending the function
 	cJSON_Delete(layer_object);
 	free(string);
 
@@ -869,10 +869,10 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	httpd_resp_sendstr(req, string);
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
-	
+
 	cJSON_Delete(monitor);
 	free(string);
-	
+
 	return ESP_OK;
 }
 
@@ -1406,6 +1406,34 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	size_t buf_len;
 	char int_param[3];
 	char *string = NULL;
+
+	buf_len = (req->content_len) + 1;
+	buf = malloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	int led_mode = 0;
+	int led_brightness = 0;
+	cJSON *payload = cJSON_Parse(buf);
+
+	cJSON *mode = cJSON_GetObjectItem(payload, "mode");
+	if (cJSON_IsNumber(mode))
+	{
+		led_mode = mode->valueint;
+		
+	}
+
+	cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
+	if (cJSON_IsNumber(brightness))
+	{
+		led_brightness = brightness->valueint;
+
+	}
+
+	if (led_mode == 4)
+	{
+		cJSON *rgb = cJSON_GetObjectItem(payload, "rgb");
+		cJSON_GetArrayItem(const cJSON *array, int index)
+	}
 
 	json_response(string);
 
