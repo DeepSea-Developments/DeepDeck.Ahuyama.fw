@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include "nvs.h"
 #include "server.h"
 
 #include "freertos/FreeRTOS.h"
@@ -83,91 +84,12 @@ void json_response(char *j_response)
 	cJSON_Delete(response_json);
 }
 
-static void json_error_generator(char *string, char *error_str)
-{
-	sprintf(string, "{\"error\":\"%s\"}", error_str);
-}
+// static void json_error_generator(char *string, char *error_str)
+// {
+// 	sprintf(string, "{\"error\":\"%s\"}", error_str);
+// }
 
 /* An HTTP GET handler */
-
-/**
- * @brief
- *
- * @param req
- * @return esp_err_t
- */
-
-/*
-esp_err_t connect_url_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "connect handler");
-
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
-	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
-	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
-	// httpd_resp_set_hdr(req, "Vary", "Origin");
-
-	// Read the URI line and get the host
-	char *string = NULL;
-	char *buf;
-	size_t buf_len;
-
-	json_response(string);
-	buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
-	if (buf_len > 1)
-	{
-		buf = malloc(buf_len);
-		if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK)
-		{
-			ESP_LOGI(TAG, "Host: %s", buf);
-		}
-		free(buf);
-	}
-
-	// Read the URI line and get the parameters
-	buf_len = httpd_req_get_url_query_len(req) + 1;
-	if (buf_len > 1)
-	{
-		buf = malloc(buf_len);
-		nvs_flash_init();
-		nvs_handle_t nvs;
-		nvs_open("wifiCreds", NVS_READWRITE, &nvs);
-		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
-		{
-			ESP_LOGI(TAG, "Found URL query: %s", buf);
-			char param[32];
-			if (httpd_query_key_value(buf, "ssid", param, sizeof(param)) == ESP_OK)
-			{
-				ESP_LOGI(TAG, "Saving SSID");
-				ESP_LOGI(TAG, "The string value = %s", param);
-				nvs_set_str(nvs, "ssid", param);
-			}
-			if (httpd_query_key_value(buf, "pass", param, sizeof(param)) == ESP_OK)
-			{
-				ESP_LOGI(TAG, "Saving pass");
-				ESP_LOGI(TAG, "The int value = %s", param);
-				nvs_set_str(nvs, "pass", param);
-			}
-			nvs_close(nvs);
-		}
-		free(buf);
-	}
-
-	// The response
-	ESP_LOGI(TAG, "Wifi Credentials Saved");
-
-	httpd_resp_set_type(req, "application/json");
-	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_send(req, NULL, 0);
-	wifi_reset = true;
-	xSemaphoreGive(Wifi_initSemaphore);
-	return ESP_OK;
-}
-*/
 
 /**
  * @brief Handler for Wifi Connection
@@ -287,7 +209,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
 /**
  *
  *
- * API MACROS
+ * END POINTS MACROS
  *
  *
  *
@@ -591,7 +513,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
 }
 
 /**
- * API LAYERS
+ * ENPOINTS LAYERS
  *
  */
 
@@ -1011,8 +933,8 @@ void fill_row(cJSON *row, char names[][10], int codes[])
 		if (strlen(cJSON_GetObjectItem(item, "name")->valuestring) < 7)
 			strcpy(names[i], cJSON_GetObjectItem(item, "name")->valuestring);
 		else
-
 			strcpy(names[i], "__");
+
 		codes[i] = cJSON_GetObjectItem(item, "key_code")->valueint;
 	}
 }
@@ -1238,6 +1160,17 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
 
+/////////////////////////////////////////
+	char *str=NULL;
+	str = cJSON_Print(payload);
+	if (str == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+	ESP_LOGE("+", "%s", str);
+/////////////////////////////////////////////
+
+
 	if (NULL == payload)
 	{
 		const char *err = cJSON_GetErrorPtr();
@@ -1321,6 +1254,41 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		}
 		printf("\n");
 	}
+
+	cJSON *item;
+	i = 0;
+	cJSON *left_encoder_map = cJSON_GetObjectItem(payload, "left_encoder_map");
+	if (left_encoder_map == NULL)
+	{
+		ESP_LOGE(TAG, "left_encoder_map not found");
+		return 1;
+	}
+	cJSON_ArrayForEach(item, left_encoder_map)
+	{
+		// printf("%s: %d\n", item->string, item->valueint);
+		new_layer.left_encoder_map[i] = item->valueint;
+		i++;
+	}
+
+	i = 0;
+	cJSON *right_encoder_map = cJSON_GetObjectItem(payload, "right_encoder_map");
+	cJSON_ArrayForEach(item, right_encoder_map)
+	{
+		// printf("%s: %d\n", item->string, item->valueint);
+		new_layer.right_encoder_map[i] = item->valueint;
+		i++;
+	}
+	i = 0;
+	cJSON *gesture_map = cJSON_GetObjectItem(payload, "gesture_map");
+	cJSON_ArrayForEach(item, gesture_map)
+	{
+		// printf("%s: %d\n", item->string, item->valueint);
+		new_layer.gesture_map[i] = item->valueint;
+		i++;
+	}
+
+
+
 	cJSON_Delete(payload);
 	free(buf);
 	current_layout = 0;
@@ -1397,76 +1365,78 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST  CHANGE LED MODE --> /api/led");
-	int mode_t;
+
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+	rgb_mode_t led_mode = {0};
 
 	// Read the URI line and get the host
 	char *buf;
 	size_t buf_len;
-	char int_param[3];
 	char *string = NULL;
 
 	buf_len = (req->content_len) + 1;
 	buf = malloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
-	int led_mode = 0;
-	int led_brightness = 0;
 	cJSON *payload = cJSON_Parse(buf);
+	string = cJSON_Print(payload);
+	if (string == NULL)
+	{
+		fprintf(stderr, "Failed to print monitor.\n");
+	}
+	ESP_LOGE("+", "%s", string);
 
 	cJSON *mode = cJSON_GetObjectItem(payload, "mode");
 	if (cJSON_IsNumber(mode))
 	{
-		led_mode = mode->valueint;
-		
+		led_mode.mode = mode->valueint;
 	}
 
 	cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
 	if (cJSON_IsNumber(brightness))
 	{
-		led_brightness = brightness->valueint;
-
+		led_mode.brightness = brightness->valueint;
 	}
 
-	if (led_mode == 4)
+	if (led_mode.mode == 4)
 	{
-		cJSON *rgb = cJSON_GetObjectItem(payload, "rgb");
-		cJSON_GetArrayItem(const cJSON *array, int index)
+		cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
+		if (cJSON_IsArray(rgb_color))
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				cJSON *item = cJSON_GetArrayItem(rgb_color, i);
+				if (cJSON_IsNumber(item))
+				{
+					led_mode.rgb[i] = item->valueint;
+					ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
+				}
+				else
+				{
+					httpd_resp_set_status(req, HTTPD_400);
+					httpd_resp_send(req, NULL, 0);
+				}
+			}
+		}
+	}
+	else
+	{
+		nvs_load_rgb_color(&led_mode);
 	}
 
 	json_response(string);
+	free(buf);
+	cJSON_Delete(payload);
+	nvs_save_led_mode(led_mode);
 
-	// Read the URI line and get the parametersk
-	buf_len = httpd_req_get_url_query_len(req) + 1;
-	if (buf_len > 1)
-	{
-		buf = malloc(buf_len);
-		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
-		{
-			ESP_LOGI(TAG, "Found URL query: %s", buf);
+	xQueueSend(keyled_q, &led_mode, 0);
 
-			if (httpd_query_key_value(buf, "mode", int_param, sizeof(int_param)) == ESP_OK)
-			{
-				ESP_LOGI(TAG, "Led Mode is = %s", int_param);
-				mode_t = atoi(int_param);
-				xQueueSend(keyled_q, &mode_t, 0);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
 
-				httpd_resp_set_type(req, "application/json");
-				httpd_resp_sendstr(req, string);
-				httpd_resp_set_status(req, HTTPD_200);
-				httpd_resp_send(req, NULL, 0);
-			}
-			else
-			{
-
-				httpd_resp_set_status(req, HTTPD_400);
-				httpd_resp_send(req, NULL, 0);
-			}
-		}
-		free(buf);
-	}
-	// cJSON_Delete(monitor);
 	return ESP_OK;
 }
 

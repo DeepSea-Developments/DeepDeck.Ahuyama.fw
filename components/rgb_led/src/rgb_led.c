@@ -16,6 +16,8 @@
 #include "esp_log.h"
 #include "led_strip.h"
 #include "rgb_led.h"
+#include "nvs_flash.h"
+#include "nvs_funcs.h"
 
 static const char *TAG = "RGB_LEDs";
 
@@ -126,7 +128,7 @@ void rgb_key_led_init(void)
         1,
         /* Size of each item is big enough to hold the
         whole structure. */
-        sizeof(uint8_t));
+        sizeof(rgb_mode_t));
 }
 
 void rgb_key_led_press(uint8_t row, uint8_t col)
@@ -157,6 +159,8 @@ void key_led_modes(void)
 
     uint8_t modes = 0;
     uint8_t new_mode;
+    rgb_mode_t led_mode;
+
 
     while (true)
     {
@@ -165,15 +169,16 @@ void key_led_modes(void)
     pointer variable, and as the value received is the address of the xMessage
     variable, after this call pxRxedPointer will point to xMessage. */
         if (xQueueReceive(keyled_q,
-                          &(new_mode),
+                          &(led_mode),
                           0))
         {
             ESP_LOGI(TAG, "Received message from Q");
-            if (new_mode != modes)
+            // new_mode = led_mode.mode;
+            if (led_mode.mode != modes)
             {
                 rgb_key->clear(rgb_key, 50);
                 ESP_ERROR_CHECK(rgb_notif->clear(rgb_notif, 100));
-                modes = new_mode;
+                modes = led_mode.mode;
             }
         }
 
@@ -279,7 +284,8 @@ void key_led_modes(void)
             for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
             {
                 // Write RGB values to strip driver
-                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, 255, 0, 0));
+                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]));
+                // ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, 255, 2, 60));
             }
             // Flush RGB values to LEDs
             ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));

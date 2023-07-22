@@ -190,8 +190,12 @@ void app_main()
 
 #ifdef RGB_LEDS
 	xTaskCreate(rgb_leds_task, "rgb_leds_task", 4096, NULL,
-				BASE_PRIORITY, NULL);
+				(BASE_PRIORITY + 2), NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
+	rgb_mode_t mode;
+	nvs_load_led_mode(&mode);
+	xQueueSend(keyled_q, &mode, 0);
+	
 #endif
 
 	// Start the keyboard Tasks
@@ -225,7 +229,7 @@ void app_main()
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
-	xTaskCreate(&wifiInit, "init comms", 1024 * 4, NULL, 10, NULL);
+	xTaskCreate(&wifiInit, "init comms",4096, NULL, (BASE_PRIORITY+3), NULL);
 	xSemaphoreGive(Wifi_initSemaphore);
 #endif
 }
