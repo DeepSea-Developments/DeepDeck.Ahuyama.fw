@@ -285,6 +285,7 @@ void disable_interrup_pin(void)
 	io_conf.pull_up_en = 0;
 	// configure GPIO with the given settings
 	gpio_config(&io_conf);
-	gpio_uninstall_isr_service();
 	gpio_isr_handler_remove(interrupt_pin);
+	gpio_uninstall_isr_service();
+	
 }

@@ -234,6 +234,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	cJSON *array = cJSON_CreateArray();
 	if (array == NULL)
 		abort();
+
 	cJSON_AddItemToObject(macro_object, "macros", array);
 
 	for (index = 0; index < total_macros; ++index)
@@ -263,7 +264,9 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 		}
 	}
 
-	char *string = cJSON_Print(macro_object);
+	char *string = NULL;
+	string = malloc(strlen(cJSON_Print(macro_object)) + 1);
+	string= cJSON_Print(macro_object);
 	if (string == NULL)
 		abort();
 
@@ -309,6 +312,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -420,6 +424,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -652,7 +657,8 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 			abort();
 		cJSON_AddItemToObject(gesture_map, gesture_items_names[index], gesture_item);
 	}
-
+	
+	string = malloc(strlen(cJSON_Print(layer_object)) + 1);
 	string = cJSON_Print(layer_object);
 	if (string == NULL)
 		abort();
@@ -699,8 +705,10 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
 	{
+		cJSON_Delete(monitor);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
+
 		return ESP_OK;
 	}
 
@@ -775,11 +783,14 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(layer_data, "uuid", layout_uuid);
 	}
 
+
+	string = malloc(100);
 	string = cJSON_Print(monitor);
 	if (string == NULL)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
+
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
