@@ -339,6 +339,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
 			free(buf);
+			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -450,6 +451,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			free(buf);
 			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
@@ -733,6 +735,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	if (monitor == NULL)
 	{
 		cJSON_Delete(monitor);
+		cJSON_Delete(monitor);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 
@@ -816,6 +819,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
+
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
