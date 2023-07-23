@@ -103,11 +103,7 @@ uint8_t nvs_read_num_layers(void)
 
 	// ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
 	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
-	}
-	else
+	if (error != ESP_OK)
 	{
 		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
 	}
@@ -217,16 +213,17 @@ esp_err_t nvs_restore_default_layers()
 	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
+		// ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
+		nvs_write_default_layers(nvs_handle);
+		nvs_close(nvs_handle);
+		nvs_load_layouts();
 	}
 	else
 	{
 		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		return error;
 	}
 
-	nvs_write_default_layers(nvs_handle);
-	nvs_close(nvs_handle);
-	nvs_load_layouts();
 	return ESP_OK;
 }
 
@@ -276,12 +273,7 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
 	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI("TAG", "LAYER KEY FOUND ---OK");
-		ESP_LOGI("TAG", "Layer QTY %d", layer_num);
-	}
-	else
+	if (error != ESP_OK)
 	{
 		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
 		return error;
@@ -293,8 +285,8 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 	{
 		return ESP_ERR_NO_MEM;
 	}
-	ESP_LOGI("TAG", "New layer QTY %d", layer_num);
-	ESP_LOGI("TAG", " Name:%s", layer.name);
+	// ESP_LOGI("TAG", "New layer QTY %d", layer_num);
+	// ESP_LOGI("TAG", " Name:%s", layer.name);
 	dd_layer *aux = malloc((layers_num + 1) * sizeof(dd_layer));
 
 	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
@@ -357,23 +349,17 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 	nvs_handle_t nvs_handle;
 	// ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
 	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI(TAG, "LAYER_NAMESPACE  open ---OK");
-	}
-	else
+	if (error != ESP_OK)
 	{
 		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		return error;
 	}
 
 	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI(TAG, "LAYER KEY FOUND ---OK");
-	}
-	else
+	if (error != ESP_OK)
 	{
 		ESP_LOGE(TAG, "Error (%s) READING KEY!: \n", esp_err_to_name(error));
+		return error;
 	}
 
 	dd_layer **new_layouts = malloc((layers_num - 1) * sizeof(dd_layer));
@@ -717,26 +703,29 @@ esp_err_t nvs_restore_default_macros(void)
 	if (error == ESP_OK)
 	{
 		ESP_LOGI("--", "MACROS_NAMESPACE OK");
+		ESP_ERROR_CHECK(nvs_erase_key(nvs_handle, MACROS_KEY));
+		ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+		nvs_close(nvs_handle);
+
+		ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &new_nvs_handle));
+		nvs_write_default_macros(new_nvs_handle);
+		nvs_close(new_nvs_handle);
+		nvs_load_macros();
 	}
 	else
 	{
 		ESP_LOGE("--", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		nvs_close(nvs_handle);
+		return error;
 	}
-	ESP_ERROR_CHECK(nvs_erase_key(nvs_handle, MACROS_KEY));
-	ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	nvs_close(nvs_handle);
 
-	ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &new_nvs_handle));
-	nvs_write_default_macros(new_nvs_handle);
-	nvs_close(new_nvs_handle);
-	nvs_load_macros();
 	return ESP_OK;
 }
 
 esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 {
-	ESP_LOGI("MACROS", "WRITING DEFAULT MACROS");
+	// ESP_LOGI("MACROS", "WRITING DEFAULT MACROS");
 	char macro_key[10];
 	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, MACROS_KEY, MACROS_NUM));
 	for (int i = 0; i < MACROS_NUM; i++)
@@ -756,7 +745,13 @@ esp_err_t nvs_save_led_mode(rgb_mode_t led_mode)
 	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		nvs_set_u8(nvs_handle, "mode", led_mode.mode);
+		nvs_set_u8(nvs_handle, "brightness", led_mode.brightness);
+		nvs_set_u8(nvs_handle, "red", led_mode.rgb[0]);
+		nvs_set_u8(nvs_handle, "green", led_mode.rgb[1]);
+		nvs_set_u8(nvs_handle, "blue", led_mode.rgb[2]);
+		nvs_close(nvs_handle);
 	}
 	else
 	{
@@ -764,12 +759,6 @@ esp_err_t nvs_save_led_mode(rgb_mode_t led_mode)
 		nvs_close(nvs_handle);
 		return error;
 	}
-
-	nvs_set_u8(nvs_handle, "mode", led_mode.mode);
-	nvs_set_u8(nvs_handle, "brightness", led_mode.brightness);
-	nvs_set_u8(nvs_handle, "red", led_mode.rgb[0]);
-	nvs_set_u8(nvs_handle, "green", led_mode.rgb[1]);
-	nvs_set_u8(nvs_handle, "blue", led_mode.rgb[2]);
 
 	return ESP_OK;
 }
@@ -781,7 +770,13 @@ esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode)
 	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		nvs_get_u8(nvs_handle, "mode", &led_mode->mode);
+		nvs_get_u8(nvs_handle, "brightness", &led_mode->brightness);
+		nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
+		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
+		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
+		nvs_close(nvs_handle);
 	}
 	else
 	{
@@ -789,13 +784,6 @@ esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode)
 		nvs_close(nvs_handle);
 		return error;
 	}
-	
-	nvs_get_u8(nvs_handle, "mode", &led_mode->mode);
-	nvs_get_u8(nvs_handle, "brightness", &led_mode->brightness);
-	nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
-	nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
-	nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
-
 
 	return ESP_OK;
 }
@@ -807,7 +795,11 @@ esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode)
 	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
 	if (error == ESP_OK)
 	{
-		ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
+		nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
+		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
+		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
+		nvs_close(nvs_handle);
 	}
 	else
 	{
@@ -815,11 +807,6 @@ esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode)
 		nvs_close(nvs_handle);
 		return error;
 	}
-
-	nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
-	nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
-	nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
-
 
 	return ESP_OK;
 }

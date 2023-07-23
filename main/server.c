@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "nvs.h"
 #include "server.h"
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/projdefs.h"
 #include "freertos/task.h"
@@ -13,25 +12,20 @@
 #include "esp_log.h"
 #include "keymap.h"
 #include "nvs_flash.h"
-
 #include <sys/param.h>
-
 #include "esp_netif.h"
-
 #include "esp_http_server.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
-
 #include "cJSON.h"
-
 #include "keyboard_config.h"
 #include "nvs_keymaps.h"
 #include "key_definitions.h"
 #include "nvs_funcs.h"
 #include "gesture_handles.h"
-
 // #include "mdns.h"
 #include "esp_vfs.h"
+
 #define ROWS 4
 #define COLS 4
 
@@ -810,7 +804,8 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
-	char string[100];
+	char *string = NULL;
+	json_response(string);
 
 	// Read the URI line and get the host
 	char *buf;
@@ -882,15 +877,26 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 		httpd_resp_send(req, NULL, 0);
 		return ESP_OK;
 	}
+	esp_err_t res;
+	res = nvs_delete_layer(pos); // Deletes the layer found
 
-	nvs_delete_layer(pos); // Deletes the layer found
-
-	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_send(req, NULL, 0);
-
-	current_layout = 0;
-	xQueueSend(layer_recieve_q, &current_layout,
-			   (TickType_t)0);
+	if (res == ESP_OK)
+	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		httpd_resp_set_status(req, HTTPD_200);
+		httpd_resp_send(req, NULL, 0);
+		xQueueSend(layer_recieve_q, &current_layout,
+				   (TickType_t)0);
+	}
+	else
+	{
+		// TODO: Handle error -> maximum number of layers reached
+		xQueueSend(layer_recieve_q, &current_layout,
+				   (TickType_t)0);
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+	}
 
 	return ESP_OK;
 }
@@ -1123,6 +1129,10 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
 
+	rgb_mode_t led_mode;
+	nvs_load_led_mode(&led_mode);
+	xQueueSend(keyled_q, &led_mode, 0);
+
 	return ESP_OK;
 }
 
@@ -1160,16 +1170,15 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
 
-/////////////////////////////////////////
-	char *str=NULL;
+#ifdef DEBUG
+	char *str = NULL;
 	str = cJSON_Print(payload);
 	if (str == NULL)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
 	ESP_LOGE("+", "%s", str);
-/////////////////////////////////////////////
-
+#endif
 
 	if (NULL == payload)
 	{
@@ -1221,14 +1230,14 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	char names[ROWS][COLS][10];
 	int codes[ROWS][COLS];
 
-	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far?");
+	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far?");
 
 	fill_row(row0, names[0], codes[0]);
 	fill_row(row1, names[1], codes[1]);
 	fill_row(row2, names[2], codes[2]);
 	fill_row(row3, names[3], codes[3]);
 
-	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far2?");
+	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far2?");
 
 	int i, j;
 	// printf("Names:\n");
@@ -1287,12 +1296,13 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		i++;
 	}
 
-
-
 	cJSON_Delete(payload);
 	free(buf);
 	current_layout = 0;
 	res = nvs_create_new_layer(new_layer);
+	rgb_mode_t led_mode;
+	nvs_load_led_mode(&led_mode);
+
 	if (res == ESP_OK)
 	{
 		httpd_resp_set_type(req, "application/json");
@@ -1301,6 +1311,8 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		httpd_resp_send(req, NULL, 0);
 		xQueueSend(layer_recieve_q, &current_layout,
 				   (TickType_t)0);
+
+		xQueueSend(keyled_q, &led_mode, 0);
 	}
 	else
 	{
@@ -1353,6 +1365,10 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
 
+	rgb_mode_t led_mode;
+	nvs_load_led_mode(&led_mode);
+	xQueueSend(keyled_q, &led_mode, 0);
+
 	return ESP_OK;
 }
 
@@ -1380,64 +1396,66 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
+#ifdef DEBUG
 	string = cJSON_Print(payload);
 	if (string == NULL)
-	{
+
 		fprintf(stderr, "Failed to print monitor.\n");
-	}
-	ESP_LOGE("+", "%s", string);
+}
+ESP_LOGE("+", "%s", string);
+#endif
 
-	cJSON *mode = cJSON_GetObjectItem(payload, "mode");
-	if (cJSON_IsNumber(mode))
-	{
-		led_mode.mode = mode->valueint;
-	}
+cJSON *mode = cJSON_GetObjectItem(payload, "mode");
+if (cJSON_IsNumber(mode))
+{
+	led_mode.mode = mode->valueint;
+}
 
-	cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
-	if (cJSON_IsNumber(brightness))
-	{
-		led_mode.brightness = brightness->valueint;
-	}
+cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
+if (cJSON_IsNumber(brightness))
+{
+	led_mode.brightness = brightness->valueint;
+}
 
-	if (led_mode.mode == 4)
+if ((led_mode.mode == 4) || (led_mode.mode == 5))
+{
+	cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
+	if (cJSON_IsArray(rgb_color))
 	{
-		cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
-		if (cJSON_IsArray(rgb_color))
+		for (int i = 0; i < 3; i++)
 		{
-			for (int i = 0; i < 3; i++)
+			cJSON *item = cJSON_GetArrayItem(rgb_color, i);
+			if (cJSON_IsNumber(item))
 			{
-				cJSON *item = cJSON_GetArrayItem(rgb_color, i);
-				if (cJSON_IsNumber(item))
-				{
-					led_mode.rgb[i] = item->valueint;
-					ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
-				}
-				else
-				{
-					httpd_resp_set_status(req, HTTPD_400);
-					httpd_resp_send(req, NULL, 0);
-				}
+				led_mode.rgb[i] = item->valueint;
+				// ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
+			}
+			else
+			{
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
 			}
 		}
 	}
-	else
-	{
-		nvs_load_rgb_color(&led_mode);
-	}
+}
+else
+{
+	nvs_load_rgb_color(&led_mode);
+}
 
-	json_response(string);
-	free(buf);
-	cJSON_Delete(payload);
-	nvs_save_led_mode(led_mode);
+json_response(string);
+free(buf);
+cJSON_Delete(payload);
+nvs_save_led_mode(led_mode);
 
-	xQueueSend(keyled_q, &led_mode, 0);
+xQueueSend(keyled_q, &led_mode, 0);
 
-	httpd_resp_set_type(req, "application/json");
-	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_send(req, NULL, 0);
+httpd_resp_set_type(req, "application/json");
+httpd_resp_sendstr(req, string);
+httpd_resp_set_status(req, HTTPD_200);
+httpd_resp_send(req, NULL, 0);
 
-	return ESP_OK;
+return ESP_OK;
 }
 
 /* This handler allows the custom error handling functionality to be

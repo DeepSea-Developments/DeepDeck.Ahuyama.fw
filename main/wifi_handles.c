@@ -59,15 +59,15 @@ static const char *TAG = "wifi_handler";
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
 							   int32_t event_id, void *event_data)
 {
-	
+
 	httpd_handle_t *server = (httpd_handle_t *)arg;
-	ESP_LOGE(TAG,"disconnect_handler");
+	ESP_LOGE(TAG, "disconnect_handler");
 	if (*server)
 	{
 		ESP_LOGI(TAG, "Stopping webserver");
 		stop_webserver(*server);
 		*server = NULL;
-		void resetWifi();
+		resetWifi();
 	}
 }
 
@@ -344,11 +344,13 @@ static void initialise_mdns(void)
 
 void resetWifi(void)
 {
+	ESP_LOGW("", "resetWifi");
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	ESP_ERROR_CHECK(esp_wifi_stop());
+	ESP_LOGW("", "WIFI_MODE_NULL");
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+	ESP_LOGW("", "WIFI_MODE_NULL");
 	xSemaphoreGive(Wifi_initSemaphore);
-	// vTaskDelete(NULL);
 }
 
 void wifiInit(void *params)

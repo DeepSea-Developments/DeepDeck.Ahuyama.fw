@@ -247,33 +247,6 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 	vTaskDelay(5 / portTICK_PERIOD_MS);
 }
 
-void apds9960_test_gesture()
-{
-	int cnt = 0;
-	while (cnt < 10)
-	{
-		uint8_t gesture = apds9960_read_gesture(apds9960);
-		if (gesture == APDS9960_DOWN)
-		{
-			printf("gesture APDS9960_DOWN*********************!\n");
-		}
-		else if (gesture == APDS9960_UP)
-		{
-			printf("gesture APDS9960_UP*********************!\n");
-		}
-		else if (gesture == APDS9960_LEFT)
-		{
-			printf("gesture APDS9960_LEFT*********************!\n");
-			cnt++;
-		}
-		else if (gesture == APDS9960_RIGHT)
-		{
-			printf("gesture APDS9960_RIGHT*********************!\n");
-			cnt++;
-		}
-		// vTaskDelay(100 / portTICK_RATE_MS);
-	}
-}
 
 ////Config Interrup PIN
 void config_interrup_pin(void)
@@ -315,13 +288,3 @@ void disable_interrup_pin(void)
 	gpio_uninstall_isr_service();
 	gpio_isr_handler_remove(interrupt_pin);
 }
-///////////////
-
-// void test() {
-
-// 	apds9960_init();
-// //	apds9960_gesture_init(apds9960);
-// 	vTaskDelay(pdMS_TO_TICKS(1000));
-// 	apds9960_test_gesture();
-// 	apds9960_deinit();
-// }

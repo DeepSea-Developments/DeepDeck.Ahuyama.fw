@@ -66,7 +66,6 @@ void read_gesture();
 //configure interrup input pin for gesture detection
 void config_interrup_pin(void);
 void disable_interrup_pin(void);
-// stand-alone test for gesture sensor
-void test();
+
 
 #endif /* MAIN_GESTURE_HANDLES_H_ */

@@ -121,7 +121,7 @@ void gesture_task(void *pvParameters)
 				continue;
 			}
 
-			ESP_LOGW("Gesture", "xSemaphore Take");
+			// ESP_LOGW("Gesture", "xSemaphore Take");
 			do
 			{
 				vTaskDelay(pdMS_TO_TICKS(10));
