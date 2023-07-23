@@ -217,6 +217,8 @@ esp_err_t config_url_handler(httpd_req_t *req)
  */
 esp_err_t get_macros_url_handler(httpd_req_t *req)
 {
+	ESP_LOGW("","Free memory: %d bytes",esp_get_free_heap_size());
+
 	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
@@ -229,11 +231,36 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 
 	cJSON *macro_object = cJSON_CreateObject();
 	if (macro_object == NULL)
-		abort();
+	{
+		// abort();
+
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
 
 	cJSON *array = cJSON_CreateArray();
 	if (array == NULL)
-		abort();
+	{
+		// abort();
+
+		const char *err_ = cJSON_GetErrorPtr();
+		if (err_ != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err_);
+			cJSON_Delete(macro_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
 	cJSON_AddItemToObject(macro_object, "macros", array);
 
 	for (index = 0; index < total_macros; ++index)
@@ -263,7 +290,9 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 		}
 	}
 
-	char *string = cJSON_Print(macro_object);
+	char *string = NULL;
+	// string = malloc(strlen(cJSON_Print(macro_object)) + 1);
+	string = cJSON_Print(macro_object);
 	if (string == NULL)
 		abort();
 
@@ -309,6 +338,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -420,6 +450,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -519,6 +550,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
+	ESP_LOGW("","Free memory: %d bytes",esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -653,6 +685,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(gesture_map, gesture_items_names[index], gesture_item);
 	}
 
+	// string = malloc(strlen(cJSON_Print(layer_object)) + 1);
 	string = cJSON_Print(layer_object);
 	if (string == NULL)
 		abort();
@@ -699,8 +732,10 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
 	{
+		cJSON_Delete(monitor);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
+
 		return ESP_OK;
 	}
 
@@ -775,6 +810,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(layer_data, "uuid", layout_uuid);
 	}
 
+	string = malloc(100);
 	string = cJSON_Print(monitor);
 	if (string == NULL)
 	{

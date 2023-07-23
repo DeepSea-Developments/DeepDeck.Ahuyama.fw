@@ -499,6 +499,7 @@ void nvs_macros_state(void)
 		used_entries++;
 	}
 	ESP_LOGI("MACROS", "Total entries in namespace: %zu", used_entries);
+	nvs_close(handle);
 }
 
 /**
@@ -737,6 +738,10 @@ esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 
 	return ESP_OK;
 }
+
+
+
+
 
 esp_err_t nvs_save_led_mode(rgb_mode_t led_mode)
 {
