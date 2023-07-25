@@ -468,6 +468,7 @@ void nvs_load_layouts(void)
 
 	ESP_LOGI("NVS_TAG", "LOADING LAYOUTS");
 	layers_num = nvs_read_num_layers();
+	free(key_layouts);
 	key_layouts = malloc(layers_num * sizeof(dd_layer));
 
 	nvs_read_layers(key_layouts);

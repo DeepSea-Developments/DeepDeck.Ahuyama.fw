@@ -195,7 +195,7 @@ void app_main()
 	rgb_mode_t mode;
 	nvs_load_led_mode(&mode);
 	xQueueSend(keyled_q, &mode, 0);
-	
+
 #endif
 
 	// Start the keyboard Tasks
@@ -220,16 +220,17 @@ void app_main()
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
-	ESP_LOGI("Main", "Main sequence done!");
-	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
-	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
-
 #ifdef WIFI_ENABLE
 	// spiffs_init();
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
-	xTaskCreate(&wifiInit, "init comms",4096, NULL, (BASE_PRIORITY+3), NULL);
+	xTaskCreate(&wifiInit, "init comms", 4096, NULL, (BASE_PRIORITY + 3), NULL);
 	xSemaphoreGive(Wifi_initSemaphore);
 #endif
+
+	ESP_LOGI("Main", "Main sequence done!");
+	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
+	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
+	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
 }

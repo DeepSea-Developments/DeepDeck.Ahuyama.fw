@@ -181,6 +181,7 @@ void key_led_modes(void)
         if (xQueueReceive(keyled_q, &(led_mode), 0))
         {
             ESP_LOGI(TAG, "Received message from Q");
+            ESP_LOGW(TAG, "mode = %d brightness = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.brightness, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
             // new_mode = led_mode.mode;
             if (led_mode.mode != modes)
             {

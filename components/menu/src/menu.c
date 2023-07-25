@@ -487,6 +487,7 @@ uint8_t menu_send_rgb_mode(uint8_t mode)
   nvs_load_led_mode(&led_mode);
   // int mode_t = mode;
   led_mode.mode = mode;
+  led_mode.brightness = 50;
   xQueueSend(keyled_q, &led_mode, 0);
 
   return mret_none;
