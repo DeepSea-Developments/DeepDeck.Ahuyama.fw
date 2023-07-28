@@ -64,7 +64,10 @@ typedef struct rbg_key {
 
 typedef struct rgb_mode_t {
         uint8_t mode;
-        uint8_t brightness;
+        uint8_t H;
+        uint8_t S;
+        uint8_t V;
+        uint8_t speed;
         uint8_t rgb[3];
 
     }rgb_mode_t;

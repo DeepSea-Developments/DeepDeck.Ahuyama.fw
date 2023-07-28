@@ -753,7 +753,10 @@ esp_err_t nvs_save_led_mode(rgb_mode_t led_mode)
 	{
 		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
 		nvs_set_u8(nvs_handle, "mode", led_mode.mode);
-		nvs_set_u8(nvs_handle, "brightness", led_mode.brightness);
+		nvs_set_u8(nvs_handle, "hue", led_mode.H);
+		nvs_set_u8(nvs_handle, "saturation", led_mode.S);
+		nvs_set_u8(nvs_handle, "value", led_mode.V);
+		nvs_set_u8(nvs_handle, "speed", led_mode.speed);
 		nvs_set_u8(nvs_handle, "red", led_mode.rgb[0]);
 		nvs_set_u8(nvs_handle, "green", led_mode.rgb[1]);
 		nvs_set_u8(nvs_handle, "blue", led_mode.rgb[2]);
@@ -778,7 +781,10 @@ esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode)
 	{
 		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
 		nvs_get_u8(nvs_handle, "mode", &led_mode->mode);
-		nvs_get_u8(nvs_handle, "brightness", &led_mode->brightness);
+		nvs_get_u8(nvs_handle, "hue", &led_mode->H);
+		nvs_get_u8(nvs_handle, "saturation", &led_mode->S);
+		nvs_get_u8(nvs_handle, "value", &led_mode->V);
+		nvs_get_u8(nvs_handle, "speed", &led_mode->speed);
 		nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
 		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
 		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);

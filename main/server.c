@@ -26,6 +26,8 @@
 // #include "mdns.h"
 #include "esp_vfs.h"
 
+#define DEBUG
+
 #define ROWS 4
 #define COLS 4
 
@@ -217,7 +219,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
  */
 esp_err_t get_macros_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("","Free memory: %d bytes",esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
 
 	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -552,7 +554,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("","Free memory: %d bytes",esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -819,7 +821,6 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
-
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
@@ -1439,63 +1440,78 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 #ifdef DEBUG
 	string = cJSON_Print(payload);
 	if (string == NULL)
-
 		fprintf(stderr, "Failed to print monitor.\n");
-}
-ESP_LOGE("+", "%s", string);
+
+	ESP_LOGE("+", "%s", string);
 #endif
 
-cJSON *mode = cJSON_GetObjectItem(payload, "mode");
-if (cJSON_IsNumber(mode))
-{
-	led_mode.mode = mode->valueint;
-}
-
-cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
-if (cJSON_IsNumber(brightness))
-{
-	led_mode.brightness = brightness->valueint;
-}
-
-if ((led_mode.mode == 4) || (led_mode.mode == 5))
-{
-	cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
-	if (cJSON_IsArray(rgb_color))
+	cJSON *mode = cJSON_GetObjectItem(payload, "mode");
+	if (cJSON_IsNumber(mode))
 	{
-		for (int i = 0; i < 3; i++)
+		led_mode.mode = mode->valueint;
+	}
+
+	cJSON *hue = cJSON_GetObjectItem(payload, "H");
+	if (cJSON_IsNumber(hue))
+	{
+		led_mode.H = hue->valueint;
+	}
+	cJSON *saturation = cJSON_GetObjectItem(payload, "S");
+	if (cJSON_IsNumber(hue))
+	{
+		led_mode.S = saturation->valueint;
+	}
+	cJSON *value = cJSON_GetObjectItem(payload, "V");
+	if (cJSON_IsNumber(value))
+	{
+		led_mode.V = value->valueint;
+	}
+
+	cJSON *speed = cJSON_GetObjectItem(payload, "speed");
+	if (cJSON_IsNumber(speed))
+	{
+		led_mode.speed = speed->valueint;
+	}
+
+	if ((led_mode.mode == 4) || (led_mode.mode == 5))
+	{
+		cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
+		if (cJSON_IsArray(rgb_color))
 		{
-			cJSON *item = cJSON_GetArrayItem(rgb_color, i);
-			if (cJSON_IsNumber(item))
+			for (int i = 0; i < 3; i++)
 			{
-				led_mode.rgb[i] = item->valueint;
-				// ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
-			}
-			else
-			{
-				httpd_resp_set_status(req, HTTPD_400);
-				httpd_resp_send(req, NULL, 0);
+				cJSON *item = cJSON_GetArrayItem(rgb_color, i);
+				if (cJSON_IsNumber(item))
+				{
+					led_mode.rgb[i] = item->valueint;
+					// ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
+				}
+				else
+				{
+					httpd_resp_set_status(req, HTTPD_400);
+					httpd_resp_send(req, NULL, 0);
+				}
 			}
 		}
 	}
-}
-else
-{
-	nvs_load_rgb_color(&led_mode);
-}
+	else
+	{
+		nvs_load_rgb_color(&led_mode);
+	}
 
-json_response(string);
-free(buf);
-cJSON_Delete(payload);
-nvs_save_led_mode(led_mode);
+	json_response(string);
+	free(buf);
+	cJSON_Delete(payload);
+	nvs_save_led_mode(led_mode);
 
-xQueueSend(keyled_q, &led_mode, 0);
+	xQueueSend(keyled_q, &led_mode, 0);
 
-httpd_resp_set_type(req, "application/json");
-httpd_resp_sendstr(req, string);
-httpd_resp_set_status(req, HTTPD_200);
-httpd_resp_send(req, NULL, 0);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
 
-return ESP_OK;
+	return ESP_OK;
 }
 
 /* This handler allows the custom error handling functionality to be

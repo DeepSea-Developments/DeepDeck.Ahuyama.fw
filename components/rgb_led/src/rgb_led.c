@@ -181,7 +181,7 @@ void key_led_modes(void)
         if (xQueueReceive(keyled_q, &(led_mode), 0))
         {
             ESP_LOGI(TAG, "Received message from Q");
-            ESP_LOGW(TAG, "mode = %d brightness = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.brightness, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
+            ESP_LOGW(TAG, "mode = %d saturation = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.S, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
             // new_mode = led_mode.mode;
             if (led_mode.mode != modes)
             {
@@ -242,7 +242,7 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
 
-        if (modes == 1)
+        if (modes == 1) // Pulsating
         {
             hue += 1;
             // Check matrix to pulsate the leds
@@ -251,7 +251,7 @@ void key_led_modes(void)
                 rbg_key *rgb = &rgb_key_status[i];
                 if (rgb->v > 0)
                 {
-                    rgb->v -= pulse_speed;
+                    rgb->v -= (led_mode.speed / 10);
                     if (rgb->v < 0)
                     {
                         rgb->v = 0;
@@ -262,10 +262,13 @@ void key_led_modes(void)
                 }
             }
             ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-            vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+            if (led_mode.speed < 20)
+                vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+            else
+                vTaskDelay(pdMS_TO_TICKS(led_mode.speed));
         }
 
-        if (modes == 2)
+        if (modes == 2) // Progresive
         {
             hue += 1;
             hue2 += 12;
@@ -277,8 +280,8 @@ void key_led_modes(void)
                 // Change led_mode.brightness by led_mode.value
                 // add led_mode.hue
 
-                hsv2rgb(hue, 100, led_mode.brightness, &red, &green, &blue);
-                hsv2rgb(hue2, 100, led_mode.brightness, &red2, &green2, &blue2);
+                hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
+                hsv2rgb(hue2, led_mode.V, led_mode.S, &red2, &green2, &blue2);
                 // Write RGB values to strip driver
                 ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
             }
@@ -291,7 +294,7 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
 
-        if (modes == 3)
+        if (modes == 3) // Rainbow
         {
             for (int i = 0; i < 3; i++)
             {
@@ -299,13 +302,13 @@ void key_led_modes(void)
                 {
                     // Build RGB values
                     hue = j * 360 / RGB_LED_KEYBOARD_NUMBER + start_rgb;
-                    hsv2rgb(hue, 100, led_mode.brightness, &red, &green, &blue);
+                    hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
                     // Write RGB values to strip driver
                     ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, j, red, green, blue));
                 }
                 // Flush RGB values to LEDs
                 ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+                vTaskDelay(pdMS_TO_TICKS(led_mode.speed));
                 rgb_key->clear(rgb_key, 50);
                 vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
             }
