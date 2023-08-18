@@ -79,7 +79,6 @@
 #include "server.h"
 #include "spiffs.h"
 
-#define BASE_PRIORITY 5
 
 // plugin functions
 static config_data_t config;
@@ -165,7 +164,7 @@ void app_main()
 #ifdef GESTURE_ENABLE
 	apds9960_init(&i2c_bus);
 	vTaskDelay(pdMS_TO_TICKS(200));
-	xTaskCreate(gesture_task, " gesture task", 4096, NULL, (BASE_PRIORITY + 1), &xGesture);
+	xTaskCreate(gesture_task, " gesture task", MEM_GESTURE_TASK, NULL, PRIOR_GESTURE_TASK, &xGesture);
 	ESP_LOGI("Gesture", "initialized");
 #endif
 
@@ -176,21 +175,18 @@ void app_main()
 	splashScreen();
 	vTaskDelay(pdMS_TO_TICKS(1000));
 
-	xTaskCreate(oled_task, "oled task", 1024 * 4, NULL,
-				BASE_PRIORITY, &xOledTask);
+	xTaskCreate(oled_task, "oled task", MEM_OLED_TASK, NULL,PRIOR_OLED_TASK, &xOledTask);
 	ESP_LOGI("Oled", "initialized");
 #endif
 
 	// activate encoder functions
 #ifdef R_ENCODER_1
-	xTaskCreate(encoder_report, "encoder report", 4096, NULL,
-				BASE_PRIORITY, NULL);
+	xTaskCreate(encoder_report, "encoder report", MEM_ENCODER_TASK, NULL, PRIOR_ENCODER_TASK, NULL);
 	ESP_LOGI("Encoder 1", "initialized");
 #endif
 
 #ifdef RGB_LEDS
-	xTaskCreate(rgb_leds_task, "rgb_leds_task", 4096, NULL,
-				(BASE_PRIORITY + 2), NULL);
+	xTaskCreate(rgb_leds_task, "rgb_leds_task", MEM_LEDS_TASK, NULL, PRIOR_LEDS_TASK	, NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
 	rgb_mode_t mode;
 	nvs_load_led_mode(&mode);
@@ -202,21 +198,18 @@ void app_main()
 	// Create the key scanning task on core 1 (otherwise it will crash)
 #ifdef MASTER
 	BLE_EN = 1;
-	xTaskCreate(key_reports, "key report task", 8192,
-				xKeyreportTask, BASE_PRIORITY, NULL);
+	xTaskCreate(key_reports, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL);
 	ESP_LOGI("Keyboard task", "initialized");
 #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
-	xTaskCreate(battery_reports, "battery reporst", 4096, NULL,
-				BASE_PRIORITY, NULL);
+	xTaskCreate(battery_reports, "battery reporst", MEM_BATTERY_TASK, NULL, PRIOR_BATTERY_TASK, NULL);
 	ESP_LOGI("Battery monitor", "initialized");
 #endif
 
 #ifdef SLEEP_MINS
-	xTaskCreate(deep_sleep, "deep sleep task", 4096, NULL,
-				BASE_PRIORITY, NULL);
+	xTaskCreate(deep_sleep, "deep sleep task", MEM_SLEEP_TASK, NULL, PRIOR_SLEEP_TASK, NULL);
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
@@ -225,7 +218,7 @@ void app_main()
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
-	xTaskCreate(&wifiInit, "init comms", 4096, NULL, (BASE_PRIORITY + 3), NULL);
+	xTaskCreate(&wifiInit, "init comms", MEM_WIFI_TASK, NULL, PRIOR_WIFI_TASK, NULL);
 	xSemaphoreGive(Wifi_initSemaphore);
 #endif
 
