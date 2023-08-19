@@ -59,15 +59,15 @@ static const char *TAG = "wifi_handler";
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
 							   int32_t event_id, void *event_data)
 {
-	
+
 	httpd_handle_t *server = (httpd_handle_t *)arg;
-	ESP_LOGE(TAG,"disconnect_handler");
+	ESP_LOGE(TAG, "disconnect_handler");
 	if (*server)
 	{
 		ESP_LOGI(TAG, "Stopping webserver");
 		stop_webserver(*server);
 		*server = NULL;
-		void resetWifi();
+		resetWifi();
 	}
 }
 
@@ -344,21 +344,23 @@ static void initialise_mdns(void)
 
 void resetWifi(void)
 {
+	ESP_LOGW("", "resetWifi");
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	ESP_ERROR_CHECK(esp_wifi_stop());
+	ESP_LOGW("", "WIFI_MODE_NULL");
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+	ESP_LOGW("", "WIFI_MODE_NULL");
 	xSemaphoreGive(Wifi_initSemaphore);
-	// vTaskDelete(NULL);
 }
 
 void wifiInit(void *params)
 {
 	init_fs();
 	nvs_handle_t nvs;
-	// nvs_open("wifiCreds", NVS_READWRITE, &nvs);
-	// nvs_set_str(nvs, "ssid", "ssid");
-	// nvs_set_str(nvs, "pass", "pass");
-	// nvs_close(nvs);
+	nvs_open("wifiCreds", NVS_READWRITE, &nvs);
+	nvs_set_str(nvs, "ssid", "DeepSea_Developments");
+	nvs_set_str(nvs, "pass", "hexaverse1");
+	nvs_close(nvs);
 
 	static httpd_handle_t server = NULL;
 	wifi_ap_mode = false;

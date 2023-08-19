@@ -62,6 +62,16 @@ typedef struct rbg_key {
         int8_t v;
     }rbg_key; 
 
+typedef struct rgb_mode_t {
+        uint8_t mode;
+        uint8_t H;
+        uint8_t S;
+        uint8_t V;
+        uint8_t speed;
+        uint8_t rgb[3];
+
+    }rgb_mode_t;
+
 //pulsating keys
 rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 

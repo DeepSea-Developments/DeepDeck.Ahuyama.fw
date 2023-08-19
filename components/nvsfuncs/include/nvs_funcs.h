@@ -19,6 +19,7 @@
 #include <keyboard_config.h>
 #include "nvs_keymaps.h"
 #include "nvs.h"
+#include "rgb_led.h"
 
 #define NVS_CONFIG_OK 1
 #define NVS_CONFIG_ERR 0
@@ -101,4 +102,8 @@ esp_err_t nvs_update_macro(dd_macros macro);
 esp_err_t nvs_delete_macro(dd_macros macro);
 esp_err_t nvs_restore_default_macros(void);
 
+
+esp_err_t nvs_save_led_mode(rgb_mode_t led_mode);
+esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode);
+esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode);
 #endif /* NVS_FUNCS_H_ */

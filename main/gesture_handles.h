@@ -65,7 +65,7 @@ void apds9960_init(i2c_bus_handle_t *i2cbus);
 void read_gesture();
 //configure interrup input pin for gesture detection
 void config_interrup_pin(void);
-// stand-alone test for gesture sensor
-void test();
+void disable_interrup_pin(void);
+
 
 #endif /* MAIN_GESTURE_HANDLES_H_ */
