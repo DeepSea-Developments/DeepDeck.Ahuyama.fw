@@ -41,7 +41,6 @@
 #include <esp_event.h>
 
 #include "keyboard.h"
-#include "driver/rmt.h"
 
 /** @brief Enable v2.5 compatibility
  * 
