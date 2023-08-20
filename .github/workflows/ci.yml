@@ -27,5 +27,12 @@ jobs:
       - run: pip install pillow cairosvg
       - run: pip install git+https://${GH_TOKEN}@github.com/electronick-co/mkdocs-material-insiders.git
       - run: mkdocs gh-deploy --force
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          cname: https://deepdeck.co
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }} 
