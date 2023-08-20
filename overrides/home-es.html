@@ -1,0 +1,183 @@
+{% extends "main-styles.html" %}
+
+<!-- Render hero under tabs -->
+{% block tabs %}
+{{ super() }}
+
+<!-- Hero for landing page -->
+<!-- 1st Section -->
+<section class="tx-container">
+    <div class="tx-hero-main-title">
+        <h1 style="font-family: 'Dead Stock  Demo'; font-weight: normal; font-style: normal; font-size: 8em" 
+                    id="leverage-architecture">DeepDeck Ahuyama</h1>
+    </div>
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+
+            <!-- Hero image -->
+            <div class="tx-hero__image">
+                <img
+                        src="../assets/images/photos/DeepDeck2.png"
+                        alt="DeepDeck"
+                        width="1000"
+                        draggable="false"
+                >
+            </div>
+
+            <!-- Hero content -->
+            <div class="tx-hero__content">
+                <p style="font-size: 1.5em">
+                    DeepDeck es un macropad (teclado mecánico pequeño) que te permite aumentar la productividad mientras
+                    usas tus programas favortitos ya sea de trabajo, hobby, o diversión. Es totalmente OpenSource.
+                    
+                    
+                    <br><br>
+
+                    Con DeepDeck puedes hacer cosas como: 
+                </p><br>
+
+                <p style="font-size: 1em">
+                    👩‍🎨 <strong>
+                    Contirte en un Ninja usando Photoshop/Inscape/etc/
+                </strong> <br>
+                    🧑‍💻 <strong>
+                    Tener todos los comandos a la mano para tus programas de hackear (?).
+                </strong> <br>
+                    👩‍🔧 <strong>
+                    Se un maestro en Freecad/Solidworks/etc/ y conviertete en un pro en 3d!
+                </strong> <br>
+                    🕵 <strong>
+                    Debuguea y navega mejor en VS code para tener más productividad.
+                </strong> <br>
+                    🧙 <strong>
+                    Conviertete en un mago al jugar teniendo todos los shortuts a la mano, casi mágico!
+                </strong> <br>
+                    🧞‍♀‍ <strong>
+                    Conviertete en un editor Genio!: Ya sea si estas editando audio o video, has tu deseo una realidad.
+                </strong> <br><br>
+
+                <a
+                        href="https://www.crowdsupply.com/deepsea-developments/deepdeck"
+                        title="crowdsupply"
+                        class="md-button md-button--primary"
+                >
+                    Visita nuestra campaña de CrowdSupply!
+                </a><br>
+                
+                <a
+                href="https://discord.gg/9cMr75TA8k"
+                target="_blank"
+                title="discord"
+                class="md-button md-button--primary">
+                Unete a nuestro discord
+                <img
+                        class = icon
+                        src="assets/images/logos/discord.png"
+                        alt=""
+                        width="22"
+                        draggable="false"
+                >
+            </a><br>
+
+
+                <a
+                    href="https://deepseadev.com/en"
+                    target="_blank"
+                    title="DeepSea Developments"
+                    class="md-button md-button--primary">
+                    Conoce al equipo atrás de DeepDeck
+                </a><br>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 2nd Section -->
+<!-- WHAT IS LEVERAGE? -->
+<section class="tx-container-2">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero__image-2" style="margin-top: 50px">
+            <img
+                    src="../assets/images/photos/DeepDeck4.png"
+                    alt=""
+                    width="600"
+                    draggable="false"
+                    align="left"
+            >
+        </div>
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-2">
+                <h1 id="what-is-leverage">Características de DeepDeck</h1><br>
+
+                <p>
+                    No queremos que DeepDeck sea como cualquier otro MacroPad, queremos que tenga <strong>SuperPoderes!</strong> 🦸 y hacerlo diferente a cualquier teclado visto antes
+                    <br><br>Estas son algunas características:<br>
+                    
+                    🎃 <strong>Compatibilidad</strong> con Windows, Mac, Linux, e incluso lo puedes conectar al celular.<br>
+                    🎃 <strong>Wireless!</strong>  connecta a tu dispositivo con Bluetooth, y además tiene WiFi!
+                    🎃 Wifi?.. <strong>Si!, Wifi!</strong> Puedes programar DeepDeck  para conectarte a  
+                    <strong>APIs</strong> y chequear cosas como el clima, tus subscriptores en youtube, 
+                    u obtener tu lista diaria de tareas desde <strong><a href="https://www.notion.so/">Notion</a></strong>. <br>
+                    🎃 No tendrás problemas de compatibilidad de software. DeepDeck <strong>no utiliza un programa especifico para ser configurado.</strong> 
+                    Funciona como los modems/routers. Tiene una página web embebida donde puedes configurar todo.
+                    Lo puedes hacer desde tu computador, lo puedes hacer desde tu celular!<br>
+                    🎃 Estamos trabajando fuertemente para construir una <strong>gran comunidad</strong>, 
+                    para que cada vez haya más personas contribuyendo al proyecto y haciendolo más versátil!<br><br> 
+
+                    Y para el público <strong>geek</strong> estas son las características técnicas:<br>
+                    🤓 DeepDeck está basado en <strong>ESP32</strong>, por lo que tienen Bluetooth y WiFi integrado. <br>
+                    🤓 4x4 teclas mecánicas con <strong>hotswaps!</strong> que permite cambiar las teclas sin necesidad de saber soldar <br>
+                    🤓 2 RGB <strong>LEDs para estado</strong> de la tarjeta.<br>
+                    🤓 <strong>LEDs RGB </strong> en cada tecla. <br>
+                    🤓 2 <strong>encoders</strong> con botón incluido, y gestos como doble click y click largo.<br>
+                    🤓 <strong>Pantalla OLED de 128x64</strong><br>
+                    🤓 <strong>Puerto I2C</strong> para integración futura de sensores.<br>
+                    🤓 Conector para <strong> batería LiPo.</strong><br>
+                    🤓 Conector <strong>USB C</strong><br>
+                    🤓 <strong>Menu de configuración</strong> integrado.<br>
+                    🤓 Página web integrada para <strong>configuraciones avanzadas.</strong><br>
+
+
+
+                </p><br>
+
+                <a
+                        href="https://www.crowdsupply.com/deepsea-developments/deepdeck"
+                        title="{{ page.next_page.title | e }}"
+                        class="md-button md-button"
+                >
+                    Quiero uno!! 
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer Section -->
+<section class="tx-footer">
+    <div class="md-grid md-typeset">
+        <div class="tx-hero">
+            <!-- Hero content -->
+            <div class="tx-hero__content-footer">
+                <p style="text-align:center;">
+                    © 2022
+                    <strong>
+                        <a href="https://www.deepseadev.com" target="_blank">DeepSea Developments, Inc</a>
+                    </strong>. All lefts reserved
+
+                    || Contáctanos 📧
+                    <strong>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=deepdeck@dsd.dev" 
+                        target="_blank">
+                            deepdeck@dsd.dev
+                        </a>
+                    </strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

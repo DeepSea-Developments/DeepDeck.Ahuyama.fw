@@ -1,35 +1,72 @@
+# Project information
 site_name: DeepDeck
+site_url: https://deepdeck.co
+site_author: DeepSea Developments
+site_description: >-
+  DeepDeck is an OpenSource, MacroPad (mini mechanical keyboard) that enables 
+  you to get more productive by using it with your work/hobby/leisure programs.
+
+# Copyright
+copyright: Copyright &copy; 2022 - 2023 DeepDeck by DeepSea Developments
+
+
 theme:
   name: material
-  custom_dir: docs
+  custom_dir: overrides
   icon:
     repo: material/github
   # Default values, taken from mkdocs_theme.yml
   language: en
+  favicon: assets/favicon.ico
+  logo: assets/logo.png
   features:
+    # - navigation.instant #Without this, the jump from home page to other subpages fails.
+    # - navigation.instant.prefetch
     - navigation.tabs
-    - content.code.annotate
-    # - content.tabs.link
-    - content.tooltips
-    # - header.autohide
-    # - navigation.expand
-    - navigation.indexes
-    # - navigation.instant
-    # - navigation.prune
-    - navigation.sections
-    
-    # - navigation.tabs.sticky
-    - navigation.top
     - navigation.tracking
+    - navigation.expand
+    - navigation.path
+
+    - toc.follow
+    - search.suggest
     - search.highlight
     - search.share
-    - search.suggest
-    - toc.follow
-    # - toc.integrate
+    - navigation.footer
+    - navigation.indexes
+    - navigation.top
+    
+
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+
+
+
+    # - navigation.tabs
+    # - content.code.annotate
+    # # - content.tabs.link
+    # - content.tooltips
+    # # - header.autohide
+    # # - navigation.expand
+    # - navigation.indexes
+    # # - navigation.instant
+    # # - navigation.prune
+    # - navigation.sections
+    
+    # # - navigation.tabs.sticky
+    # - navigation.top
+    # - navigation.tracking
+    # - search.highlight
+    # - search.share
+    # - search.suggest
+    # - toc.follow
+    # # - toc.integrate
 
   palette: 
     # Palette toggle for light mode
-    - scheme: default
+    - scheme: deepdeck
       toggle:
         icon: material/weather-sunny 
         name: Switch to dark mode
@@ -40,10 +77,10 @@ theme:
         icon: material/weather-night
         name: Switch to light mode
 
-site_url: https://deepdeck.co
+
 repo_url: https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw
-repo_name: DeepDeck
-edit_uri: edit/master/docs/
+repo_name: deepdeck.co
+edit_uri: edit/mkdocs/docs/
 
 extra_css:
   - stylesheets/extra.css
@@ -51,7 +88,7 @@ extra_css:
 extra:
   alternate:
     - name: English
-      link: / 
+      link: /
       lang: en
     - name: Español
       link: /es/ 
@@ -82,66 +119,94 @@ extra:
             using our <a href="..." target=_blank>feedback form</a>.
 
 markdown_extensions:
-
-  # Python Markdown
-  - abbr
   - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - meta
-  - md_in_html
-  - toc:
-      permalink: true
-
-  # Python Markdown Extensions
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.betterem:
-      smart_enable: all
-  - pymdownx.caret
   - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
-  - pymdownx.highlight
-  - pymdownx.inlinehilite
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
 
-# plugins:
-#   - social
+  # # Python Markdown
+  # - abbr
+  # - admonition
+  # - attr_list
+  # - def_list
+  # - footnotes
+  # - meta
+  # - md_in_html
+  # - toc:
+  #     permalink: true
+
+  # # Python Markdown Extensions
+  # - pymdownx.arithmatex:
+  #     generic: true
+  # - pymdownx.betterem:
+  #     smart_enable: all
+  # - pymdownx.caret
+  # - pymdownx.details
+  # - pymdownx.emoji:
+  #     emoji_index: !!python/name:materialx.emoji.twemoji
+  #     emoji_generator: !!python/name:materialx.emoji.to_svg
+  # - pymdownx.highlight
+  # - pymdownx.inlinehilite
+  # - pymdownx.highlight:
+  #     anchor_linenums: true
+  # - pymdownx.inlinehilite
+  # - pymdownx.snippets
+  # - pymdownx.superfences
+  # - pymdownx.keys
+  # - pymdownx.mark
+  # - pymdownx.smartsymbols
+  # - pymdownx.superfences
+  # - pymdownx.tabbed:
+  #     alternate_style: true
+  # - pymdownx.tasklist:
+  #     custom_checkbox: true
+  # - pymdownx.tilde
+
+plugins:
+  - social
+  - search
+  - blog:
+      archive: false
+      archive_toc: false
+      categories: false
+      categories_toc: false
+  - tags
+  # - git-committers:
+  #     repository: DeepSea-Developments/deepdeck.co
+  #     branch: mkdocs
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - meta
+  - glightbox
+
+
 
   # Page tree
 nav:
   - Home: index.md
   - Quick Start Guide: 
-      - First steps: qsg.md
-      - Firmware update: qsg-firmware-update.md
-      - WebServer: qsg-webserver.md
-      - Thank you!: thankyou.md
-  - Documentation:
-    - Installation: vscode-setup.md
-    - DeepDeck installer: installer.md
+    - First steps: en/QuickStartGuide/qsg.md
+    - Firmware update: en/QuickStartGuide/qsg-firmware-update.md
+    - Wifi Setup: en/QuickStartGuide/wifi-setup.md
+    - Layer creation: en/QuickStartGuide/layer-setup.md
+    - Add a battery: en/QuickStartGuide/battery.md
+    - Thank you!: en/QuickStartGuide/thankyou.md
+  - Setup:
+    - Installation: en/Setup/vscode-setup.md
     - Configuration: 
-      - deepdeck-configuration.md
-      - Layer: layer-configuration.md
-      - Macro: macro-configuration.md
-      - Knob: knob-configuration.md
-  - Resources: 
-    - Source Code: source_code.md
-    - 3d print accesories: 3dprint.md
-    - Other accesories: accessories.md
-    - Support: support.md
+      - en/Setup/deepdeck-configuration.md
+      - Layer: en/Setup/layer-configuration.md
+      - Macro: en/Setup/macro-configuration.md
+      - Knob: en/Setup/knob-configuration.md
+  - Documentation:
+    - DeepDeck installer: en/Docs/installer.md
+  - Download: 
+    - Source Code: en/Resources/source_code.md
+    - 3d print accesories: en/Resources/3dprint.md
+    - Other accesories: en/Resources/accessories.md
+    - Support: en/Resources/support.md
+  - Blog: blog/index.md

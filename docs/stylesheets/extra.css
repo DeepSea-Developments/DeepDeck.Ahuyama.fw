@@ -3,3 +3,36 @@
     --md-primary-fg-color--light: #ffbe55;
     --md-primary-fg-color--dark:  #ffbe55;
   }
+
+  [data-md-color-scheme="deepdeck"] {
+    /* Primary color shades */
+    --md-primary-fg-color:        #06668e;
+    --md-primary-fg-color--light: #e5e5e5;
+    --md-primary-fg-color--dark:  #e5e5e5;
+    --md-primary-bg-color:        #e5e5e5;
+    --md-primary-fg-color--light: #e5e5e5;
+    --md-primary-fg-color--dark:  #ffbe55;
+    
+    /* Accent color shades */
+    --md-accent-fg-color:                #ffbe55;
+    --md-accent-fg-color--transparent:   #9a7131;
+    --md-accent-bg-color:                #06668e;
+    --md-accent-bg-color--light:         #06668e;
+
+    --md-typeset-color:         #06668e;
+    --md-typeset-a-color:         #9a7131;
+
+    --md-button-color:          #06668e;
+    
+    --md-footer-fg-color:        #ffbe55;
+    --md-footer-bg-color:        #3e3e3e;
+    
+  }
+
+  .md_button {
+    color:aqua;
+  }
+
+  [data-md-color-scheme="slate"] {
+    --md-hue: 210; 
+  }
