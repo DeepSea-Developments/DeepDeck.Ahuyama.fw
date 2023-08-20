@@ -1,3 +1,7 @@
+---
+comments: true
+---
+
 # Firmware update
 
 We are constantly releasing new features into DeepDeck and the idea is to have the latest firmware! We created a software to make things easier to program and also to stay updated.

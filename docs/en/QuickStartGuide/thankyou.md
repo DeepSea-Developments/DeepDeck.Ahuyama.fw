@@ -1,3 +1,7 @@
+---
+comments: true
+---
+
 # Thank you very much for supporting DeepDeck!!
 
 DeepDeck started as a small project and now we have a succesfull crowdfunding campaign! And this is just the start.
