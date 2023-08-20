@@ -1,29 +1,31 @@
-name: ci 
+name: ci
 on:
   push:
     branches:
-      - master 
-      - main
+      - mkdocs
 permissions:
   contents: write
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - uses: actions/cache@v2
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+      - uses: actions/cache@v3
         with:
-          key: ${{ github.ref }}
+          key: mkdocs-material-${{ env.cache_id }}
           path: .cache
-      - run: pip install mkdocs-material 
+          restore-keys: |
+            mkdocs-material-
+      - run: pip install mkdocs-git-committers-plugin-2
+      - run: pip install mkdocs-git-revision-date-localized-plugin
+      - run: pip install mkdocs-glightbox
+      - run: pip install pillow cairosvg
+      - run: pip install git+https://${GH_TOKEN}@github.com/electronick-co/mkdocs-material-insiders.git
       - run: mkdocs gh-deploy --force
-      
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          cname: https://deepdeck.co
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }} 
