@@ -175,9 +175,10 @@ plugins:
       categories: false
       categories_toc: false
   - tags
-  # - git-committers:
-  #     repository: DeepSea-Developments/deepdeck.co
-  #     branch: mkdocs
+  - git-committers:
+      repository: DeepSea-Developments/DeepDeck.Ahuyama.fw
+      branch: mkdocs
+      enabled: !ENV [CI, false]
   - git-revision-date-localized:
       enable_creation_date: true
   - meta
@@ -194,6 +195,7 @@ nav:
     - Wifi Setup: en/QuickStartGuide/wifi-setup.md
     - Layer creation: en/QuickStartGuide/layer-setup.md
     - Add a battery: en/QuickStartGuide/battery.md
+    - Support: en/Resources/support.md
     - Thank you!: en/QuickStartGuide/thankyou.md
   - Setup:
     - Installation: en/Setup/vscode-setup.md
@@ -205,8 +207,7 @@ nav:
   - Documentation:
     - DeepDeck installer: en/Docs/installer.md
   - Download: 
-    - Source Code: en/Resources/source_code.md
-    - 3d print accesories: en/Resources/3dprint.md
+    - en/Resources/index.md
+    - 3d printed accesories: en/Resources/3d-prints.md
     - Other accesories: en/Resources/accessories.md
-    - Support: en/Resources/support.md
   - Blog: blog/index.md
