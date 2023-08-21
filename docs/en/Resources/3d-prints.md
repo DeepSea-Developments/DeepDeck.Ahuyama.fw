@@ -1,3 +1,7 @@
+---
+comments: true
+---
+
 # 3d Printed parts!
 
 Here you can find printable parts to pimp your DeepDeck :sunglasses:
