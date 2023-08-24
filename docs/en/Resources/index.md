@@ -14,7 +14,7 @@ comments: true
 
     Download the tool for updating the firmware on your DeepDeck
 
-    [:octicons-arrow-right-24: For linux, windows and mac](https://github.com/DeepSea-Developments/DeepDeck.programmer/releases){ .md-button }
+    [:octicons-arrow-right-24: For Linux, Windows, and Mac](https://github.com/DeepSea-Developments/DeepDeck.programmer/releases){ .md-button }
 
 -   :material-printer-3d-nozzle:{ .lg .middle } __Explore 3d printed parts__
 
