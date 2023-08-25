@@ -86,6 +86,7 @@ enum custom_macros
  * important- make sure you you put the macros in the same order as the their enumeration
  */
 uint16_t macros[MACROS_NUM][MACRO_LEN] = {
+	
 	// KC_CTR + ALT - //Ubuntu windows manager (change workspace)
 	{KC_LCTRL, KC_LALT, KC_NO},
 	// KC_CTR + ALT + Shift - Ubuntu windows manager (move windows)
@@ -167,27 +168,27 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 
 };
 
-// char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
-// 							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
-// 							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
-// 							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
-// 							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
-// 							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
-// 							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
-// 							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
-// 							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
-// 							  "KC_SPECIAL_LINK"};
+char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
+							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
+							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
+							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
+							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
+							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
+							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
+							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
+							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
+							  "KC_SPECIAL_LINK"};
 
-char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
-							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
-							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
-							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
-							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
-							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
-							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
-							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
-							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
-							  "macro_90"};
+// char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
+// 							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
+// 							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
+// 							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
+// 							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
+// 							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
+// 							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
+// 							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
+// 							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
+// 							  "macro_90"};
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
