@@ -79,7 +79,6 @@
 #include "server.h"
 #include "spiffs.h"
 
-
 // plugin functions
 static config_data_t config;
 
