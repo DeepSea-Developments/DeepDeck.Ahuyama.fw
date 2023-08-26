@@ -100,7 +100,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 36 //Available macro lenght
+#define MACROS_NUM 17 //Available macro lenght
 #define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
 
