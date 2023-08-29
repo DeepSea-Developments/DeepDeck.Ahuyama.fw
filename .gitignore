@@ -97,3 +97,16 @@ managed_components
 pytest_embedded_log/
 
 .cache
+*/.cproject
+components/apds9960/.cproject
+components/battery/.cproject
+components/battery/.project
+components/apds9960/.project
+components/ble/.cproject
+components/ble/.project
+components/bus/test/.cproject
+components/bus/test/.project
+components/bus/.cproject
+components/bus/.project
+components/hidkeycodeconv/.cproject
+components/hidkeycodeconv/.project

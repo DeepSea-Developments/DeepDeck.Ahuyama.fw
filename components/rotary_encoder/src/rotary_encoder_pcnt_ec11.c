@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/cdefs.h>
+#include <inttypes.h>
 #include "esp_compiler.h"
 #include "esp_log.h"
 #include "driver/pcnt.h"
@@ -21,8 +22,6 @@
 #include "hal/pcnt_hal.h"
 #include "rotary_encoder.h"
 
-#include "key_definitions.h"
-#include "keyboard_config.h"
 #include "hal_ble.h"
 
 static const char *TAG = "rotary_encoder";
@@ -183,7 +182,8 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     //Configure Encoder button
     if(config->button_gpio_num != GPIO_NUM_NC)
     {
-        gpio_pad_select_gpio(config->button_gpio_num);
+
+        esp_rom_gpio_pad_select_gpio(config->button_gpio_num);
         gpio_set_direction(config->button_gpio_num, GPIO_MODE_INPUT);
         gpio_set_pull_mode(config->button_gpio_num,GPIO_PULLDOWN_ONLY);
     }
@@ -458,5 +458,5 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
         }
     } 
     
-    vTaskDelay(5 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(5));
 }

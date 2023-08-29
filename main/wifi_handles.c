@@ -37,6 +37,7 @@
 #include "nvs_funcs.h"
 #include "esp_vfs.h"
 #include "server.h"
+#include "esp_mac.h"
 
 #include "mdns.h"
 #include "spiffs.h"
@@ -44,7 +45,7 @@
 #define MDNS_INSTANCE "DeepG Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
 
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -91,15 +92,13 @@ void wifi_AP_event_handler(void *arg, esp_event_base_t event_base,
 	{
 		wifi_event_ap_staconnected_t *event =
 			(wifi_event_ap_staconnected_t *)event_data;
-		ESP_LOGI(TAG, "station " MACSTR " join, AID=%d", MAC2STR(event->mac),
-				 event->aid);
+		ESP_LOGI(TAG, "station " MACSTR " join, AID=%d", MAC2STR(event->mac), event->aid);
 	}
 	else if (event_id == WIFI_EVENT_AP_STADISCONNECTED)
 	{
 		wifi_event_ap_stadisconnected_t *event =
 			(wifi_event_ap_stadisconnected_t *)event_data;
-		ESP_LOGI(TAG, "station " MACSTR " leave, AID=%d", MAC2STR(event->mac),
-				 event->aid);
+		ESP_LOGI(TAG, "station " MACSTR " leave, AID=%d", MAC2STR(event->mac), event->aid);
 	}
 }
 

@@ -16,6 +16,8 @@
 #define ROTARY_ENCODER_H
 
 #include "esp_err.h"
+#include "key_definitions.h"
+#include "keyboard_config.h"
 
 /**
  * @brief Type of Rotary underlying device handle
@@ -177,7 +179,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder);
  * @return
  *      - encoder_state_t: TODO
  */
-void encoder_command(uint8_t command, uint16_t encoder_commands[4]);
+void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]);
 
 
 /**

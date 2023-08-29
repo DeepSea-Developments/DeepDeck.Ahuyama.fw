@@ -6,10 +6,12 @@ idf_component_register(SRCS  "spiffs.c" "main.c"
                                         "gesture_handles.c" 
                                         "server.c" 
                                         "wifi_handles.c"
-                    INCLUDE_DIRS "."
-                    REQUIRES driver "spiffs" "mdns"
-                                        "bootloader_support"
+                    REQUIRES            "driver"
+                                        "spiffs" 
+                                        "mdns"
+                                        "bootloader"
                                         "esp_http_server" 
+                                        "esp_timer"
                                         "mqtt_dd" 
                                         "battery" 
                                         "ble" 
@@ -21,7 +23,9 @@ idf_component_register(SRCS  "spiffs.c" "main.c"
                                         "menu" 
                                         "bus" 
                                         "apds9960" 
-                                        "uuid_master") 
-
+                                        "uuid_master"
+                    INCLUDE_DIRS ".")
 
                     spiffs_create_partition_image(www_0 ../spiffs_image FLASH_IN_PROJECT)
+
+set(COMPONENT_REQUIRES driver bootloader_support)

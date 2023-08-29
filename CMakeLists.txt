@@ -8,6 +8,7 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 add_compile_options(-Wno-error=missing-braces)
 add_compile_options(-Wno-unused-variable)
+add_compile_options(-Wno-error=format= -Wno-format)
 
 project(DeepDeck)
 
