@@ -78,7 +78,7 @@ struct menu_str_t{
 
 
 
-deepdeck_status_t deepdeck_status;
+static deepdeck_status_t deepdeck_status;
 
 uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl);
 
@@ -105,7 +105,7 @@ uint8_t menu_rgb_mode_2(void);
 uint8_t menu_rgb_mode_3(void);
 uint8_t menu_rgb_mode_4(void);
 
-menu_t menu_main; 
+static menu_t menu_main;
 extern menu_item_t m_main_array[];
 
 extern menu_t menu_bluetooth; 
