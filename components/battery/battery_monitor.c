@@ -28,7 +28,6 @@
 
 #include "esp_system.h"
 #include "driver/gpio.h"
-#include "adc_continous.h"
 #include "adc_cali.h"
 #include "adc_cali_scheme.h"
 #include "keyboard_config.h"
