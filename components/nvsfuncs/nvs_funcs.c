@@ -652,7 +652,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 
 esp_err_t nvs_update_macro(dd_macros macro)
 {
-	ESP_LOGI("--", "UPDATING MACRO");
+	ESP_LOGI(NVS_TAG, "UPDATING MACRO");
 	nvs_handle_t nvs_handle;
 	dd_macros temp;
 	esp_err_t error;
@@ -661,20 +661,20 @@ esp_err_t nvs_update_macro(dd_macros macro)
 	ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle));
 
 	sprintf(macro_key, "macro_%hu", (1 + macro.keycode - MACRO_BASE_VAL));
-	ESP_LOGI("--", "Reading  %s", macro_key);
+	ESP_LOGI(NVS_TAG, "Reading  %s", macro_key);
 	error = nvs_get_blob(nvs_handle, macro_key, (void *)&temp, &dd_macros_size);
 	if (error != ESP_OK)
 	{
-		ESP_LOGE("--", "Error (%s) reading Macro %s!\n", esp_err_to_name(error), macro_key);
+		ESP_LOGE(NVS_TAG, "Error (%s) reading Macro %s!\n", esp_err_to_name(error), macro_key);
 		nvs_close(nvs_handle);
 		return error;
 	}
 	else
 	{
-		ESP_LOGI("--", "Macro Name  %s, Macro Keycode %d", temp.name, temp.keycode);
+		ESP_LOGI(NVS_TAG, "Macro Name  %s, Macro Keycode %d", temp.name, temp.keycode);
 	}
 
-	ESP_LOGI("--", "updating  %s", macro_key);
+	ESP_LOGI(NVS_TAG, "updating  %s", macro_key);
 	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	nvs_close(nvs_handle);

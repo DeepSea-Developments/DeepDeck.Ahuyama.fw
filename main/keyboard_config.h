@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define FIRMWARE_VERSION "0.5.5"
+#define FIRMWARE_VERSION "0.5.6"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
@@ -100,7 +100,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 17 //Available macro lenght
+#define MACROS_NUM 40 //Available macro lenght
 #define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
 

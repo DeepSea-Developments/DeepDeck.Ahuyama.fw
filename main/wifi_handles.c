@@ -357,10 +357,6 @@ void wifiInit(void *params)
 {
 	init_fs();
 	nvs_handle_t nvs;
-	nvs_open("wifiCreds", NVS_READWRITE, &nvs);
-	nvs_set_str(nvs, "ssid", "DeepSea_Developments");
-	nvs_set_str(nvs, "pass", "hexaverse1");
-	nvs_close(nvs);
 
 	static httpd_handle_t server = NULL;
 	wifi_ap_mode = false;
@@ -391,7 +387,6 @@ void wifiInit(void *params)
 
 			ESP_LOGI(":", "Searching for wifi credentials");
 
-			nvs_handle_t nvs;
 			ESP_ERROR_CHECK(nvs_open("wifiCreds", NVS_READWRITE, &nvs));
 
 			size_t ssidLen, passLen;

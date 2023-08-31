@@ -454,7 +454,6 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
 			free(buf);
-			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -463,10 +462,10 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	cJSON *name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(name) && (name->valuestring != NULL))
 	{
-		if (strlen(name->valuestring) < 6)
+		if (strlen(name->valuestring) < 7)
 			strcpy(new_macro.name, name->valuestring);
 		else
-			strcpy(new_macro.name, "  ");
+			strcpy(new_macro.name, "**");
 	}
 	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
 	if (cJSON_IsNumber(keycode))

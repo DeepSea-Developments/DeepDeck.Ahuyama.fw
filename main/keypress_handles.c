@@ -204,7 +204,7 @@ void layer_adjust(uint16_t keycode)
 			xQueueSend(keyled_q, &led_mode, 0);
 
 #endif
-			ESP_LOGI(KEY_PRESS_TAG, "Layer modified!, Current layer: %d  ¨=)",
+			ESP_LOGI(KEY_PRESS_TAG, "Layer modified!, Current layer: %d",
 					 current_layout);
 		}
 	}
@@ -275,7 +275,7 @@ uint8_t *check_key_state(dd_layer *keymap)
 									   (TickType_t)0);
 #endif
 							ESP_LOGI(KEY_PRESS_TAG,
-									 "Layer modified!, Current layer: %d  =)",
+									 "Layer modified!, Current layer: %d",
 									 current_layout);
 						}
 
@@ -373,10 +373,8 @@ uint8_t *check_key_state(dd_layer *keymap)
 
 					if (current_report[report_index] != 0)
 					{
-						if (led_status != 0)
-						{
-							led_status = 0;
-						}
+						led_status = 0;
+						
 
 						modifier &= ~check_modifier(keycode);
 						current_report[KEY_STATE[row][col]] = 0;

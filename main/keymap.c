@@ -60,7 +60,29 @@ enum custom_macros
 	KC_APP_CHROME_REOPEN_TABS,		 // Chrome - Reopen all the tabs
 	KC_APP_CHROME_BACKWARD,			 // Chrome - Navigate Backward
 	KC_APP_CHROME_FORWARD,			 // Chrome - Navigate forward
-	
+	KC_M18,
+	KC_M19,
+	KC_M20,
+	KC_M21,
+	KC_M22,
+	KC_M23,
+	KC_M24,
+	KC_M25,
+	KC_M26,
+	KC_M27,
+	KC_M28,
+	KC_M29,
+	KC_M30,
+	KC_M31,
+	KC_M32,
+	KC_M33,
+	KC_M34,
+	KC_M35,
+	KC_M36,
+	KC_M37,
+	KC_M38,
+	KC_M39,
+	KC_M40,
 };
 
 /*define what the macros do
@@ -106,6 +128,52 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 	// Chrome - Navigate forward
 	{KC_LALT, KC_RIGHT, KC_NO},
 
+	// M18
+	{KC_NO},
+	// M19
+	{KC_NO},
+	// M20
+	{KC_NO},
+	// M21
+	{KC_NO},
+	// M22
+	{KC_NO},
+	// M23
+	{KC_NO},
+	// M24
+	{KC_NO},
+	// M25
+	{KC_NO},
+	// M26
+	{KC_NO},
+	// M27
+	{KC_NO},
+	// M28
+	{KC_NO},
+	// M29
+	{KC_NO},
+	// M30
+	{KC_NO},
+	// M31
+	{KC_NO},
+	// M32
+	{KC_NO},
+	// M33
+	{KC_NO},
+	// M34
+	{KC_NO},
+	// M35
+	{KC_NO},
+	// M36
+	{KC_NO},
+	// M37
+	{KC_NO},
+	// M38
+	{KC_NO},
+	// M39
+	{KC_NO},
+	// M40
+	{KC_NO},
 };
 
 char *default_macro_name[] = {	"Copy", 
@@ -122,9 +190,32 @@ char *default_macro_name[] = {	"Copy",
 								"Tab2", 
 								"Tab3", 
 								"TabN",
-								"REOPEN_TABS", 
+								"ROpenT", 
 								"BACKWARD", 
 								"FORWARD", 
+								"M18",
+								"M19",
+								"M20",
+								"M21",
+								"M22",
+								"M23",
+								"M24",
+								"M25",
+								"M26",
+								"M27",
+								"M28",
+								"M29",
+								"M30",
+								"M31",
+								"M32",
+								"M33",
+								"M34",
+								"M35",
+								"M36",
+								"M37",
+								"M38",
+								"M39",
+								"M40", 
 								};
 
 // char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
