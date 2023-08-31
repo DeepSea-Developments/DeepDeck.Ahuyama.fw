@@ -26,6 +26,8 @@ extern dd_macros default_macros[USER_MACROS_NUM];
 extern dd_macros *ptr_default_macros[USER_MACROS_NUM];
 extern char encoder_items_names[ENCODER_SIZE][15];
 extern char gesture_items_names[GESTURE_SIZE][8] ;
+
+extern uint8_t current_layout;
 // void init_keymap();
 void generate_uuid();
 void init_default_macros();

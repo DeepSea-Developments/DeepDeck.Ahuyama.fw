@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define FIRMWARE_VERSION "0.5.5"
+#define FIRMWARE_VERSION "0.5.6"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
@@ -100,7 +100,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 36 //Available macro lenght
+#define MACROS_NUM 40 //Available macro lenght
 #define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
 
@@ -150,6 +150,27 @@ extern TaskHandle_t xKeyreportTask;
 #define I2C_MASTER_TX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0           /*!< I2C master do not need buffer */
 #define I2C_MASTER_FREQ_HZ          400000      /*!< I2C master clock frequency */
+
+
+#define MEM_WIFI_TASK				1024*4
+#define MEM_SLEEP_TASK				1024*4
+#define	MEM_BATTERY_TASK			1024*4
+#define MEM_KEYBOARD_TASK			1024*8
+#define	MEM_LEDS_TASK				1024*4
+#define MEM_ENCODER_TASK			1024*4
+#define MEM_OLED_TASK				1024*4
+#define MEM_GESTURE_TASK			1024*4
+
+#define PRIOR_BASE					3
+#define PRIOR_WIFI_TASK				4
+#define PRIOR_SLEEP_TASK			2
+#define PRIOR_BATTERY_TASK			3
+#define PRIOR_KEYBOARD_TASK			3
+#define PRIOR_LEDS_TASK				6
+#define PRIOR_ENCODER_TASK			4
+#define PRIOR_OLED_TASK				3
+#define PRIOR_GESTURE_TASK			4
+
 
 #endif
 //

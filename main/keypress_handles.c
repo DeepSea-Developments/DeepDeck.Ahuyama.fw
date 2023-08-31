@@ -32,7 +32,6 @@
 #include "rgb_led.h"
 #include "gesture_handles.h"
 
-
 #define KEY_PRESS_TAG "KEY_PRESS"
 
 /*
@@ -96,7 +95,8 @@ void media_control_send(uint16_t keycode)
 	{
 		media_state[1] = 10;
 	}
-	if (keycode == KC_MEDIA_PREV_TRACK) {
+	if (keycode == KC_MEDIA_PREV_TRACK)
+	{
 		media_state[1] = 11;
 	}
 	if (keycode == KC_MEDIA_STOP)
@@ -197,7 +197,14 @@ void layer_adjust(uint16_t keycode)
 #ifdef OLED_ENABLE
 			xQueueSend(layer_recieve_q, &current_layout, (TickType_t)0);
 #endif
-			ESP_LOGI(KEY_PRESS_TAG, "Layer modified!, Current layer: %d  ¨=)",
+
+#ifdef RGB_LEDS
+			rgb_mode_t led_mode;
+			nvs_load_led_mode(&led_mode);
+			xQueueSend(keyled_q, &led_mode, 0);
+
+#endif
+			ESP_LOGI(KEY_PRESS_TAG, "Layer modified!, Current layer: %d",
 					 current_layout);
 		}
 	}
@@ -247,15 +254,14 @@ uint8_t *check_key_state(dd_layer *keymap)
 				if (matrix_state[row][col - MATRIX_COLS * pad] == 1)
 				{
 
-					//DISABLE PLUGIN_LAUNCHER. -> TODO ADJUST PLUGIN_BASE_VAL.
-					// // checking for function
-					// if (keycode >= PLUGIN_BASE_VAL)
-					// {
-					// 	plugin_launcher(keycode);
-					// 	continue;
-					// }
+					// DISABLE PLUGIN_LAUNCHER. -> TODO ADJUST PLUGIN_BASE_VAL.
+					//  // checking for function
+					//  if (keycode >= PLUGIN_BASE_VAL)
+					//  {
+					//  	plugin_launcher(keycode);
+					//  	continue;
+					//  }
 
-					
 					// checking for layer hold
 					if ((keycode >= LAYER_HOLD_BASE_VAL) && (keycode <= LAYER_HOLD_MAX_VAL))
 					{
@@ -269,7 +275,7 @@ uint8_t *check_key_state(dd_layer *keymap)
 									   (TickType_t)0);
 #endif
 							ESP_LOGI(KEY_PRESS_TAG,
-									 "Layer modified!, Current layer: %d  =)",
+									 "Layer modified!, Current layer: %d",
 									 current_layout);
 						}
 
@@ -278,7 +284,7 @@ uint8_t *check_key_state(dd_layer *keymap)
 
 					// checking for layer adjust keycodes
 					// if ((keycode >= LAYERS_BASE_VAL) && (keycode < MACRO_BASE_VAL))
-					if ((keycode >LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
+					if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
 					{
 						// ESP_LOGW("---", "adjust");
 						layer_adjust(keycode);
@@ -367,10 +373,8 @@ uint8_t *check_key_state(dd_layer *keymap)
 
 					if (current_report[report_index] != 0)
 					{
-						if (led_status != 0)
-						{
-							led_status = 0;
-						}
+						led_status = 0;
+						
 
 						modifier &= ~check_modifier(keycode);
 						current_report[KEY_STATE[row][col]] = 0;

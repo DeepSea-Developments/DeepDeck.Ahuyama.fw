@@ -18,6 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "gesture_handles.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -150,7 +151,8 @@ void read_gesture()
 			}
 			gesture_command(gesture,
 							key_layouts[current_layout].gesture_map);
-		}else
+		}
+		else
 		{
 			ESP_LOGE("Gesture", "_NONE");
 		}
@@ -175,7 +177,7 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 	uint8_t modifier = 0;
 	uint16_t action;
 	uint8_t key_state[REPORT_LEN] = {0};
-	
+
 	if (command != 0)
 	{
 		action = gesture_commands[command - 1]; // Have to substract 1 as IDLE is the state 0.
@@ -245,33 +247,6 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 	vTaskDelay(5 / portTICK_PERIOD_MS);
 }
 
-void apds9960_test_gesture()
-{
-	int cnt = 0;
-	while (cnt < 10)
-	{
-		uint8_t gesture = apds9960_read_gesture(apds9960);
-		if (gesture == APDS9960_DOWN)
-		{
-			printf("gesture APDS9960_DOWN*********************!\n");
-		}
-		else if (gesture == APDS9960_UP)
-		{
-			printf("gesture APDS9960_UP*********************!\n");
-		}
-		else if (gesture == APDS9960_LEFT)
-		{
-			printf("gesture APDS9960_LEFT*********************!\n");
-			cnt++;
-		}
-		else if (gesture == APDS9960_RIGHT)
-		{
-			printf("gesture APDS9960_RIGHT*********************!\n");
-			cnt++;
-		}
-		// vTaskDelay(100 / portTICK_RATE_MS);
-	}
-}
 
 ////Config Interrup PIN
 void config_interrup_pin(void)
@@ -293,13 +268,24 @@ void config_interrup_pin(void)
 						 (void *)interrupt_pin);
 }
 
-///////////////
-
-// void test() {
-
-// 	apds9960_init();
-// //	apds9960_gesture_init(apds9960);
-// 	vTaskDelay(pdMS_TO_TICKS(1000));
-// 	apds9960_test_gesture();
-// 	apds9960_deinit();
-// }
+void disable_interrup_pin(void)
+{
+	gpio_num_t interrupt_pin = (gpio_num_t)INTERRUPT_GPIO;
+	// zero-initialize the config structure.
+	gpio_config_t io_conf = {};
+	// disable interrupt
+	io_conf.intr_type = GPIO_INTR_DISABLE;
+	// set as output mode
+	io_conf.mode = GPIO_MODE_DEF_DISABLE;
+	// bit mask of the pins that you want to set,e.g.GPIO18/19
+	io_conf.pin_bit_mask = (1ULL << INTERRUPT_GPIO);
+	// disable pull-down mode
+	io_conf.pull_down_en = 0;
+	// disable pull-up mode
+	io_conf.pull_up_en = 0;
+	// configure GPIO with the given settings
+	gpio_config(&io_conf);
+	gpio_isr_handler_remove(interrupt_pin);
+	gpio_uninstall_isr_service();
+	
+}
