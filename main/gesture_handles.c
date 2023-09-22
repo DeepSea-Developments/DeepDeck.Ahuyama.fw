@@ -113,13 +113,6 @@ void apds9960_free()
 void read_gesture()
 {
 	uint8_t gesture = 0;
-	// flag to prevent false gestures while using the left encoder
-	if (flag)
-	{
-
-		flag = false;
-		//			ESP_LOGI("Gesture", "Suspend xOledTask");
-		vTaskSuspend(xOledTask); // suspend oled task to prevent i2c bus crashed
 
 		//			ESP_LOGI("Gesture", "Read Gesture start .......");
 		gesture = apds9960_read_gesture(apds9960);
@@ -157,18 +150,6 @@ void read_gesture()
 			ESP_LOGE("Gesture", "_NONE");
 		}
 
-		xTimerStart(xTimer, 0);
-		vTaskResume(xOledTask);
-	}
-	else
-	{							 // reload the timer
-		xTimerStop(xTimer, 0);	 /// stop the timer
-		vTaskSuspend(xOledTask); // suspend oled to be able to send i2c cmd to the gesture sensor
-								 //		ESP_LOGI(".", "--");
-		apds9960_gesture_init(apds9960);
-		xTimerStart(xTimer, 0); /// start the timer
-		vTaskResume(xOledTask);
-	}
 }
 
 // How to process gesture activity
