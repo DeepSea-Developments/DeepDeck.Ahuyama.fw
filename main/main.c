@@ -220,7 +220,6 @@ void app_main()
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
 	xTaskCreate(&wifiInit, "init comms", MEM_WIFI_TASK, NULL, PRIOR_WIFI_TASK, NULL);
 	xSemaphoreGive(Wifi_initSemaphore);
-	xTaskCreate()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");

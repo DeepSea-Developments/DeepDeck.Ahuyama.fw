@@ -80,7 +80,6 @@ static void connect_handler(void *arg, esp_event_base_t event_base,
 		ESP_LOGI(TAG, "Starting webserver");
 		*server = start_webserver(CONFIG_EXAMPLE_WEB_MOUNT_POINT);
 	}
-	
 }
 
 //////////////////////////WIFI AP//////////////////////////////////////////
