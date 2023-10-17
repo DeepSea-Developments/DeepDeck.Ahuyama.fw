@@ -97,3 +97,7 @@ managed_components
 pytest_embedded_log/
 
 .cache
+
+#sdkconfig files
+sdkconfig
+sdkconfig.old
