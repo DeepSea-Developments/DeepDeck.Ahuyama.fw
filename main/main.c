@@ -87,6 +87,32 @@ static config_data_t config;
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t Wifi_initSemaphore = NULL;
 
+#define USER_CHECK(a, str, ret)                                                \
+	if (!(a))                                                                  \
+	{                                                                          \
+		ESP_LOGE("MAIN", "%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, str); \
+		return (ret);                                                          \
+	}
+
+SemaphoreHandle_t user_i2c_mutex = NULL;
+esp_err_t i2s_user_lock(void)
+{
+
+	//ESP_LOGW("MAIN", "i2s_user_lock");
+	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
+	BaseType_t ret = xSemaphoreTake(user_i2c_mutex, portMAX_DELAY);
+	USER_CHECK(pdTRUE == ret, "Take semaphore failed", ESP_FAIL);
+	return ret;
+}
+
+esp_err_t i2s_user_unlock(void)
+{
+	//ESP_LOGW("MAIN", "i2s_user_unlock");
+	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
+	BaseType_t ret = xSemaphoreGive(user_i2c_mutex);
+	USER_CHECK(pdTRUE == ret, "Give semaphore failed", ESP_FAIL);
+	return ret;
+}
 /**
  * @brief Main tasks of ESP32. This is a tasks with priority level 1.
  *
@@ -160,6 +186,13 @@ void app_main()
 	};
 	i2c_bus_handle_t i2c_bus = i2c_bus_create(i2c_master_port, &conf);
 
+user_i2c_mutex = xSemaphoreCreateMutex();
+	if (user_i2c_mutex == NULL)
+	{
+		ESP_LOGE("MAIN", "%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, "user_i2c_mutex failed");
+		while (1)
+			vTaskDelay(pdMS_TO_TICKS(200));
+	}
 	// activate gesture
 #ifdef GESTURE_ENABLE
 	apds9960_init(&i2c_bus);
@@ -227,3 +260,4 @@ void app_main()
 	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
 }
+
