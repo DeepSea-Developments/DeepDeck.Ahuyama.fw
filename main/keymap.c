@@ -43,11 +43,9 @@ enum layer_holds
 
 enum custom_macros
 {
-	KC_CTRLALT = MACRO_BASE_VAL,	 // Ubuntu windows manager (change workspace)
-	KC_CTRLALTSHIFT,				 // Ubuntu windows manager (move windows)
-	KC_APP_SHUTTER,					 // Shutter
-	KC_APP_TERMINAL,				 // Terminal
-	KC_ALT_TAB,						 // Alt Tab
+	KC_APP_COPY = MACRO_BASE_VAL,	 // Copy
+	KC_APP_PASTE,					 // Paste
+	KC_ALT_TAB,	 					 // Alt Tab				 
 	KC_ALT_SHIFT_TAB,				 // Alt Shift Tab
 	KC_APP_CHROME_NTAB,				 // Chrome - Next tab
 	KC_APP_CHROME_PTAB,				 // Chrome - Prev tab
@@ -62,38 +60,42 @@ enum custom_macros
 	KC_APP_CHROME_REOPEN_TABS,		 // Chrome - Reopen all the tabs
 	KC_APP_CHROME_BACKWARD,			 // Chrome - Navigate Backward
 	KC_APP_CHROME_FORWARD,			 // Chrome - Navigate forward
-	KC_APP_WINDOWPUT_LINUX_K,		 // Windows plugin call windowput to move windows to certain parts. use this plus arrows.
-	KC_APP_GIMP_DESELECT,			 // Gimp shortcut to deselect all.
-	KC_APP_GIMP_INVERT,				 // Gimp shortcut to invert selection.
-	KC_APP_GIMP_FIT_IMAGE,			 // Gimp shortcut to fir image to window.
-	KC_APP_VSCODE_TOGGLE_SIDEBAR,	 // VSCode: Toggle sidebar.
-	KC_APP_VSCODE_COMMENT_LINE,		 // VSCode: Toggle line comment.
-	KC_APP_VSCODE_COMMENT_SELECTION, // VSCode: Toggle selection comment.
-	KC_APP_VSCODE_MULT_SELECTION,	 // VSCode: Multiple selection
-	KC_APP_VSCODE_FORWARD,			 // VSCode: Go forward
-	KC_APP_VSCODE_BACKWARD,			 // VSCode: Go Backward
-	KC_APP_VSCODE_FIND,				 // VSCode: Find
-	KC_APP_VSCODE_FIND_ALL,			 // VSCode: Find all
-	KC_APP_VSCODE_UNDO,				 // VSCode: undo
-	KC_APP_VSCODE_REDO,				 // VSCode: redo
-
-	KC_APP_COPY,	 // Copy
-	KC_APP_PASTE,	 // Paste
-	KC_SPECIAL_LINK, // SPECIAL LINK
+	KC_M18,
+	KC_M19,
+	KC_M20,
+	KC_M21,
+	KC_M22,
+	KC_M23,
+	KC_M24,
+	KC_M25,
+	KC_M26,
+	KC_M27,
+	KC_M28,
+	KC_M29,
+	KC_M30,
+	KC_M31,
+	KC_M32,
+	KC_M33,
+	KC_M34,
+	KC_M35,
+	KC_M36,
+	KC_M37,
+	KC_M38,
+	KC_M39,
+	KC_M40,
 };
 
 /*define what the macros do
  * important- make sure you you put the macros in the same order as the their enumeration
  */
 uint16_t macros[MACROS_NUM][MACRO_LEN] = {
-	// KC_CTR + ALT - //Ubuntu windows manager (change workspace)
-	{KC_LCTRL, KC_LALT, KC_NO},
-	// KC_CTR + ALT + Shift - Ubuntu windows manager (move windows)
-	{KC_LCTRL, KC_LALT, KC_LSHIFT, KC_NO},
-	// Shutter
-	{KC_LALT, KC_LSHIFT, KC_S, KC_NO},
-	// Terminal
-	{KC_LCTRL, KC_LALT, KC_T, KC_NO},
+	
+
+	//  Copy
+	{KC_LCTRL, KC_C, KC_NO},
+	//  Paste
+	{KC_LCTRL, KC_V, KC_NO},
+
 	// alt + Tab
 	{KC_LALT, KC_TAB, KC_NO},
 	// alt + Shift + Tab
@@ -126,68 +128,106 @@ uint16_t macros[MACROS_NUM][MACRO_LEN] = {
 	// Chrome - Navigate forward
 	{KC_LALT, KC_RIGHT, KC_NO},
 
-	// Linux - WindowPut plugin - MosaicWindow
-	{KC_LGUI, KC_LALT, KC_NO},
-
-	// GIMP - Select none
-	{KC_LCTRL, KC_LSHIFT, KC_A, KC_NO},
-	// GIMP - Invert Selection
-	{KC_LCTRL, KC_I, KC_NO},
-	// GIMP - Fit image
-	{KC_LCTRL, KC_LSHIFT, KC_J, KC_NO},
-
-	// VSCode: Toggle sidebar
-	{KC_LCTRL, KC_B, KC_NO},
-	// VSCode: Toggle line comment.
-	{KC_LCTRL, KC_SLASH, KC_NO},
-	// VSCode: Toggle selection comment.
-	{KC_LCTRL, KC_LSHIFT, KC_A, KC_NO},
-	// VSCode: Multiple selection
-	{KC_LCTRL, KC_D, KC_NO},
-	// VSCode: Go forward
-	{KC_LCTRL, KC_LALT, KC_MINUS, KC_NO},
-	// VSCode: Go Backward
-	{KC_LCTRL, KC_LSHIFT, KC_MINUS, KC_NO},
-	// VSCode: Find
-	{KC_LCTRL, KC_F, KC_NO},
-	// VSCode: Find all
-	{KC_LCTRL, KC_LSHIFT, KC_F, KC_NO},
-
-	// VSCode: undo
-	{KC_LCTRL, KC_Z, KC_NO},
-	// VSCode: redo
-	{KC_LCTRL, KC_Y, KC_NO},
-
-	//  Copy
-	{KC_LCTRL, KC_C, KC_NO},
-	//  Paste
-	{KC_LCTRL, KC_V, KC_NO},
-
-	{KC_LCTRL, KC_K, KC_NO},
-
+	// M18
+	{KC_NO},
+	// M19
+	{KC_NO},
+	// M20
+	{KC_NO},
+	// M21
+	{KC_NO},
+	// M22
+	{KC_NO},
+	// M23
+	{KC_NO},
+	// M24
+	{KC_NO},
+	// M25
+	{KC_NO},
+	// M26
+	{KC_NO},
+	// M27
+	{KC_NO},
+	// M28
+	{KC_NO},
+	// M29
+	{KC_NO},
+	// M30
+	{KC_NO},
+	// M31
+	{KC_NO},
+	// M32
+	{KC_NO},
+	// M33
+	{KC_NO},
+	// M34
+	{KC_NO},
+	// M35
+	{KC_NO},
+	// M36
+	{KC_NO},
+	// M37
+	{KC_NO},
+	// M38
+	{KC_NO},
+	// M39
+	{KC_NO},
+	// M40
+	{KC_NO},
 };
 
-// char *default_macro_name[] = {"KC_CTRLALT", "KC_CTRLALTSHIFT", "KC_APP_SHUTTER", "KC_APP_TERMINAL", "KC_ALT_TAB",
-// 							  "KC_ALT_SHIFT_TAB", "KC_APP_CHROME_NTAB", "KC_APP_CHROME_PTAB", "KC_APP_CHROME_NEW_TAB",
-// 							  "KC_APP_CHROME_NEW_WINDOW", "KC_APP_CHROME_N_INC_WINDOW", "KC_APP_CHROME_CLOSE_TAB",
-// 							  "KC_APP_CHROME_TAB1", "KC_APP_CHROME_TAB2", "KC_APP_CHROME_TAB3", "KC_APP_CHROME_TAB_LAST",
-// 							  "KC_APP_CHROME_REOPEN_TABS", "KC_APP_CHROME_BACKWARD", "KC_APP_CHROME_FORWARD",
-// 							  "KC_APP_WINDOWPUT_LINUX_K", "KC_APP_GIMP_DESELECT", "KC_APP_GIMP_INVERT", "KC_APP_GIMP_FIT_IMAGE",
-// 							  "KC_APP_VSCODE_TOGGLE_SIDEBAR", "KC_APP_VSCODE_COMMENT_LINE", "KC_APP_VSCODE_COMMENT_SELECTION",
-// 							  "KC_APP_VSCODE_MULT_SELECTION", "KC_APP_VSCODE_FORWARD", "KC_APP_VSCODE_BACKWARD", "KC_APP_VSCODE_FIND",
-// 							  "KC_APP_VSCODE_FIND_ALL", "KC_APP_VSCODE_UNDO", "KC_APP_VSCODE_REDO", "KC_APP_COPY", "KC_APP_PASTE",
-// 							  "KC_SPECIAL_LINK"};
+char *default_macro_name[] = {	"Copy", 
+								"Paste", 
+								"AltTab",
+								"AtlSTab", 
+								"NTAB", 
+								"PTAB", 
+								"NEW_TAB",
+								"NEW_WIND", 
+								"INC_WIND", 
+								"CloseTab",
+								"Tab1", 
+								"Tab2", 
+								"Tab3", 
+								"TabN",
+								"ROpenT", 
+								"BACKWARD", 
+								"FORWARD", 
+								"M18",
+								"M19",
+								"M20",
+								"M21",
+								"M22",
+								"M23",
+								"M24",
+								"M25",
+								"M26",
+								"M27",
+								"M28",
+								"M29",
+								"M30",
+								"M31",
+								"M32",
+								"M33",
+								"M34",
+								"M35",
+								"M36",
+								"M37",
+								"M38",
+								"M39",
+								"M40", 
+								};
 
-char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
-							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
-							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
-							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
-							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
-							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
-							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
-							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
-							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
-							  "macro_90"};
+// char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
+// 							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
+// 							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
+// 							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
+// 							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
+// 							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
+// 							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
+// 							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
+// 							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
+// 							  "macro_90"};
 
 // Fillers to make layering more clear
 #define _______ KC_TRNS
@@ -276,7 +316,7 @@ dd_layer layer3 =
 		.key_map_names = {{"dev", "fulscr", "prtscr", "layer"}, {"PTAB", "NTAB", "reopne", "close"}, {"back", "forw", "new", "incog"}, {"Tab1", "Tab2", "Tab3", "TabN"}},
 
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
-		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_APP_VSCODE_UNDO, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK},
+		.left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK},
 		.right_encoder_map = {KC_APP_CHROME_FORWARD, KC_APP_CHROME_BACKWARD, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_NEW_WINDOW, KC_APP_CHROME_CLOSE_TAB},
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_APP_CHROME_CLOSE_TAB, 0, KC_APP_CHROME_NTAB, KC_APP_CHROME_PTAB, 0, 0},

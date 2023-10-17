@@ -454,7 +454,6 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
 			free(buf);
-			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -463,10 +462,10 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	cJSON *name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(name) && (name->valuestring != NULL))
 	{
-		if (strlen(name->valuestring) < 6)
+		if (strlen(name->valuestring) < 7)
 			strcpy(new_macro.name, name->valuestring);
 		else
-			strcpy(new_macro.name, "  ");
+			strcpy(new_macro.name, "**");
 	}
 	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
 	if (cJSON_IsNumber(keycode))
@@ -1391,10 +1390,22 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 	if (error == ESP_OK)
 	{
 
-		httpd_resp_set_type(req, "application/json");
-		httpd_resp_sendstr(req, string);
-		httpd_resp_set_status(req, HTTPD_200);
-		httpd_resp_send(req, NULL, 0);
+		// Restore macros as well
+		error = nvs_restore_default_macros();
+
+		if (error == ESP_OK)
+		{
+			httpd_resp_set_type(req, "application/json");
+			httpd_resp_sendstr(req, string);
+			httpd_resp_set_status(req, HTTPD_200);
+			httpd_resp_send(req, NULL, 0);
+		}
+		else
+		{
+
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+		}
 	}
 	else
 	{
@@ -1402,6 +1413,7 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
+
 	current_layout = 0;
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);

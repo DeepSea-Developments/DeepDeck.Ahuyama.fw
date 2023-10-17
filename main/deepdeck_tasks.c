@@ -133,7 +133,7 @@ void gesture_task(void *pvParameters)
 			vTaskDelay(pdMS_TO_TICKS(10));
 		}
 
-		vTaskDelay(pdMS_TO_TICKS(250));
+		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
 
@@ -237,7 +237,7 @@ void rgb_leds_task(void *pvParameters)
 		key_led_modes();
 	}
 }
-
+extern uint8_t gesture_disable_g;
 void encoder_report(void *pvParameters)
 {
 	uint8_t encoder1_status = 0;
