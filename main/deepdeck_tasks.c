@@ -175,8 +175,8 @@ void key_reports(void *pvParameters)
 	while (1)
 	{
 		memcpy(report_state, check_key_state(&key_layouts[current_layout]),
-			   sizeof report_state);
-
+			   sizeof(report_state));
+		
 		// Do not send anything if queues are uninitialized
 		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL)
 		{
@@ -213,7 +213,7 @@ void key_reports(void *pvParameters)
 #ifdef NKRO
 			pReport = (void *)&report_state;
 #endif
-
+			BLE_EN=1;
 			if (BLE_EN == 1)
 			{
 				xQueueSend(keyboard_q, pReport, (TickType_t)0);

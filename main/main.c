@@ -98,7 +98,7 @@ SemaphoreHandle_t user_i2c_mutex = NULL;
 esp_err_t i2s_user_lock(void)
 {
 
-	ESP_LOGW("MAIN", "i2s_user_lock");
+	// ESP_LOGW("MAIN", "i2c_user_lock");
 	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
 	BaseType_t ret = xSemaphoreTake(user_i2c_mutex, portMAX_DELAY);
 	USER_CHECK(pdTRUE == ret, "Take semaphore failed", ESP_FAIL);
@@ -107,7 +107,7 @@ esp_err_t i2s_user_lock(void)
 
 esp_err_t i2s_user_unlock(void)
 {
-	ESP_LOGW("MAIN", "i2s_user_unlock");
+	// ESP_LOGW("MAIN", "i2s_user_unlock");
 	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
 	BaseType_t ret = xSemaphoreGive(user_i2c_mutex);
 	USER_CHECK(pdTRUE == ret, "Give semaphore failed", ESP_FAIL);

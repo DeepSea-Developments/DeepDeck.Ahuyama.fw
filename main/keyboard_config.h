@@ -106,6 +106,8 @@
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 
+// #define NKRO
+
 #define KEYMAP_COLS MATRIX_COLS*KEYPADS  // used for a symmetrical split keyboard
 #define REPORT_LEN (MOD_LED_BYTES+MACRO_LEN+MATRIX_ROWS*KEYMAP_COLS) //size of hid reports with NKRO and room for 3 key macro
 #define REPORT_COUNT_BYTES (MATRIX_ROWS*KEYMAP_COLS+MACRO_LEN)

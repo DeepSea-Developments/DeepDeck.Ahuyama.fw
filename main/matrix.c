@@ -42,14 +42,14 @@ const gpio_num_t MATRIX_COLS_PINS[] = { GPIO_NUM_16, GPIO_NUM_15, GPIO_NUM_14,
 		GPIO_NUM_13 };
 
 // matrix states
-uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
 
 uint32_t lastDebounceTime = 0;
 
-uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS] = { &MATRIX_STATE,
-		&SLAVE_MATRIX_STATE, };
+// uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS] = { &MATRIX_STATE,
+// 		&SLAVE_MATRIX_STATE, };
 
 //used for debouncing
 static uint32_t millis() {
@@ -170,10 +170,17 @@ void matrix_setup(void) {
 #endif
 }
 
-uint8_t curState = 0;
-uint32_t DEBOUNCE_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+
+
+
 // Scanning the matrix for input
-void scan_matrix(void) {
+void scan_matrix(uint8_t * current_matrix) 
+{
+	uint8_t curState = 0;
+	static uint32_t DEBOUNCE_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+	static uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+	static uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+
 #ifdef COL2ROW
 	// Setting column pin as low, and checking if the input of a row pin changes.
 	for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -185,12 +192,9 @@ void scan_matrix(void) {
 				DEBOUNCE_MATRIX[row][col] = millis();
 			}
 			PREV_MATRIX_STATE[row][col] = curState;
-			if ((millis() - DEBOUNCE_MATRIX[row][col]) > DEBOUNCE) {
-
-				if (MATRIX_STATE[row][col] != curState) {
-					MATRIX_STATE[row][col] = curState;
-				}
-
+			if ((millis() - DEBOUNCE_MATRIX[row][col]) > DEBOUNCE) 
+			{
+				MATRIX_STATE[row][col] = curState;
 			}
 		}
 		gpio_set_level(MATRIX_COLS_PINS[col], 0);
@@ -220,6 +224,27 @@ void scan_matrix(void) {
 		gpio_set_level(MATRIX_ROWS_PINS[row], 0);
 	}
 #endif
+
+	// ESP_LOGI("MATRIX:","--------------%d-----------------------------",current_matrix);
+	// for(int i=0;i<4;i++)
+	// {
+	// 	for(int j=0;j<4;j++)
+	// 	{
+	// 		printf("%d ",MATRIX_STATE[i][j]);
+	// 	}
+	// 	printf("\n");
+	// }
+	memcpy(current_matrix, MATRIX_STATE, sizeof(MATRIX_STATE));
+	// printf("\n");
+	// for(int i=0;i<4;i++)
+	// {
+	// 	for(int j=0;j<4;j++)
+	// 	{
+	// 		printf("%d ",*current_matrix++);
+	// 	}
+	// 	printf("\n");
+	// }
+	// printf("\n\n\n");
 
 }
 

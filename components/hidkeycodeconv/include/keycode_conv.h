@@ -15,7 +15,7 @@
 #include "keyboard_config.h"
 
 //Flag to enable or disable sending reports via BLE
-static int BLE_EN;
+static int BLE_EN; //Todo Review and remove the static declaration
 
 /** @brief Queue for receiving keyboard input
  *  */
