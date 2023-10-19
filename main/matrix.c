@@ -171,8 +171,6 @@ void matrix_setup(void) {
 }
 
 
-
-
 // Scanning the matrix for input
 void scan_matrix(uint8_t * current_matrix) 
 {

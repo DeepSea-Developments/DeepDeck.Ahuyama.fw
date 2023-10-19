@@ -78,6 +78,7 @@
 #include "wifi_handles.h"
 #include "server.h"
 #include "spiffs.h"
+#include "keys.h"
 
 
 // plugin functions
@@ -229,11 +230,11 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
-#ifdef MASTER
-	BLE_EN = 1;
-	xTaskCreate(key_reports, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL);
-	ESP_LOGI("Keyboard task", "initialized");
-#endif
+// #ifdef MASTER
+// 	BLE_EN = 1;
+// 	xTaskCreate(key_reports, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL);
+// 	ESP_LOGI("Keyboard task", "initialized");
+// #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
@@ -259,5 +260,10 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
 	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
+
+
+
+
+	keys_hello_world();
 }
 
