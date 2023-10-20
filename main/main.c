@@ -264,6 +264,7 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 
 
 
-	keys_hello_world();
+	init_keys_task();
+	
 }
 

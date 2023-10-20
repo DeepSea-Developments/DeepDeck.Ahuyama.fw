@@ -35,9 +35,9 @@ void rtc_matrix_setup(void);
  */
 void matrix_setup(void);
 
-/*
- * @brief scan matrix
- */
-void scan_matrix(uint8_t * current_matrix);
+// /*
+//  * @brief scan matrix
+//  */
+// void scan_matrix(uint8_t * current_matrix);
 
 #endif /* MATRIX_H_ */

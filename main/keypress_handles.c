@@ -218,7 +218,7 @@ uint8_t matrix_prev_state[MATRIX_ROWS][MATRIX_COLS] = {0};
 uint8_t *check_key_state(dd_layer *keymap)
 {
 	uint8_t matrix_state[MATRIX_ROWS][MATRIX_COLS] = {0};
-	scan_matrix(matrix_state);
+	// scan_matrix(matrix_state);
 	
 	for (uint8_t col = 0; col < MATRIX_COLS; col++)
 	{
