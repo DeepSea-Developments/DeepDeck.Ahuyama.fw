@@ -232,7 +232,7 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 	// Create the key scanning task on core 1 (otherwise it will crash)
 // #ifdef MASTER
 // 	BLE_EN = 1;
-// 	xTaskCreate(key_reports, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL);
+// 	xTaskCreate(main_task, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
 // 	ESP_LOGI("Keyboard task", "initialized");
 // #endif
 
@@ -265,6 +265,9 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 
 
 	init_keys_task();
+
+	xTaskCreate(main_task, "MainTask", MEM_KEYBOARD_TASK, NULL, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
+	ESP_LOGI("Keyboard task", "initialized");
 	
 }
 

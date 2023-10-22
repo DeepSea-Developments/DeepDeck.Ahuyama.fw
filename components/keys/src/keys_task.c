@@ -37,24 +37,30 @@ void key_event_to_queue(keys_event_struct_t event)
     xQueueSend(keys_q, &event, 0);
 
     ESP_LOGI(TAG,"Key: %d",event.key_pos);
-    ESP_LOGI(TAG,"Event: %d",event.event);
+    ESP_LOGW(TAG,"Event: %d",event.event);
     ESP_LOGI(TAG,"Time: %d",event.time);
     ESP_LOGI(TAG,"counter: %d",event.counter);
 }
 
-void keys_task(void)
+void keys_task(void *pvParameters)
+
 {
-    keys_config_struct_t keys_config;
-    keys_config.mode = RAW_MODE;
-    keys_config.interval_time = 150;
-    keys_config.long_time = 2000;
-    keys_config.options = LONG_TRIGGER_AT_TIMEOUT;
-    keys_config.enable_v = ENABLE_V_TAP_DANCE | ENABLE_V_LEADER_KEY;
+    keys_config_struct_t keys_config = {
+        .mode_vector = {0},
+        .interval_time = 150,
+        .long_time = 500
+    };
+
+    keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
+    keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
+    keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
+    keys_config.mode_vector[0] = MODE_V_RAW_DISABLE;
+    keys_config.mode_vector[1] = MODE_V_RAW_DISABLE;
+    keys_config.mode_vector[15] = MODE_V_RAW_DISABLE;
     
     while(1)
     {
         scan_matrix(keys_config, key_event_to_queue);
-
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

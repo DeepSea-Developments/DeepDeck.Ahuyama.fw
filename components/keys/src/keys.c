@@ -54,33 +54,6 @@ typedef enum {
 } keys_basic_fsm_t;
 
 
-
-void dummy_handler(keys_event_struct_t event)
-{
-    ESP_LOGI(TAG,"Key: %d",event.key_pos);
-    ESP_LOGI(TAG,"Event: %d",event.event);
-    ESP_LOGI(TAG,"Time: %d",event.time);
-    ESP_LOGI(TAG,"counter: %d",event.counter);
-}
-
-void keys_hello_world(void)
-{
-    matrix_setup();
-    uint8_t current_matrix[4][4];
-    
-    keys_config_struct_t keys_config;
-    keys_config.mode = CLEAN_MODE;
-    keys_config.interval_time = 150;
-    keys_config.long_time = 2000;
-    keys_config.options = 0;///LONG_TRIGGER_AT_TIMEOUT;
-    keys_config.enable_v = ENABLE_V_TAP_DANCE | ENABLE_V_LEADER_KEY;
-    
-    while(1)
-    {
-        scan_matrix(keys_config, dummy_handler);
-    }
-}
-
 // state matrix aux definitions
 #define STATE_MATRIX_STATE_MASK                 0b00011111
 #define STATE_MATRIX_DEBOUNCING_FLAG            (1 << 5)
@@ -235,9 +208,6 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
     keys_basic_fsm_t current_fsm_state = S_IDLE;
     uint8_t state_item;
 	
-	// static uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-	// static uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-
     static uint32_t aux_time_matrix[MATRIX_ROWS][MATRIX_COLS] = { 0 };
     static uint32_t time_matrix[MATRIX_ROWS][MATRIX_COLS] = { 0 };
     static uint8_t state_matrix[MATRIX_ROWS][MATRIX_COLS] = { 0 };
@@ -248,285 +218,205 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
         // - bit 6: Current pin state (maybe not needed)
         // - bit 7: Past pin state
 
-    uint8_t tapdance_enable=keys_config.options & ENABLE_V_TAP_DANCE; //temp variables
-    uint8_t longpress_mode=keys_config.options & LONG_TRIGGER_AT_TIMEOUT;  //temp variables
-    uint16_t longpress_timeout=keys_config.long_time; // temp variable
-    uint16_t interval_timeout=keys_config.interval_time; // temp variable
-
     static uint8_t n_tap=0; //This could/should be a matrix to allow multiple tapdaces at the same time.
 
 #ifdef COL2ROW
 
-    if(keys_config.mode == RAW_MODE)
-    {
-        // Setting column pin as low, and checking if the input of a row pin changes.
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) 
-        {	
-            gpio_set_level(MATRIX_COLS_PINS[col], 1);
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) 
+    // Setting column pin as low, and checking if the input of a row pin changes.
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) 
+    {	
+        gpio_set_level(MATRIX_COLS_PINS[col], 1);
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++) 
+        {
+            current_key_state = gpio_get_level(MATRIX_ROWS_PINS[row]);
+
+            state_item = state_matrix[row][col];
+
+
+            // -------- Debounce Routine -------------
+            if (STATE_MATRIX_GET_PAST_LVL(state_item) != current_key_state) 
             {
-                current_key_state = gpio_get_level(MATRIX_ROWS_PINS[row]);
-
-                state_item = state_matrix[row][col];
-
-
-                // -------- Debounce Routine -------------
-                if (STATE_MATRIX_GET_PAST_LVL(state_item) != current_key_state) 
+                state_item = STATE_MATRIX_SET_DEBOUNCING(state_item);
+                aux_time_matrix[row][col] = millis();
+                // PREV_MATRIX_STATE[row][col] = current_key_state;
+                if(current_key_state)
                 {
-                    state_item = STATE_MATRIX_SET_DEBOUNCING(state_item);
-                    aux_time_matrix[row][col] = millis();
-                    if(current_key_state)
-                    {
-                        state_item = STATE_MATRIX_SET_PAST_LVL(state_item);
-                    }
-                    else
-                    {
-                        state_item = STATE_MATRIX_RESET_PAST_LVL(state_item);
-                    }
-                    state_matrix[row][col] = state_item;
-                    continue; //As it is debouncing, go to the next key
+                    state_item = STATE_MATRIX_SET_PAST_LVL(state_item);
                 }
-                if (STATE_MATRIX_IS_DEBOUNCING(state_item) && ((millis() - aux_time_matrix[row][col]) > DEBOUNCE)) 
+                else
                 {
-                    state_item = STATE_MATRIX_RESET_DEBOUNCING(state_item);
+                    state_item = STATE_MATRIX_RESET_PAST_LVL(state_item);
                 }
-
-                // Debounce ready, lets see the state of the key
-                
-                current_fsm_state = STATE_MATRIX_GET_FMS_STATE(state_item);
-                switch (current_fsm_state)
-                {
-                    case S_IDLE:
-
-                        // -------Key Pressed------
-                        if(current_key_state == 1)
-                        {
-                            current_fsm_state = S_PRESSED;
-                            
-                            time_matrix[row][col] = millis();     //This to know the time the key has been pressed
-                            if (handler) 
-                            {
-                                keys_event_struct_t event;
-                                init_event_struct(&event, KEY_PRESSED, (((row) * MATRIX_COLS) + (col)),
-                                                  0,0);
-                                handler(event);
-                            }
-                            ESP_LOGI(TAG,"KEY%d%d pressed",row + 1,col + 1);
-                        }
-
-                        break;
-                    case S_PRESSED:
-                        
-                        // -------Key Released ------
-                        if(current_key_state == 0)
-                        {
-                            current_fsm_state = S_IDLE;
-                            if (handler) 
-                            {
-                                keys_event_struct_t event;
-                                init_event_struct(&event, KEY_RELEASED, (((row) * MATRIX_COLS) + (col)),
-                                                millis()-time_matrix[row][col],0);
-                                handler(event);
-                            }
-                            ESP_LOGI(TAG,"KEY%d%d Released",row + 1,col + 1);
-                        }
-                    
-                    break;
-                    
-                    default:
-                        current_fsm_state = S_IDLE;
-                        break;
-                }
-
-                //save the item in the matrix once it was used.
-                
-                state_item &= ~STATE_MATRIX_STATE_MASK;
-                state_item |= current_fsm_state;
-                
                 state_matrix[row][col] = state_item;
+                continue; //As it is debouncing, go to the next key
             }
-            gpio_set_level(MATRIX_COLS_PINS[col], 0);
-        }
-
-    }
-    else //Clean mode
-    {
-        // Setting column pin as low, and checking if the input of a row pin changes.
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) 
-        {	
-            gpio_set_level(MATRIX_COLS_PINS[col], 1);
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) 
+            
+            if (STATE_MATRIX_IS_DEBOUNCING(state_item) && ((millis() - aux_time_matrix[row][col]) > DEBOUNCE)) 
             {
-                current_key_state = gpio_get_level(MATRIX_ROWS_PINS[row]);
+                // ESP_LOGI(TAG,"DEBOUNCED");
+                // Debounced value
+                // MATRIX_STATE[row][col] = current_key_state; //TBC
+                state_item = STATE_MATRIX_RESET_DEBOUNCING(state_item);
+            }
 
-                state_item = state_matrix[row][col];
+            // Debounce ready, lets see the state of the key
+            
 
+    uint16_t interval_timeout=keys_config.interval_time; // temp variable
 
-                // -------- Debounce Routine -------------
-                if (STATE_MATRIX_GET_PAST_LVL(state_item) != current_key_state) 
-                {
-                    state_item = STATE_MATRIX_SET_DEBOUNCING(state_item);
-                    aux_time_matrix[row][col] = millis();
-                    // PREV_MATRIX_STATE[row][col] = current_key_state;
-                    if(current_key_state)
+            keys_event_struct_t event;
+            uint8_t key_vector_pos = ((row) * MATRIX_COLS) + (col); // turns the matrix position (row and col) to a single vector position
+            uint8_t key_mode = keys_config.mode_vector[key_vector_pos];
+
+            current_fsm_state = STATE_MATRIX_GET_FMS_STATE(state_item);
+            switch (current_fsm_state)
+            {
+                case S_IDLE:
+
+                    // -------Key Pressed------
+                    if(current_key_state == 1)
                     {
-                        state_item = STATE_MATRIX_SET_PAST_LVL(state_item);
-                    }
-                    else
-                    {
-                        state_item = STATE_MATRIX_RESET_PAST_LVL(state_item);
-                    }
-                    state_matrix[row][col] = state_item;
-                    continue; //As it is debouncing, go to the next key
-                }
-                if (STATE_MATRIX_IS_DEBOUNCING(state_item) && ((millis() - aux_time_matrix[row][col]) > DEBOUNCE)) 
-                {
-                    // ESP_LOGI(TAG,"DEBOUNCED");
-                    // Debounced value
-                    // MATRIX_STATE[row][col] = current_key_state; //TBC
-                    state_item = STATE_MATRIX_RESET_DEBOUNCING(state_item);
-                }
+                        current_fsm_state = S_PRESSED;
+                        ESP_LOGI(TAG,"KEY%d%d pressed",row + 1,col + 1);
+                        time_matrix[row][col] = millis();     //This to know the time the key has been pressed
+                        aux_time_matrix[row][col] = millis(); //This to review timeouts
 
-                // Debounce ready, lets see the state of the key
-                
-                current_fsm_state = STATE_MATRIX_GET_FMS_STATE(state_item);
-                switch (current_fsm_state)
-                {
-                    case S_IDLE:
-
-                        // -------Key Pressed------
-                        if(current_key_state == 1)
+                        if(!MODE_V_IS_RAW_DISABLED(key_mode) && !MODE_V_IS_TAPDANCE_ENABLED(key_mode) && !MODE_V_IS_MODTAP_ENABLED(key_mode))
                         {
-                            current_fsm_state = S_PRESSED;
-                            ESP_LOGI(TAG,"KEY%d%d pressed",row + 1,col + 1);
-                            time_matrix[row][col] = millis();     //This to know the time the key has been pressed
-                            aux_time_matrix[row][col] = millis(); //This to review timeouts
-                        }
-
-                        break;
-                    case S_PRESSED:
-                        
-                        // -------Key Released with tapdance enabled------
-                        if(current_key_state == 0 && tapdance_enable)
-                        {
-                            current_fsm_state = S_RELEASED;
-                            aux_time_matrix[row][col] = millis();
-                            n_tap=1;
-                            ESP_LOGI(TAG,"KEY%d%d released",row + 1,col + 1);
-                        }
-                        // -------Key Released without tapdance enabled------
-                        else if(current_key_state == 0)
-                        {
-                            current_fsm_state = S_IDLE;
+                            
                             if (handler) 
                             {
-                                keys_event_struct_t event;
-                                init_event_struct(&event, KEY_RELEASED, (((row) * MATRIX_COLS) + (col)),
+                                init_event_struct(&event, KEY_PRESSED, key_vector_pos,
                                                 millis()-time_matrix[row][col],n_tap);
                                 handler(event);
                             }
-                            ESP_LOGI(TAG,"KEY%d%d Short Pressed",row + 1,col + 1);
+                            ESP_LOGI(TAG,"KEY%d%d KEY_PRESSED",row + 1,col + 1);
                         }
-                        // -------Timeout finished, long pressed----------------
-                        else if((millis() - aux_time_matrix[row][col]) > longpress_timeout)
-                        {
-                            current_fsm_state = S_LONG_P;
-                            // If longpress mode is trigger at timeout, sent the event
-                            if(longpress_mode)
-                            {
-                                if (handler) 
-                                {
-                                    keys_event_struct_t event;
-                                    init_event_struct(&event, KEY_LONG_P_TIMEOUT, (((row) * MATRIX_COLS) + (col)),
-                                                    millis()-time_matrix[row][col],n_tap);
-                                    handler(event);
-                                }
-                                ESP_LOGI(TAG,"KEY%d%d Long Pressed timeout",row + 1,col + 1);
-                            }
-                        }
+                    }
+
+                    break;
+                case S_PRESSED:
                     
-                        break;
-                    case S_RELEASED:
-
-                        //-------- interval timeout finished --------
-                        if((millis() - aux_time_matrix[row][col]) > interval_timeout)
+                    // -------Key Released with tapdance or modtap enabled------
+                    if(current_key_state == 0 && (MODE_V_IS_TAPDANCE_ENABLED(key_mode) || MODE_V_IS_MODTAP_ENABLED(key_mode) ))
+                    {
+                        current_fsm_state = S_RELEASED;
+                        aux_time_matrix[row][col] = millis();
+                        n_tap=1;
+                        ESP_LOGI(TAG,"KEY%d%d released",row + 1,col + 1);
+                    }
+                    // -------Key Released without any modes enabled------
+                    else if(current_key_state == 0)
+                    {
+                        current_fsm_state = S_IDLE;
+                        if (handler) 
                         {
-                            current_fsm_state = S_IDLE;
-                            if (n_tap<2)
-                            {
-                                if (handler) 
-                                {
-                                    keys_event_struct_t event;
-                                    init_event_struct(&event, KEY_SHORT_P, (((row) * MATRIX_COLS) + (col)),
-                                                    millis()-time_matrix[row][col],n_tap);
-                                    handler(event);
-                                }
-                                ESP_LOGI(TAG,"KEY%d%d Short Pressed",row + 1,col + 1);
-                            }
-                            else
-                            {
-                                if (handler) 
-                                {
-                                    keys_event_struct_t event;
-                                    init_event_struct(&event, KEY_TAP_DANCE, (((row) * MATRIX_COLS) + (col)),
-                                                    millis()-time_matrix[row][col],n_tap);
-                                    handler(event);
-                                }
-                                ESP_LOGI(TAG,"KEY%d%d TapDance DONE with %d taps",row + 1,col + 1,n_tap);
-                            }
+                            init_event_struct(&event, KEY_RELEASED, key_vector_pos,
+                                            millis()-time_matrix[row][col],n_tap);
+                            handler(event);
                         }
+                        ESP_LOGI(TAG,"KEY%d%d KEY_RELEASED",row + 1,col + 1);
+                    }
 
-                        // -------Key Pressed------
-                        if(current_key_state == 1)
+                    // -------Timeout finished, long pressed if modtap is enabled----------------
+                    else if(MODE_V_IS_MODTAP_ENABLED(key_mode) && (millis() - aux_time_matrix[row][col]) > keys_config.long_time)
+                    {
+                        current_fsm_state = S_LONG_P;
+                        // IF simple long press is NOT enabled, send the KEY_LONG_P_TIMEOUT event
+                        if(!MODE_V_IS_LONG_P_SIMPLE_ENABLED(key_mode))
                         {
-                            current_fsm_state = S_TAPDANCE;
-                            ESP_LOGI(TAG,"KEY%d%d pressed",row + 1,col + 1);
-                        }
-                    
-                        break;
-                    case S_LONG_P:
-
-                        // -------Key Released ------
-                        if(current_key_state == 0)
-                        {
-                            current_fsm_state = S_IDLE;
                             if (handler) 
                             {
-                                keys_event_struct_t event;
-                                    init_event_struct(&event, KEY_LONG_P, (((row) * MATRIX_COLS) + (col)),
-                                                    millis()-time_matrix[row][col],n_tap);
-                                    handler(event);
-                                ESP_LOGI(TAG,"KEY%d%d Long Pressed",row + 1,col + 1);
+                                init_event_struct(&event, KEY_MT_LONG_TIMEOUT, key_vector_pos,
+                                                millis()-time_matrix[row][col],n_tap);
+                                handler(event);
                             }
+                            ESP_LOGI(TAG,"KEY%d%d event: KEY_MT_LONG_TIMEOUT",row + 1,col + 1);
                         }
-                    
+                    }
+                
                     break;
-                    case S_TAPDANCE:
-                        
-                        // -------Key Released------
-                        if(current_key_state == 0)
-                        {
-                            current_fsm_state = S_RELEASED;
-                            n_tap++;
-                            aux_time_matrix[row][col] = millis();
-                            ESP_LOGI(TAG,"KEY%d%d TapDance",row + 1,col + 1);
-                        }
-                    
-                    break;    
-                    
-                    default:
-                        break;
-                }
+                case S_RELEASED:
 
-                //save the item in the matrix once it was used.
+                    //-------- interval timeout finished --------
+                    if((millis() - aux_time_matrix[row][col]) > interval_timeout)
+                    {
+                        current_fsm_state = S_IDLE;
+                        // ModTap enaled
+                        if (MODE_V_IS_MODTAP_ENABLED(key_mode))
+                        {
+                            if (handler) 
+                            {
+                                init_event_struct(&event, KEY_MT_SHORT, key_vector_pos,
+                                                millis()-time_matrix[row][col],n_tap);
+                                handler(event);
+                            }
+                            ESP_LOGI(TAG,"KEY%d%d KEY_MT_SHORT",row + 1,col + 1);
+                        }
+                        // Tap dance event
+                        else
+                        {
+                            if (handler) 
+                            { 
+                                init_event_struct(&event, KEY_TAP_DANCE, key_vector_pos,
+                                                millis()-time_matrix[row][col],n_tap);
+                                handler(event);
+                            }
+                            ESP_LOGI(TAG,"KEY%d%d KEY_TAP_DANCE with %d taps",row + 1,col + 1,n_tap);
+                        }
+                    }
+
+                    // -------Key Pressed------
+                    if(current_key_state == 1)
+                    {
+                        current_fsm_state = S_TAPDANCE;
+                        ESP_LOGI(TAG,"KEY%d%d pressed",row + 1,col + 1);
+                    }
                 
-                state_item &= ~STATE_MATRIX_STATE_MASK;
-                state_item |= current_fsm_state;
+                    break;
+                case S_LONG_P:
+
+                    // -------Key Released ------
+                    if(current_key_state == 0)
+                    {
+                        current_fsm_state = S_IDLE;
+                        if (handler) 
+                        {
+                            
+                                init_event_struct(&event, KEY_MT_LONG, key_vector_pos,
+                                                millis()-time_matrix[row][col],n_tap);
+                                handler(event);
+                            ESP_LOGI(TAG,"KEY%d%d KEY_MT_LONG",row + 1,col + 1);
+                        }
+                    }
                 
-                state_matrix[row][col] = state_item;
+                break;
+                case S_TAPDANCE:
+                    
+                    // -------Key Released------
+                    if(current_key_state == 0)
+                    {
+                        current_fsm_state = S_RELEASED;
+                        n_tap++;
+                        aux_time_matrix[row][col] = millis();
+                        ESP_LOGI(TAG,"KEY%d%d TapDance",row + 1,col + 1);
+                    }
+                
+                break;    
+                
+                default:
+                    break;
             }
-            gpio_set_level(MATRIX_COLS_PINS[col], 0);
+
+            //save the item in the matrix once it was used.
+            
+            state_item &= ~STATE_MATRIX_STATE_MASK;
+            state_item |= current_fsm_state;
+            
+            state_matrix[row][col] = state_item;
         }
+        gpio_set_level(MATRIX_COLS_PINS[col], 0);
+        
     
 #endif
 #ifdef ROW2COL

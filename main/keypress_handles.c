@@ -33,6 +33,8 @@
 #include "gesture_handles.h"
 #include "esp_timer.h"
 
+#include "keys.h"
+
 #define KEY_PRESS_TAG "KEY_PRESS"
 
 /*
@@ -214,7 +216,7 @@ void layer_adjust(uint16_t keycode)
 
 uint8_t matrix_prev_state[MATRIX_ROWS][MATRIX_COLS] = {0};
 
-// checking the state of each key in the matrix
+// checking the state of each key in the matrix (TODo: OLD, remove)
 uint8_t *check_key_state(dd_layer *keymap)
 {
 	uint8_t matrix_state[MATRIX_ROWS][MATRIX_COLS] = {0};
@@ -378,5 +380,112 @@ uint8_t *check_key_state(dd_layer *keymap)
 	
 	return current_report;
 }
+
+
+
+
+void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,uint8_t * report_state)
+{
+
+	// Send RGB notification on key changed.
+	uint8_t row = key_event.key_pos/MATRIX_ROWS;
+	uint8_t col = key_event.key_pos%MATRIX_ROWS;
+
+#ifdef RGB_LEDS
+	rgb_key_led_press(row , col); // report the pressed key
+#endif
+
+	uint16_t report_index = (2 + key_event.key_pos);
+	keycode = keymap->key_map[row][col];
+
+	// led_status = check_led_status(keycode); ----> ToDo: To be checked
+
+	// Check whether state is pressed or unpressed
+
+	//if pressed:
+	if (key_event.event == KEY_PRESSED)
+	{
+		// Check if layer hold (ToDo)
+
+		// Check if keycode is layer adjust
+		if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
+		{
+			// ESP_LOGW("---", "adjust");
+			layer_adjust(keycode);
+			// continue;
+
+		}
+
+		// Check if is a macro
+		else if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
+		{
+			for (uint8_t i = 0; i < MACRO_LEN; i++)
+			{
+				uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+
+				if (key == KC_NO)
+				{
+					break;
+				}
+				
+				report_state[i + 2] = key; // 2 is an offset, as 0 and 1 are used for other reasons
+				modifier |= check_modifier(key);
+			}
+			// continue;
+		}
+
+		// Check if media key
+		else if ((keycode >= KC_MEDIA_NEXT_TRACK) && (keycode <= KC_AUDIO_VOL_DOWN))
+		{
+			media_control_send(keycode);
+		}
+
+		else if (report_state[report_index] == 0)
+		{
+			modifier |= check_modifier(keycode);
+			report_state[report_index] = keycode;
+		}
+	}
+
+	// If unpressed
+	if (key_event.event == KEY_RELEASED)
+	{
+		// Check if layer hold (ToDo)
+
+		// Check Macro
+		if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
+		{
+			for (uint8_t i = 0; i < MACRO_LEN; i++)
+			{
+				uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+				report_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
+				modifier &= ~check_modifier(key);
+			}
+		}
+		
+		// Check other keys
+		if (report_state[report_index] != 0)
+		{
+			led_status = 0;
+			
+
+			modifier &= ~check_modifier(keycode);
+			report_state[KEY_STATE[row][col]] = 0;
+			report_state[report_index] = 0;
+
+			// checking for media control keycodes
+			if ((keycode >= KC_MEDIA_NEXT_TRACK) && (keycode <= KC_AUDIO_VOL_DOWN))
+			{
+				media_control_release(keycode);
+			}
+		}
+	
+	}
+	report_state[0] = modifier;
+	report_state[1] = led_status;
+	
+	
+}
+	
 
 #endif

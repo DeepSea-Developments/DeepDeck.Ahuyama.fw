@@ -21,9 +21,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+#include "keyboard_config.h"
 
 // #include "key_definitions.h"
-// #include "keyboard_config.h"
+
 
 #define KEYS_Q_SIZE 20
 
@@ -36,12 +37,12 @@ extern QueueHandle_t keys_q;
  */
 typedef enum {
     /** Press event issued */
-    KEY_PRESSED = 0,
-    KEY_RELEASED,
-    KEY_SHORT_P,
-    KEY_LONG_P_TIMEOUT,
-    KEY_LONG_P,
-    KEY_TAP_DANCE,
+    KEY_RELEASED = 0,
+    KEY_PRESSED,
+    KEY_MT_SHORT,           //When ModTap enabled. Event when key is pressed in a short time.
+    KEY_MT_LONG_TIMEOUT,    //When ModTap enabled. Timeout of long time. Useful when long tap is a modifier, like shift or control
+    KEY_MT_LONG,            //When ModTap enabled. Event when key is unpressed after long time.
+    KEY_TAP_DANCE,          //When TapDance enabled. Event should send how many taps where done. (1 to 255)
     KEY_LEADER, 
 } key_events_t;
 
@@ -63,35 +64,32 @@ typedef struct {
     uint32_t time;          /*!< Time between the press event happen and the release. */
 } keys_event_struct_t;
 
-/**
- * @brief Enum of keys modes.
- *
- */
-typedef enum {
-    /** Press event issued */
-    RAW_MODE = 0,
-    CLEAN_MODE,
-} keys_modes_t;
 
-#define ENABLE_V_TAP_DANCE  (1<<0)
-#define ENABLE_V_LEADER_KEY (1<<1)
-#define LONG_TRIGGER_AT_TIMEOUT (1<<0)
+
+#define MODE_V_TAPDANCE_ENABLE       (1 << 0)  // Will enable the TAPDANCE event
+#define MODE_V_MODTAP_ENABLE         (1 << 1)  // Will enable the LONG_PRESSED_TIMEOUT and LONG_PRESSED event
+#define MODE_V_LONG_P_SIMPLE         (1 << 2)  // Will only send the LONG_PRESSED action when the key is unpressed
+                                        // This is not usefull for normal macro applications, but for other interactions.
+#define MODE_V_RAW_DISABLE           (1 << 3) // This bit will disable sending the PRESSED event when the key is first pressed  
+
+#define MODE_V_IS_TAPDANCE_ENABLED(mode_v_item)         (mode_v_item & MODE_V_TAPDANCE_ENABLE)
+#define MODE_V_IS_MODTAP_ENABLED(mode_v_item)           (mode_v_item & MODE_V_MODTAP_ENABLE)
+#define MODE_V_IS_LONG_P_SIMPLE_ENABLED(mode_v_item)    (mode_v_item & MODE_V_LONG_P_SIMPLE)
+#define MODE_V_IS_RAW_DISABLED(mode_v_item)             (mode_v_item & MODE_V_RAW_DISABLE)
 
 /**
  * @brief Structure that configure the mode of the component.
  *
  */
 typedef struct {
-    keys_modes_t mode;      /*!< Mode of the keys.
-                                 - Raw mode sends the information of pressed and unpressed keys
-                                 - Clean mode accepts short pressed, long pressed, tap dance and leader key */
-    uint8_t enable_v;       /*!< Vector to enable or disable actions in Clean mode. in Raw mode it does not
-                                 have any functionality.
-                                 bit 0 - 1 to enable Tap dance action. Use ENABLE_V_TAP_DANCE definition.
-                                 bit 1 - 1 to enable leader key action. Use ENABLE_V_LEADER_KEY definition.
-                                  */
-    uint8_t options;        /*!< Used to select additional options:
-                                bit 0: 1 for selecting trigger at timeout, 0 for selecting trigger at unpress. */
+    uint8_t mode_vector[MATRIX_ROWS*MATRIX_COLS];   /*!< Vector to enable or disable actions.
+                                                    
+                                                    default: 0x00 or "raw mode". Send the press and release as soon as it happens
+                                                    bit 0 - 1 to enable Tap dance action. Use MODE_V_TAPDANCE_ENABLE definition.
+                                                    bit 1 - 1 to enable leader key action. Use ENABLE_V_LEADER_KEY definition.
+                                                    bit 2 - 1 to enable simple long press event (only event sent when key is unpressed)
+                                                    bit 3 - 1 t disable sending the pressed event. 
+                                                    */
     uint16_t long_time;     /*!< minimum time for considering a key pressed as KEY_LONG_P */
     uint16_t interval_time; /*!< time used for tapdance or leader key. if after a key is pressed, another key is
                                   not pressed before interval time ends, it will be consider the end of the action.*/

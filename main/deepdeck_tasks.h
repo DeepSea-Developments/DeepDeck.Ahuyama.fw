@@ -54,6 +54,8 @@ void battery_reports(void *pvParameters);
  */
 void key_reports(void *pvParameters);
 
+void main_task(void *pvParameters);
+
 /**
  * @brief Task that handles RGB lights
  * 
