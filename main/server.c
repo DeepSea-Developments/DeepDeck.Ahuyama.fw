@@ -926,17 +926,18 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 		httpd_resp_sendstr(req, string);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
-		xQueueSend(layer_recieve_q, &current_layout,
-				   (TickType_t)0);
 	}
 	else
 	{
 		// TODO: Handle error -> maximum number of layers reached
-		xQueueSend(layer_recieve_q, &current_layout,
-				   (TickType_t)0);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
+
+#ifdef OLED_ENABLE
+	xQueueSend(layer_recieve_q, &current_layout,
+			   (TickType_t)0);
+#endif
 
 	return ESP_OK;
 }
@@ -1166,12 +1167,16 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 
 	current_layout = 0;
+#ifdef OLED_ENABLE
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
+#endif
 
+#ifdef RGB_LEDS
 	rgb_mode_t led_mode;
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
+#endif
 
 	return ESP_OK;
 }
@@ -1340,8 +1345,10 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	free(buf);
 	current_layout = 0;
 	res = nvs_create_new_layer(new_layer);
+#ifdef RGB_LEDS
 	rgb_mode_t led_mode;
 	nvs_load_led_mode(&led_mode);
+#endif
 
 	if (res == ESP_OK)
 	{
@@ -1349,20 +1356,21 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		httpd_resp_sendstr(req, string);
 		httpd_resp_set_status(req, HTTPD_200);
 		httpd_resp_send(req, NULL, 0);
-		xQueueSend(layer_recieve_q, &current_layout,
-				   (TickType_t)0);
-
+#ifdef RGB_LEDS
 		xQueueSend(keyled_q, &led_mode, 0);
+#endif
 	}
 	else
 	{
 		// TODO: Handle error -> maximum number of layers reached
-		xQueueSend(layer_recieve_q, &current_layout,
-				   (TickType_t)0);
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
 
+#ifdef OLED_ENABLE
+	xQueueSend(layer_recieve_q, &current_layout,
+			   (TickType_t)0);
+#endif
 	return ESP_OK;
 }
 
@@ -1415,12 +1423,16 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 	}
 
 	current_layout = 0;
+#ifdef OLED_ENABLE
 	xQueueSend(layer_recieve_q, &current_layout,
 			   (TickType_t)0);
+#endif
 
+#ifdef RGB_LEDS
 	rgb_mode_t led_mode;
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
+#endif
 
 	return ESP_OK;
 }
