@@ -139,7 +139,9 @@ void wifi_init_softap(void)
 			 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS,
 			 EXAMPLE_ESP_WIFI_CHANNEL);
 	wifi_ap_mode = true;
+#ifdef OLED_DISPLAY
 	wifi_connected_oled("AP_MODE");
+#endif
 }
 //////////////////////////////////////////////////////////////////////////
 
@@ -175,7 +177,9 @@ void event_handler(void *arg, esp_event_base_t event_base,
 		char ip_char[16] = {0}; // 16 es el tamaño máximo de una dirección IP
 		sprintf(ip_char, "%d.%d.%d.%d", esp_ip4_addr1_16(&event->ip_info.ip), esp_ip4_addr2_16(&event->ip_info.ip), esp_ip4_addr3_16(&event->ip_info.ip), esp_ip4_addr4_16(&event->ip_info.ip));
 
+#ifdef OLED_DISPLAY
 		wifi_connected_oled(ip_char);
+#endif
 		s_retry_num = 0;
 		xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 	}
