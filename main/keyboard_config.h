@@ -100,7 +100,7 @@
 #define MAX_LAYER (LAYERS-1)
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
-#define MACROS_NUM 40 //Available macro lenght
+#define MACROS_NUM 40 //Available macro length
 #define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
 
@@ -140,6 +140,7 @@ extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
 // array to hold names of layouts for oled
 extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
 
+/// @brief 
 extern TaskHandle_t xKeyreportTask;
 
 
