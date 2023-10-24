@@ -112,13 +112,20 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define REPORT_LEN (MOD_LED_BYTES+MACRO_LEN+MATRIX_ROWS*KEYMAP_COLS) //size of hid reports with NKRO and room for 3 key macro
 #define REPORT_COUNT_BYTES (MATRIX_ROWS*KEYMAP_COLS+MACRO_LEN)
 
-#define PLUGIN_BASE_VAL 	0x135 // 0x135 default value. -->309
-#define LAYER_HOLD_MAX_VAL 	0x134 //0x134 default value. -->308
-#define LAYER_HOLD_BASE_VAL 0x123 //0x123 default value. -->291
-#define MACRO_BASE_VAL 		500 //0x103 default value. -->259
+#define PLUGIN_BASE_VAL 	0x0135 	// 0x135 default value. -->309
+#define LAYER_HOLD_MAX_VAL 	0x0134 	//0x134 default value. -->308
+#define LAYER_HOLD_BASE_VAL 0x0123 	//0x123 default value. -->291
+#define MACRO_BASE_VAL 		500 	//0x103 default value. -->259
 #define MACRO_HOLD_MAX_VAL 	600
-#define MACRO_BASE_VAL_INT 	259
-// #define LAYERS_BASE_VAL 	0xFF // 0xFF default value. -->255
+
+#define TAPDANCE_BASE_VAL 	601
+#define TAPDANCE_MAX_VAL	650
+
+#define MODTAP_BASE_VAL		651
+#define MODTAP_MAX_VAL		700
+
+#define LEADERKEY_BASE_VAL	701
+#define LEADERKEY_MAX_VAL	750
 
 #define LAYER_ADJUST_MIN 	400
 #define LAYER_ADJUST_MAX 	410

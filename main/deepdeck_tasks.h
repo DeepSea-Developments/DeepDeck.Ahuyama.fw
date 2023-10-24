@@ -16,8 +16,6 @@
 #include "freertos/task.h"
 
 
-#define TRUNC_SIZE 20
-
 #ifdef OLED_ENABLE
 extern TaskHandle_t xOledTask;
 #endif

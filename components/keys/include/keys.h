@@ -43,7 +43,8 @@ typedef enum {
     KEY_MT_LONG_TIMEOUT,    //When ModTap enabled. Timeout of long time. Useful when long tap is a modifier, like shift or control
     KEY_MT_LONG,            //When ModTap enabled. Event when key is unpressed after long time.
     KEY_TAP_DANCE,          //When TapDance enabled. Event should send how many taps where done. (1 to 255)
-    KEY_LEADER, 
+    KEY_LEADER_INIT,
+    KEY_LEADER 
 } key_events_t;
 
 /**

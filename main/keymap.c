@@ -18,11 +18,6 @@
 		name, {{0}}, {{{0}}}, {0}, {0}, {0}, false, {0}, \
 	}
 
-// // Keymaps are designed to be relatively interchangeable with QMK
-// enum custom_keycodes {
-// 	QWERTY, NUM,
-//     PLUGINS,
-// };
 
 // Set these for each layer and use when layers are needed in a hold-to use layer
 enum layer_holds
@@ -32,10 +27,20 @@ enum layer_holds
 	FUNCS_H
 };
 
-// // array to hold names of layouts for oled
-// char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH] = { "MEDIA", "NUM",
-// 		  "VSCODE",
-// 		};
+
+enum custom_tapdance
+{
+	KC_TD_1 = TAPDANCE_BASE_VAL,
+	KC_TD_2,
+	KC_TP_3
+};
+
+enum custom_modtap
+{
+	KC_MT_1 = MODTAP_BASE_VAL,
+	KC_MT_2,
+	KC_MT_3
+};
 
 /* select a keycode for your macro
  * important - first macro must be initialized as MACRO_BASE_VAL
@@ -218,20 +223,10 @@ char *default_macro_name[] = {	"Copy",
 								"M40", 
 								};
 
-// char *default_macro_name[] = {"macro_1","macro_2","macro_3","macro_4","macro_5","macro_6","macro_7","macro_8","macro_9",
-// 							  "macro_10","macro_11","macro_12","macro_13","macro_14","macro_15","macro_16","macro_17","macro_18","macro_19",
-// 							  "macro_20","macro_21","macro_22","macro_23","macro_24","macro_25","macro_26","macro_27","macro_28","macro_29",
-// 							  "macro_30","macro_31","macro_32","macro_33","macro_34","macro_35","macro_36","macro_37","macro_38","macro_39",
-// 							  "macro_40","macro_41","macro_42","macro_43","macro_44","macro_45","macro_46","macro_47","macro_48","macro_49",
-// 							  "macro_50","macro_51","macro_52","macro_53","macro_54","macro_55","macro_56","macro_57","macro_58","macro_59",
-// 							  "macro_60","macro_61","macro_62","macro_63","macro_64","macro_65","macro_66","macro_67","macro_68","macro_69",
-// 							  "macro_70","macro_71","macro_72","macro_73","macro_74","macro_75","macro_76","macro_77","macro_78","macro_79",
-// 							  "macro_80","macro_81","macro_82","macro_83","macro_84","macro_85","macro_86","macro_87","macro_88","macro_89",
-// 							  "macro_90"};
-
 // Fillers to make layering more clear
 #define _______ KC_TRNS
 #define XXXXXXX KC_NO
+
 char encoder_items_names[ENCODER_SIZE][15] = {"cw", "ccw", "single_press", "long_press", "double_press"};
 char gesture_items_names[GESTURE_SIZE][8] = {"up", "down", "left", "right", "near", "far"};
 
@@ -284,8 +279,8 @@ dd_layer layer2 =
 			{KC_7, KC_8, KC_9, RAISE},
 			{KC_4, KC_5, KC_6, KC_KP_SLASH},
 			{KC_1, KC_2, KC_3, KC_KP_ASTERISK},
-			{KC_DOT, KC_0, KC_KP_MINUS, KC_KP_PLUS}},
-		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {".", "0", "-", "+"}},
+			{KC_TD_1, KC_MT_1, KC_KP_MINUS, KC_KP_PLUS}},
+		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "KC_MT_1", "-", "+"}},
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},
 		.right_encoder_map = {KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB},
