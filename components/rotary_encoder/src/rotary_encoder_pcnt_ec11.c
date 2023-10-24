@@ -25,6 +25,7 @@
 #include "keyboard_config.h"
 #include "hal_ble.h"
 #include "keypress_handles.h"
+#include "nvs_keymaps.h"
 
 static const char *TAG = "rotary_encoder";
 
@@ -423,22 +424,22 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
         {
             ESP_LOGI("Encoder","Macro detected %d", action);
 
-            for (uint8_t i = 0; i < MACRO_LEN; i++) 
+            for (uint8_t i = 0; i < MACRO_LEN; i++)
             {
-                uint16_t key = macros[action - MACRO_BASE_VAL][i];
+                uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
                 if (key == KC_NO)
                 {
                     break;
                 }
                 key_state[2+i] = key;
                 modifier |= check_key_modifier(key);
-           
+
                 //ESP_LOGI("KEY sent", "macroid: %d", key);
             }
             key_state[0] = modifier;
             xQueueSend(keyboard_q,(void*)&key_state, (TickType_t) 0);
             for (uint8_t i = 0; i < MACRO_LEN; i++) {
-                uint16_t key = macros[action - MACRO_BASE_VAL][i];
+                uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
                 if (key == KC_NO)
                 {
                     break;
