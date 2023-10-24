@@ -17,8 +17,8 @@ typedef struct dd_layer_str {
 	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
 	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
 	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7];       // Name of each key up to 6 characters
-	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
-	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
+	uint16_t left_encoder_map[ENCODER_SIZE];               // Map for left encoder
+	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for right encoder
 	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
 	bool active;
 	char uuid_str[SHORT_UUID_STR_LEN];
