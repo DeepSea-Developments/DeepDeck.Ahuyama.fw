@@ -227,8 +227,22 @@ typedef enum {
     /** Press event issued */
     NO_ITERATION = 0,
     TAPDANCE_ITERATION,
-    MODTAP_ITERATION    
+    MODTAP_ITERATION,
+	LEADERKEY_ITERATION    
 } iteration_mode_t;
+
+/** 
+ * @brief Finite state machine states for key hevaviour
+ * 
+ */
+typedef enum {
+    S_IDLE = 0,
+    S_PRESSED,
+    S_RELEASED,
+    S_LONG_P,
+    S_TAPDANCE
+} keys_lk_fsm_t;
+
 
 void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,uint8_t * report_state)
 {
@@ -246,6 +260,15 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 
 	uint16_t report_index = (2 + key_event.key_pos);
 	keycode = keymap->key_map[row][col];
+
+	#ifdef DEBUG_REPORT //print the report 
+		printf("Keyboard Report complete: ");
+		for(int i=0; i< REPORT_LEN; i++)
+		{
+			printf("%02x ",report_state[i]);
+		}
+		printf("\n");
+	#endif
 
 	// led_status = check_led_status(keycode); ----> ToDo: To be checked
 
@@ -314,26 +337,72 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			break;
 		}
 	}
+	//Leader key is pressed. Will activate Leader key mode. 
+	else if (keycode == KC_LK) 
+	{
+		if (key_event.event == KEY_RELEASED)
+		{
+			keys_config_struct_t lk_key_config;
+			leaderkey_config_struct_init(&lk_key_config);
+
+			xQueueSend(keys_config_q,&lk_key_config,0);
+			ESP_LOGW(TAG,"LEADER KEY config sent in queue. it should start now");
+		}
+		// Nothing elese to do here
+		return;
+		
+	}
+	else if (key_event.event == KEY_LEADER)
+	{
+		// Init dummy events to be reviewed. ToDo take this into other place and NVS.
+		uint8_t dummy_sequences[3][LK_MAX_KEYS] = {{0,1,2,3},
+												   {0,5,10,15,15},
+												   {12,12,13,13,14,14,15,15}};
+		uint8_t dummy_sequences_len[3] = {4,5,8};
+		uint8_t dummy_seq_keycodes[3] = {KC_1,KC_2,KC_3};
+
+		// Check if one sequence goes acording to the event done
+		if(key_event.counter < LK_MAX_KEYS)
+		{
+			uint8_t sequence_found = 0;
+			for(uint8_t i=0;i<3;i++)
+			{
+				if(memcmp(key_event.lk_seq_array,dummy_sequences[i],dummy_sequences_len[i]) == 0)
+				{
+					keycode = dummy_seq_keycodes[i];
+					ESP_LOGW(TAG,"Sequence found! i: %d, keycode = %d",i,keycode);
+					sequence_found = 1;
+					break;
+				}
+			}
+			if(sequence_found == 0)
+			{
+				keycode = KC_NO;
+			}
+		}
+
+		// If so, start iteration mode on the keycode corresponding.
+		iteration_type = LEADERKEY_ITERATION;
+		iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
+		key_event.event = KEY_PRESSED;
+	}
+	
 	// else
 	// {
 	// 	//Todo Add assert and error here!
 	// 	ESP_LOGE(TAG,"Tapdance Action but no corresponding key. Should never arrive here!");
 	// 	keycode = KC_NO;
 	// }
-	
-	
 
 	do
 	{
 		//First check the iterations and prepare if needed
 		iteration_times --;
-		if ((iteration_type == TAPDANCE_ITERATION || iteration_type == MODTAP_ITERATION )&& iteration_times==0)
+		if ((iteration_type == TAPDANCE_ITERATION || iteration_type == MODTAP_ITERATION || iteration_type == LEADERKEY_ITERATION )&& iteration_times==0)
 		{
 			key_event.event = KEY_RELEASED; //On the second iteration act as a key release.
 		}
 		
-
-
 		// Check whether state is pressed or unpressed
 		//if pressed:
 		if (key_event.event == KEY_PRESSED)
@@ -344,6 +413,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
 			{
 				layer_adjust(keycode);
+				return;
 			}
 
 			// Check if is a macro
@@ -397,6 +467,11 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			{
 				media_control_release(keycode);
 			}
+
+			else if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
+			{
+				return;
+			}
 			
 			// Check other keys
 			else if (report_state[report_index] != 0)
@@ -411,11 +486,13 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			}
 		
 		}
+
+
 		report_state[0] = modifier;
 		report_state[1] = led_status;
 		
-		void *pReport;	
-		pReport = (void *)&report_state;
+		// void *pReport;	
+		// pReport = (void *)&report_state;
 
 	#ifndef NKRO
 		uint8_t trunc_report[REPORT_LEN] = {0};
@@ -434,10 +511,9 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			}
 		}
 
-		pReport = (void *)&trunc_report;
 	#endif
 	#ifdef NKRO
-				pReport = (void *)&report_state;
+				pReport = (void *)&report_state; //Todo fix this. it should not work.
 	#endif
 
 		#ifdef DEBUG_REPORT //print the report 
@@ -459,6 +535,26 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		
 
 	} while (iteration_times > 0);
+
+	// After doing the leaderkey, send the key configuration back to normal
+	if (iteration_type == LEADERKEY_ITERATION) 
+	{
+		keys_config_struct_t keys_config = {
+        .mode_vector = {0},
+        .general_mode = KEY_CONFIG_NORMAL_MODE,
+        .interval_time = 150,
+        .long_time = 500
+    	};
+
+		keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
+		keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
+		keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
+
+		xQueueSend(keys_config_q,&keys_config,0);
+		ESP_LOGW(TAG,"LEADER KEY: Return to normal, dummy config");
+		// Nothing elese to do here
+		return;
+	}
 
 }
 	

@@ -50,7 +50,9 @@ typedef enum {
     S_PRESSED,
     S_RELEASED,
     S_LONG_P,
-    S_TAPDANCE
+    S_TAPDANCE,
+    S_LEADER_KEY,
+    S_LEADER_KEY_SEQ
 } keys_basic_fsm_t;
 
 
@@ -149,6 +151,15 @@ void init_event_struct(keys_event_struct_t * event, key_events_t k_event, uint8_
     event->counter = counter ;
 }
 
+void init_lk_event_struct(keys_event_struct_t * event, uint8_t counter, uint8_t *lk_array)
+{  
+    event->event = KEY_LEADER;
+    event->key_pos = 0;
+    event->time = 0;
+    event->counter = counter ;
+    memcpy(event->lk_seq_array,lk_array, (size_t)LK_MAX_KEYS);
+}
+
 // Initializing matrix pins
 void matrix_setup(void) 
 {
@@ -200,6 +211,13 @@ void matrix_setup(void)
 #endif
 }
 
+void leaderkey_config_struct_init(keys_config_struct_t * key_config)
+{
+    key_config->general_mode = KEY_CONFIG_LEADERKEY_MODE;
+    memset(key_config->mode_vector,0,sizeof(key_config->mode_vector)); // Raw mode, needed for leader key mode.
+    key_config->long_time=600; //TODO: eventually must be modifiable
+    key_config->interval_time = 600; // TODO: eventually must be modifiable
+}
 
 // Scanning the matrix for input
 void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
@@ -220,6 +238,81 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
 
     static uint8_t n_tap=0; //This could/should be a matrix to allow multiple tapdaces at the same time.
 
+    //Leader key variables
+    static keys_basic_fsm_t lk_current_state = S_IDLE;
+    static uint32_t lk_timer = 0;
+    static uint8_t lk_seq_array[LK_MAX_KEYS]; //Contains the sequence of keys pressed. in 4x4 keys goes from 0 t 15. 
+                                               // Then, an "empty" or non valid key would be 0xff
+    static uint8_t lk_counter = 0; // Counts the number of keys pressed so far.
+    static uint8_t lk_key_status = 0;
+    static uint8_t lk_one_shot = 1; //Variable to make sure it only enter the FSM once. 
+
+    // Check if Leader key mode has been activated and run the FSM (finite state machine)
+    if (keys_config.general_mode == KEY_CONFIG_LEADERKEY_MODE && lk_one_shot)
+    {
+        switch (lk_current_state)
+        {
+            case S_IDLE:
+                // Already asked about LEADERKEY MODE, so prepare variables for other interactions
+                lk_timer = millis(); // Reset timer
+                lk_current_state = S_LEADER_KEY;
+                memset(lk_seq_array,0xff,(size_t)LK_MAX_KEYS); // Fill array with "non valid" keys (0xFF)
+                lk_counter = 0;
+                lk_key_status = 0;
+                ESP_LOGE(TAG,"S_IDLE->S_LEADER_KEY");
+            break;
+    
+            case S_LEADER_KEY:
+
+                // If a key was pressed, go to the sequence state
+                if (lk_key_status == 1)
+                {
+                    lk_current_state = S_LEADER_KEY_SEQ;
+                    ESP_LOGE(TAG,"S_LEADER_KEY->S_LEADER_KEY_SEQ");
+
+                }
+                // Review if the timeout is set
+                else if ((millis() - lk_timer) > keys_config.interval_time) //
+                { 
+                    if (handler) 
+                    {
+                        keys_event_struct_t event;
+                        init_lk_event_struct(&event, lk_counter,
+                                            &lk_seq_array);
+                        handler(event);
+                    }
+                    
+                    ESP_LOGI(TAG,"LEADER KEY EVENT SENT.");
+                    ESP_LOGE(TAG,"S_LEADER_KEY->S_IDLE");
+                    
+                    lk_one_shot = 0; //Set this flag to zero to avoid reentering the leader key state.
+                    lk_current_state = S_IDLE; 
+
+                }
+            break;
+
+            case S_LEADER_KEY_SEQ:
+                // If key was un pressed, reset the timer and go back to S_LEADER_KEY
+                if (lk_key_status == 0)
+                {
+                    lk_counter ++; // Increase the lk counter. Other part will take into account if exceeds the LK_MAX_KEYS
+                    lk_timer = millis();
+                    lk_current_state = S_LEADER_KEY;
+                    ESP_LOGE(TAG,"S_LEADER_KEY_SEQ->S_LEADER_KEY");
+                }
+            break;
+
+            default:
+                ESP_LOGE(TAG,"I should never arrive here. wa japen?");
+            break;
+        }
+    }
+    else if(keys_config.general_mode == KEY_CONFIG_NORMAL_MODE)
+    {
+        lk_one_shot = 1;
+    }
+    
+
 #ifdef COL2ROW
 
     // Setting column pin as low, and checking if the input of a row pin changes.
@@ -231,7 +324,6 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
             current_key_state = gpio_get_level(MATRIX_ROWS_PINS[row]);
 
             state_item = state_matrix[row][col];
-
 
             // -------- Debounce Routine -------------
             if (STATE_MATRIX_GET_PAST_LVL(state_item) != current_key_state) 
@@ -261,9 +353,6 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
 
             // Debounce ready, lets see the state of the key
             
-
-    uint16_t interval_timeout=keys_config.interval_time; // temp variable
-
             keys_event_struct_t event;
             uint8_t key_vector_pos = ((row) * MATRIX_COLS) + (col); // turns the matrix position (row and col) to a single vector position
             uint8_t key_mode = keys_config.mode_vector[key_vector_pos];
@@ -283,14 +372,29 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
 
                         if(!MODE_V_IS_RAW_DISABLED(key_mode) && !MODE_V_IS_TAPDANCE_ENABLED(key_mode) && !MODE_V_IS_MODTAP_ENABLED(key_mode))
                         {
-                            
-                            if (handler) 
+                            if (handler && keys_config.general_mode == KEY_CONFIG_NORMAL_MODE) 
                             {
                                 init_event_struct(&event, KEY_PRESSED, key_vector_pos,
                                                 millis()-time_matrix[row][col],n_tap);
                                 handler(event);
                             }
                             ESP_LOGI(TAG,"KEY%d%d KEY_PRESSED",row + 1,col + 1);
+                            
+                            // If leader key mode is activated, set key to 1.
+                            if(keys_config.general_mode == KEY_CONFIG_LEADERKEY_MODE)
+                            {
+                                if(lk_counter < LK_MAX_KEYS) //Verify the status of counter to avoid overflow of array.
+                                {
+                                    lk_seq_array[lk_counter] = key_vector_pos;
+                                    ESP_LOGW(TAG,"LK stored key %d in pos %d", key_vector_pos, lk_counter);
+                                }
+                                else
+                                {
+                                    ESP_LOGW(TAG,"LEADER KEY COUNTER OVERFLOW");
+                                }
+                                lk_key_status = 1;
+                                ESP_LOGI(TAG,"LKMODE key = 1");
+                            }
                         }
                     }
 
@@ -309,13 +413,20 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
                     else if(current_key_state == 0)
                     {
                         current_fsm_state = S_IDLE;
-                        if (handler) 
+                        if (handler && keys_config.general_mode == KEY_CONFIG_NORMAL_MODE)
                         {
                             init_event_struct(&event, KEY_RELEASED, key_vector_pos,
                                             millis()-time_matrix[row][col],n_tap);
                             handler(event);
                         }
                         ESP_LOGI(TAG,"KEY%d%d KEY_RELEASED",row + 1,col + 1);
+
+                        // If leader key mode is activated, set key to 0.
+                        if(keys_config.general_mode == KEY_CONFIG_LEADERKEY_MODE)
+                        {
+                            lk_key_status = 0;
+                            ESP_LOGI(TAG,"LKMODE key = 0");
+                        }
                     }
 
                     // -------Timeout finished, long pressed if modtap is enabled----------------
@@ -339,7 +450,7 @@ void scan_matrix(keys_config_struct_t keys_config, KeyEventHandler handler)
                 case S_RELEASED:
 
                     //-------- interval timeout finished --------
-                    if((millis() - aux_time_matrix[row][col]) > interval_timeout)
+                    if((millis() - aux_time_matrix[row][col]) > keys_config.interval_time)
                     {
                         current_fsm_state = S_IDLE;
                         // ModTap enaled

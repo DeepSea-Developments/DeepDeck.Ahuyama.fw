@@ -170,7 +170,7 @@ void battery_reports(void *pvParameters)
 
 void main_task(void *pvParameters)
 {
-	uint8_t report_state[REPORT_LEN];
+	uint8_t report_state[REPORT_LEN] = {0};
 	keys_event_struct_t key_event;
 	ESP_LOGI("MAIN_TASK","INTO MAIN TASK");
 	while(1)
@@ -182,11 +182,6 @@ void main_task(void *pvParameters)
 			{
 				ESP_LOGI("MAIN_TASK", "Key event received");
 				keys_get_report_from_event(&key_layouts[current_layout],key_event,report_state);
-
-				// void *pReport;	
-				// pReport = (void *)&report_state;
-				// xQueueSend(keyboard_q, pReport, (TickType_t)0);
-
 			}
 		}
 
@@ -194,67 +189,6 @@ void main_task(void *pvParameters)
 	}
 }
 
-
-// void key_reports(void *pvParameters) //ToDo Erase.
-// {
-// 	// Arrays for holding the report at various stages
-// 	uint8_t past_report[REPORT_LEN] = {0};
-// 	uint8_t report_state[REPORT_LEN];
-
-// 	while (1)
-// 	{
-// 		memcpy(report_state, check_key_state(&key_layouts[current_layout]),
-// 			   sizeof(report_state));
-		
-// 		// Do not send anything if queues are uninitialized
-// 		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL)
-// 		{
-// 			ESP_LOGE(TAG, "queues not initialized");
-// 			continue;
-// 		}
-
-// 		// Check if the report was modified, if so send it
-// 		if (memcmp(past_report, report_state, sizeof past_report) != 0)
-// 		{
-// 			DEEP_SLEEP = false;
-// 			void *pReport;
-// 			memcpy(past_report, report_state, sizeof past_report);
-
-// #ifndef NKRO
-// 			uint8_t trunc_report[REPORT_LEN] = {0};
-// 			trunc_report[0] = report_state[0];
-// 			trunc_report[1] = report_state[1];
-
-// 			uint16_t cur_index = 2;
-// 			// Phone's mtu size is usuaully limited to 20 bytes
-// 			for (uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE;
-// 				 ++i)
-// 			{
-// 				if (report_state[i] != 0)
-// 				{
-// 					trunc_report[cur_index] = report_state[i];
-// 					++cur_index;
-// 				}
-// 			}
-
-// 			pReport = (void *)&trunc_report;
-// #endif
-// #ifdef NKRO
-// 			pReport = (void *)&report_state;
-// #endif
-// 			BLE_EN=1;
-// 			if (BLE_EN == 1)
-// 			{
-// 				xQueueSend(keyboard_q, pReport, (TickType_t)0);
-// 			}
-// 			if (input_str_q != NULL)
-// 			{
-// 				xQueueSend(input_str_q, pReport, (TickType_t)0);
-// 			}
-// 		}
-// 		vTaskDelay(pdMS_TO_TICKS(10));
-// 	}
-// }
 
 void rgb_leds_task(void *pvParameters)
 {

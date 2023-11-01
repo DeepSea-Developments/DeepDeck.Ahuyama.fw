@@ -104,6 +104,12 @@
 #define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
 
+// TapDance definitions
+#define TAPDANCE_LEN 5
+
+//Leader key definitions
+#define LK_MAX_KEYS 10
+
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 
 // #define NKRO
@@ -125,7 +131,9 @@ extern uint16_t macros[MACROS_NUM][MACRO_LEN];
 #define MODTAP_MAX_VAL		700
 
 #define LEADERKEY_BASE_VAL	701
-#define LEADERKEY_MAX_VAL	750
+// #define LEADERKEY_MAX_VAL	750
+
+#define KC_LK LEADERKEY_BASE_VAL
 
 #define LAYER_ADJUST_MIN 	400
 #define LAYER_ADJUST_MAX 	410

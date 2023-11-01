@@ -279,8 +279,8 @@ dd_layer layer2 =
 			{KC_7, KC_8, KC_9, RAISE},
 			{KC_4, KC_5, KC_6, KC_KP_SLASH},
 			{KC_1, KC_2, KC_3, KC_KP_ASTERISK},
-			{KC_TD_1, KC_MT_1, KC_KP_MINUS, KC_KP_PLUS}},
-		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "KC_MT_1", "-", "+"}},
+			{KC_TD_1, KC_MT_1, KC_KP_MINUS, KC_LK}},
+		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "KC_MT_1", "-", "LK"}},
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},
 		.right_encoder_map = {KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB},

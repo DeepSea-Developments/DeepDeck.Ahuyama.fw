@@ -95,6 +95,7 @@ void nvs_load_layouts(void);
  */
 esp_err_t nvs_update_layout_position(void);
 
+// TODO: Document macro NVS functions
 void nvs_load_macros(void);
 esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle);
 esp_err_t nvs_create_new_macro(dd_macros macros);
@@ -102,7 +103,14 @@ esp_err_t nvs_update_macro(dd_macros macro);
 esp_err_t nvs_delete_macro(dd_macros macro);
 esp_err_t nvs_restore_default_macros(void);
 
+void nvs_load_tapdance(void);
+esp_err_t nvs_write_default_tapdance(nvs_handle_t nvs_handle);
+esp_err_t nvs_create_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_update_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_delete_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_restore_default_tapdance(dd_tapdance tapdance);
 
+// TODO: Document led functions
 esp_err_t nvs_save_led_mode(rgb_mode_t led_mode);
 esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode);
 esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode);

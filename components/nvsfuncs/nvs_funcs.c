@@ -63,6 +63,7 @@
 // NameSpaces
 #define LAYER_NAMESPACE "layers"
 #define MACROS_NAMESPACE "user_macros"
+#define TAPDANCE_NAMESPACE "user_tapd"
 
 #define LEDMODE_NAMESPACE "led_mode"
 
@@ -70,12 +71,15 @@
 #define LAYER_NUM_KEY "layer_num"
 #define MACROS_KEY "macros_key"
 
-const static char *TAG = "NVS LAYERS";
+const static char *TAG = "NVS FUNCS";
 
 dd_layer *key_layouts;
 dd_macros *user_macros;
+dd_tapdance *user_tapdance;
+
+
 uint8_t layers_num = 0;
-int total_macros = 0;
+uint8_t total_macros = 0;
 
 /**
  * @brief Check the number of available entries of the NVS
@@ -739,6 +743,75 @@ esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 
 	return ESP_OK;
 }
+
+
+/**********
+ * TAPDANCE
+*/
+
+void nvs_load_tapdance(void)
+{
+	ESP_LOGI(TAG, "LOADING USER TAPDANCEs");
+
+	nvs_handle_t nvs_handle;
+	size_t dd_tapdance_size = sizeof(dd_tapdance);
+	esp_err_t error;
+	esp_err_t res;
+	uint8_t tapdance_num = 0;
+	
+	char tapdance_key[10];
+
+	error = nvs_open(TAPDANCE_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK) //TODO: assert insteat of print this errors.
+	{
+		ESP_LOGI(TAG, "TAPDANCE_NAMESPACE OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+	}
+
+	error = nvs_get_u8(nvs_handle, MACROS_KEY, &tapdance_num);
+
+	switch (error)
+	{
+	case ESP_ERR_NVS_NOT_FOUND:
+		ESP_LOGE("--", "Value not set yet. Running routine to write default values");
+		nvs_write_default_macros(nvs_handle);
+		ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, MACROS_KEY, &tapdance_num));
+		break;
+	case ESP_OK:
+
+		ESP_LOGI("--", "%d Macros loaded", tapdance_num);
+
+		break;
+	default:
+		ESP_LOGE("--", "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
+		break;
+	}
+
+	user_macros = malloc((tapdance_num + 1) * sizeof(dd_macros));
+	for (int i = 0; i < tapdance_num; i++)
+	{
+		sprintf(tapdance_key, "macro_%hu", (i + 1));
+		res = nvs_get_blob(nvs_handle, tapdance_key, (void *)&user_macros[i], &dd_tapdance_size);
+		if (res != ESP_OK)
+		{
+			ESP_LOGE("++", "Error (%s) reading Macro %s!\n", esp_err_to_name(res), tapdance_key);
+		}
+	}
+	total_macros = tapdance_num;
+	nvs_close(nvs_handle);
+	nvs_check_memory_status();
+	nvs_macros_state();
+}
+
+
+esp_err_t nvs_write_default_tapdance(nvs_handle_t nvs_handle);
+esp_err_t nvs_create_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_update_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_delete_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_restore_default_tapdance(dd_tapdance tapdance);
 
 
 

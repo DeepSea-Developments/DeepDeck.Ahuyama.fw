@@ -31,6 +31,7 @@
 
 static const char *TAG = "keys_tasks";
 QueueHandle_t keys_q;
+QueueHandle_t keys_config_q;
 
 void key_event_to_queue(keys_event_struct_t event)
 {
@@ -43,23 +44,26 @@ void key_event_to_queue(keys_event_struct_t event)
 }
 
 void keys_task(void *pvParameters)
-
 {
     keys_config_struct_t keys_config = {
         .mode_vector = {0},
+        .general_mode = KEY_CONFIG_NORMAL_MODE,
         .interval_time = 150,
         .long_time = 500
     };
 
-    keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
-    keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
-    keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
-    keys_config.mode_vector[0] = MODE_V_RAW_DISABLE;
-    keys_config.mode_vector[1] = MODE_V_RAW_DISABLE;
-    keys_config.mode_vector[15] = MODE_V_RAW_DISABLE;
+    // keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
+    // keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
+    // keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
     
     while(1)
     {
+        //Check if 
+        if(xQueueReceive(keys_config_q,&keys_config,0))
+        {  
+            // TODO: Here i might only change certain parameters i'm interested in, not everything.
+            ESP_LOGW(TAG, "Configuration Received");
+        }
         scan_matrix(keys_config, key_event_to_queue);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -68,7 +72,9 @@ void keys_task(void *pvParameters)
 void init_keys_task(void)
 {
     // Init the keys queue
-    keys_q = xQueueCreate(KEYS_Q_SIZE, sizeof(keys_event_struct_t));
+    keys_q = xQueueCreate(KEYS_Q_SIZE, sizeof(keys_config_struct_t));
+
+    keys_config_q = xQueueCreate(KEYS_CONFIG_Q_SIZE, sizeof(keys_event_struct_t));
     matrix_setup();
     xTaskCreate(keys_task, "Keys task", MEM_ENCODER_TASK, NULL, PRIOR_ENCODER_TASK, NULL);
 	ESP_LOGI("Keys task", "initialized");

@@ -147,7 +147,7 @@ void read_gesture()
 		}
 		else
 		{
-			ESP_LOGE("Gesture", "_NONE");
+			// ESP_LOGE("Gesture", "_NONE");
 		}
 
 }

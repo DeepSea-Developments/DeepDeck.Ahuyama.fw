@@ -44,7 +44,7 @@ typedef enum {
  * 
  */
 typedef enum {
-    S_IDLE = 0,
+    S_B_IDLE = 0,
     S_BUTTON_PRESSED,
     S_BUTTON_RELEASED,
     S_LONG_PRESSED,

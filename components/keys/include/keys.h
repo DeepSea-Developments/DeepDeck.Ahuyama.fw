@@ -27,9 +27,13 @@
 
 
 #define KEYS_Q_SIZE 20
+#define KEYS_CONFIG_Q_SIZE 3
 
 // Define the queue handle
 extern QueueHandle_t keys_q;
+
+// Define the queue handle
+extern QueueHandle_t keys_config_q;
 
 /**
  * @brief Enum of possible key event states.
@@ -43,7 +47,6 @@ typedef enum {
     KEY_MT_LONG_TIMEOUT,    //When ModTap enabled. Timeout of long time. Useful when long tap is a modifier, like shift or control
     KEY_MT_LONG,            //When ModTap enabled. Event when key is unpressed after long time.
     KEY_TAP_DANCE,          //When TapDance enabled. Event should send how many taps where done. (1 to 255)
-    KEY_LEADER_INIT,
     KEY_LEADER 
 } key_events_t;
 
@@ -63,6 +66,10 @@ typedef struct {
                                  k41 (key row 4, column  ), is key_pos[12]
                                  */
     uint32_t time;          /*!< Time between the press event happen and the release. */
+    uint8_t lk_seq_array[LK_MAX_KEYS]; /*!< When the keys are in leader key mode, itreturns the array
+                                            of keys pressed. take into account that this array only stores
+                                            up to LK_MAX_KEYS. You should take care of counter to see if 
+                                            user pressed more than LK_MAX_KEYS */
 } keys_event_struct_t;
 
 
@@ -78,6 +85,9 @@ typedef struct {
 #define MODE_V_IS_LONG_P_SIMPLE_ENABLED(mode_v_item)    (mode_v_item & MODE_V_LONG_P_SIMPLE)
 #define MODE_V_IS_RAW_DISABLED(mode_v_item)             (mode_v_item & MODE_V_RAW_DISABLE)
 
+#define KEY_CONFIG_NORMAL_MODE      0
+#define KEY_CONFIG_LEADERKEY_MODE   1
+
 /**
  * @brief Structure that configure the mode of the component.
  *
@@ -87,14 +97,23 @@ typedef struct {
                                                     
                                                     default: 0x00 or "raw mode". Send the press and release as soon as it happens
                                                     bit 0 - 1 to enable Tap dance action. Use MODE_V_TAPDANCE_ENABLE definition.
-                                                    bit 1 - 1 to enable leader key action. Use ENABLE_V_LEADER_KEY definition.
+                                                    bit 1 - 1 to enable Modtap action. Use MODE_V_MODTAP_ENABLE definition.
                                                     bit 2 - 1 to enable simple long press event (only event sent when key is unpressed)
                                                     bit 3 - 1 t disable sending the pressed event. 
                                                     */
+    uint8_t general_mode;   /*!< KEY_CONFIG_NORMAL_MODE for normal mode. KEY_CONFIG_LEADERKEY_MODE for leader key mode*/
     uint16_t long_time;     /*!< minimum time for considering a key pressed as KEY_LONG_P */
     uint16_t interval_time; /*!< time used for tapdance or leader key. if after a key is pressed, another key is
                                   not pressed before interval time ends, it will be consider the end of the action.*/
 } keys_config_struct_t;
+
+/**
+ * @brief Init the leaderkey config structure.
+ * 
+ * @param key_config config struct
+ */
+void leaderkey_config_struct_init(keys_config_struct_t * key_config);
+
 
 /**
  * @brief Handler of the events on the keyboard.

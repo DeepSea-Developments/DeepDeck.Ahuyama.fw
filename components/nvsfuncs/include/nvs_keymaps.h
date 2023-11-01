@@ -75,13 +75,26 @@ typedef struct dd_macro_str {
 	// int keycode;
 } dd_macro;
 
+/**
+ * @brief Structure for Macros // TODO: add new macros methodology
+ * 
+ */
 typedef struct dd_macros_str {
 	uint16_t key[MACRO_LEN];  			  //200 keys ---> MACRO_LEN = 5       
 	char name[USER_MACRO_NAME_LEN];       //  200 macros ---> Name of each macro up to 32 characters
 	int keycode;
 } dd_macros;
 
+/**
+ * @brief structure to hold tapdance actions. 
+ * 
+ */
+typedef struct dd_tapdance_str {
+	uint8_t tap_list[TAPDANCE_LEN];
+	uint8_t keycode_list[TAPDANCE_LEN];
+} dd_tapdance;
 
+extern dd_tapdance *user_tapdance;
 extern dd_macros *user_macros;
 extern dd_layer *key_layouts;
 
