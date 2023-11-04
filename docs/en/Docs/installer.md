@@ -2,6 +2,11 @@
 
 To update the firmware in a nice and easy way, we design a program that can run on Windows, Linux, and Mac (both Intel and M1). On this page, you will find the complete instruction for using the software.
 
+<figure markdown>
+  ![DeepDeck installer](deepdeck_installer_0_6_6.png)
+</figure>
+
+
 ## Quick guide
 
 1. Open software
@@ -9,14 +14,15 @@ To update the firmware in a nice and easy way, we design a program that can run 
 3. Press the "Look for updates" button
 4. The latest release of firmware will be selected automagically
 5. Save your layers before updating the firmware
-6. Press "Erase and Program"
-7. Admire the art made by Dall-e and me while the program makes its work
+6. Press "Program"
+7. Admire the art made by MidJourney and me while the program makes its work
 8. When a pop-up window appears saying that everything is ok, you are ready to go.
 
 ### Troubleshooting
 #### Error pop-up window with errors
 There are 2 known conditions for this to happen: 
-1. DeepDeck is not detected. Try to unplug and plug it again and run again the procedure 
+
+1. DeepDeck is not detected. Try to unplug and plug it again and run again the procedure.
 2. There is no internet connection, necessary for downloading the code. Review your internet connection and try again.
 
 If none of this works, please go to [this page](https://github.com/DeepSea-Developments/DeepDeck.programmer/issues) and create an issue with screenshots and any relevant information as OS, so we can take a look

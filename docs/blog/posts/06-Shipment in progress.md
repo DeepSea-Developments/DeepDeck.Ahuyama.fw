@@ -6,9 +6,6 @@ description: >
   a blog alongside your documentation or standalone
 categories:
   - Crowdsupply campaing
-links:
-  - Getting started with Insiders: insiders/getting-started.md#requirements
-  - setup/setting-up-a-blog.md#built-in-blog-plugin
 ---
 
 {shipment}

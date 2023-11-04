@@ -1,15 +1,14 @@
 ---
+authors: 
+  - ElectroNick
 date: 2022-10-30 
-authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Blog
-links:
-  - Getting started with Insiders: insiders/getting-started.md#requirements
-  - setup/setting-up-a-blog.md#built-in-blog-plugin
+  - Crowdsupply campaing
 ---
+
 # Use it with visual studio code!
 
 vimeo: 758849228

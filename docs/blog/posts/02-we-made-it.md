@@ -6,9 +6,6 @@ description: >
   a blog alongside your documentation or standalone
 categories:
   - Crowdsupply campaing
-links:
-  - Getting started with Insiders: insiders/getting-started.md#requirements
-  - setup/setting-up-a-blog.md#built-in-blog-plugin
 ---
 
 We are very happy to announce that our project has been funded! (147% funded at the moment of this publication!) Thanks to all the backers that made this possible and Crowd Supply for supporting and hosting our project!

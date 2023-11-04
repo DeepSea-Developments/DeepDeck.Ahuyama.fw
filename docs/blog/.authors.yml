@@ -1,4 +1,5 @@
-ElectroNick:
-  name: Nick Velasquez
-  description: Creator
-  avatar: https://avatars.githubusercontent.com/u/5274871
+authors:
+  ElectroNick:
+    name: Nick Velasquez
+    description: Creator
+    avatar: https://avatars.githubusercontent.com/u/5274871

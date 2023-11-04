@@ -6,9 +6,6 @@ description: >
   a blog alongside your documentation or standalone
 categories:
   - Crowdsupply campaing
-links:
-  - Getting started with Insiders: insiders/getting-started.md#requirements
-  - setup/setting-up-a-blog.md#built-in-blog-plugin
 ---
 
 This past week we went over 200% of our campaign goal! Thank you to everyone for your support. We are very excited and have been working hard on taking into account all of your suggestions and comments on our [Discord channel](https://linktr.ee/deepdeck). So we're also making development plans for extra features you will have when you receive your DeepDeck.

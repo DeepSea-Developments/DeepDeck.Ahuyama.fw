@@ -9,7 +9,6 @@ site_description: >-
 # Copyright
 copyright: Copyright &copy; 2022 - 2023 DeepDeck by DeepSea Developments
 
-
 theme:
   name: material
   custom_dir: overrides
@@ -26,7 +25,6 @@ theme:
     - navigation.tracking
     - navigation.expand
     - navigation.path
-
     - toc.follow
     - search.suggest
     - search.highlight
@@ -34,35 +32,12 @@ theme:
     - navigation.footer
     - navigation.indexes
     - navigation.top
-    
-
     - content.action.edit
     - content.action.view
     - content.code.annotate
     - content.code.copy
     - content.code.select
 
-
-
-    # - navigation.tabs
-    # - content.code.annotate
-    # # - content.tabs.link
-    # - content.tooltips
-    # # - header.autohide
-    # # - navigation.expand
-    # - navigation.indexes
-    # # - navigation.instant
-    # # - navigation.prune
-    # - navigation.sections
-    
-    # # - navigation.tabs.sticky
-    # - navigation.top
-    # - navigation.tracking
-    # - search.highlight
-    # - search.share
-    # - search.suggest
-    # - toc.follow
-    # # - toc.integrate
 
   palette: 
     # Palette toggle for light mode
@@ -125,65 +100,34 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-
-  # # Python Markdown
-  # - abbr
-  # - admonition
-  # - attr_list
-  # - def_list
-  # - footnotes
-  # - meta
-  # - md_in_html
-  # - toc:
-  #     permalink: true
-
-  # # Python Markdown Extensions
-  # - pymdownx.arithmatex:
-  #     generic: true
-  # - pymdownx.betterem:
-  #     smart_enable: all
-  # - pymdownx.caret
-  # - pymdownx.details
-  # - pymdownx.emoji:
-  #     emoji_index: !!python/name:materialx.emoji.twemoji
-  #     emoji_generator: !!python/name:materialx.emoji.to_svg
-  # - pymdownx.highlight
-  # - pymdownx.inlinehilite
-  # - pymdownx.highlight:
-  #     anchor_linenums: true
-  # - pymdownx.inlinehilite
-  # - pymdownx.snippets
-  # - pymdownx.superfences
-  # - pymdownx.keys
-  # - pymdownx.mark
-  # - pymdownx.smartsymbols
-  # - pymdownx.superfences
-  # - pymdownx.tabbed:
-  #     alternate_style: true
-  # - pymdownx.tasklist:
-  #     custom_checkbox: true
-  # - pymdownx.tilde
-
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+ 
 plugins:
   - social
   - search
+  - tags
+  - meta
+  - glightbox
   - blog:
       archive: false
       archive_toc: false
       categories: false
       categories_toc: false
-  - tags
-  - git-committers:
-      repository: DeepSea-Developments/DeepDeck.Ahuyama.fw
-      branch: mkdocs
-      enabled: !ENV [CI, false]
-  - git-revision-date-localized:
-      enable_creation_date: true
-  - meta
-  - glightbox
 
+# Continuous integration
+  - group:
+      enabled: !ENV CI
+      plugins:
+        - git-revision-date-localized:
+            enable_creation_date: true
+            type: timeago
+        - git-committers:
+            repository: DeepSea-Developments/DeepDeck.Ahuyama.fw
+            branch: mkdocs
+        - optimize
+        - minify:
+            minify_html: true
 
 
   # Page tree
