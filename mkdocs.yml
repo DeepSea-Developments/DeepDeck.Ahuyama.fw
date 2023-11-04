@@ -125,9 +125,9 @@ plugins:
         - git-committers:
             repository: DeepSea-Developments/DeepDeck.Ahuyama.fw
             branch: mkdocs
-        - optimize
         - minify:
             minify_html: true
+        # - optimize
 
 
   # Page tree
