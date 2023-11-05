@@ -39,9 +39,9 @@
 #include "freertos/queue.h"
 #include <esp_log.h>
 #include <esp_event.h>
+#include <driver/rmt_tx.h>
 
 #include "keyboard.h"
-#include "driver/rmt.h"
 
 /** @brief Enable v2.5 compatibility
  * 
@@ -548,7 +548,7 @@ typedef struct halIOIR {
 	/** @brief Buffer for IR signal
 	 * @warning Do not free this buffer! It will be freed by transmitting function
 	 * @note In case of receiving, this buffer can be freed. */
-	rmt_item32_t *buffer;
+	rmt_symbol_word_t *buffer;
 	/** @brief Count of rmt_item32_t items */
 	uint16_t count;
 	/** @brief Status of receiver */

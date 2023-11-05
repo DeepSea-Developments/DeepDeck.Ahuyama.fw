@@ -21,9 +21,12 @@
 
 
 extern dd_layer *default_layouts[LAYERS];
-extern dd_macros default_macros[USER_MACROS_NUM];
-// extern dd_macros default_macros;
-extern dd_macros *ptr_default_macros[USER_MACROS_NUM];
+extern dd_macros default_macros[MACROS_NUM];
+extern dd_macros *ptr_default_macros[MACROS_NUM];
+
+extern dd_tapdance default_tapdance[TAPDANCE_NUM];
+
+
 extern char encoder_items_names[ENCODER_SIZE][15];
 extern char gesture_items_names[GESTURE_SIZE][8] ;
 

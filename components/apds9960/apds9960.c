@@ -17,6 +17,7 @@
 #include "apds9960.h"
 #include "esp_log.h"
 #include <string.h>
+#include <string.h>
 
 #define APDS9960_TIMEOUT_MS_DEFAULT (1000)
 
@@ -86,69 +87,7 @@ esp_err_t apds9960_delete(apds9960_handle_t *sensor)
 
 	return ESP_OK;
 }
-//
-// esp_err_t apds9960_gesture_init(apds9960_handle_t sensor) {
-//
-//	apds9960_enable_gesture_engine(sensor, false);
-//	apds9960_enable_proximity_engine(sensor, false);
-//	apds9960_enable_color_engine(sensor, false);
-//	apds9960_enable_color_interrupt(sensor, false);
-//	apds9960_enable_proximity_interrupt(sensor, false);
-//	/* Set ENABLE register to 0 (disable all features) */
-//	apds9960_enable(sensor, false);
-//
-//	/* Set default values for ambient light and proximity registers */
-//	apds9960_set_adc_integration_time(sensor, DEFAULT_ATIME);
-//	apds9960_set_register(sensor, APDS9960_WTIME, DEFAULT_WTIME);
-//
-//	apds9960_set_register(sensor, APDS9960_PPULSE, DEFAULT_PROX_PPULSE);
-//	apds9960_set_register(sensor, APDS9960_POFFSET_UR, DEFAULT_POFFSET_UR);
-//	apds9960_set_register(sensor, APDS9960_POFFSET_DL, DEFAULT_POFFSET_DL);
-//	apds9960_set_register(sensor, APDS9960_CONFIG1, DEFAULT_CONFIG1);
-//
-//	apds9960_set_led_drive_boost(sensor, APDS9960_LEDDRIVE_100MA,
-//			APDS9960_LEDBOOST_100PCNT);
-//	apds9960_set_proximity_gain(sensor, DEFAULT_PGAIN);
-//	apds9960_set_ambient_light_gain(sensor, DEFAULT_AGAIN);
-//
-//	apds9960_set_proximity_interrupt_threshold(sensor, DEFAULT_PILT,
-//	DEFAULT_PIHT, DEFAULT_PERS);
-//
-//	apds9960_set_light_inthigh_threshold(sensor, DEFAULT_AIHT);
-//	apds9960_set_light_intlow_threshold(sensor, DEFAULT_AILT);
-//
-//	apds9960_set_register(sensor, APDS9960_PERS, DEFAULT_PERS);
-//	apds9960_set_register(sensor, APDS9960_CONFIG2, DEFAULT_CONFIG2);
-//	apds9960_set_register(sensor, APDS9960_CONFIG3, DEFAULT_CONFIG3);
-//
-//	apds9960_set_gesture_enter_thresh(sensor, DEFAULT_GPENTH);
-//	apds9960_set_gesture_exit_thresh(sensor, DEFAULT_GEXTH);
-//	apds9960_set_register(sensor, APDS9960_GCONF1, DEFAULT_GCONF1);
-//	apds9960_set_gesture_gain(sensor, APDS9960_GGAIN_4X);
-//	apds9960_set_gesture_LEDDrive(sensor, DEFAULT_GLDRIVE);
-//	apds9960_set_gesture_waittime(sensor, APDS9960_GWTIME_2_8MS);
-//
-//	apds9960_set_register(sensor, APDS9960_GOFFSET_U, DEFAULT_GOFFSET);
-//	apds9960_set_register(sensor, APDS9960_GOFFSET_D, DEFAULT_GOFFSET);
-//	apds9960_set_register(sensor, APDS9960_GOFFSET_L, DEFAULT_GOFFSET);
-//	apds9960_set_register(sensor, APDS9960_GOFFSET_R, DEFAULT_GOFFSET);
-//	apds9960_set_register(sensor, APDS9960_GPULSE, DEFAULT_GPULSE);
-//	apds9960_set_register(sensor, APDS9960_GCONF3, DEFAULT_GCONF3);
-//
-//	apds9960_set_gesture_Int_Enable(sensor, DEFAULT_GIEN);
-//
-////
-//	apds9960_enable_gesture_interrupt(sensor, true);
-//
-//	apds9960_enable_proximity_engine(sensor, true);
-//	apds9960_set_gesture_dimensions(sensor, APDS9960_DIMENSIONS_ALL);
-//	apds9960_set_gesture_fifo_threshold(sensor, APDS9960_GFIFO_4);
-//	apds9960_reset_counts(sensor);
-//	apds9960_set_gesture_pulse(sensor, APDS9960_GPULSELEN_32US, 8);
-//
-//	return apds9960_enable_gesture_engine(sensor, true);
-////	return ESP_OK;
-//}
+
 
 esp_err_t apds9960_gesture_init(apds9960_handle_t sensor)
 {
@@ -1665,17 +1604,8 @@ uint8_t apds9960_read_gesture2(apds9960_handle_t sensor)
 		{
 
 			apds9960_reset_counts(sensor);
-			//			apds9960_clear_interrupt(sensor);
-			///////
-			//			apds9960_enable_gesture_interrupt(sensor, false);
-			//			apds9960_set_gesture_Int_Enable(sensor, 0);
-			//			apds9960_enable_gesture_interrupt(sensor, true);
-			//			apds9960_set_gesture_Int_Enable(sensor, 1);
-
-			//			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(200));
 			apds9960_gesture_init(sensor);
-			//////
-
 			return gestureReceived;
 		}
 		scan_counter++;

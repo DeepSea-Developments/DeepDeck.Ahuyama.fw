@@ -37,6 +37,7 @@
 #include "nvs_funcs.h"
 #include "esp_vfs.h"
 #include "server.h"
+#include "esp_mac.h"
 
 #include "mdns.h"
 #include "spiffs.h"
@@ -44,7 +45,7 @@
 #define MDNS_INSTANCE "DeepG Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
 
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 

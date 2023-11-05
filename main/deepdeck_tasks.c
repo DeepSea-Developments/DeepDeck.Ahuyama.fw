@@ -32,11 +32,11 @@
 #include "keycode_conv.h"
 
 #include "gesture_handles.h"
+#include "keys.h"
 
-static const char *TAG = "KeyReport";
+// static const char *TAG = "KeyReport";
 
-#define KEY_REPORT_TAG "KEY_REPORT"
-#define SYSTEM_REPORT_TAG "KEY_REPORT"
+
 // #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
 #define SEC_TO_MIN 60
@@ -166,66 +166,29 @@ void battery_reports(void *pvParameters)
 	}
 }
 
-void key_reports(void *pvParameters)
+
+
+void main_task(void *pvParameters)
 {
-	// Arrays for holding the report at various stages
-	uint8_t past_report[REPORT_LEN] = {0};
-	uint8_t report_state[REPORT_LEN];
-
-	while (1)
+	uint8_t report_state[REPORT_LEN] = {0};
+	keys_event_struct_t key_event;
+	ESP_LOGI("MAIN_TASK","INTO MAIN TASK");
+	while(1)
 	{
-		memcpy(report_state, check_key_state(&key_layouts[current_layout]),
-			   sizeof report_state);
-
-		// Do not send anything if queues are uninitialized
-		if (mouse_q == NULL || keyboard_q == NULL || joystick_q == NULL)
+		//Check if there are things in the key queue, if not, continue polling.
+		if (keys_q)
 		{
-			ESP_LOGE(TAG, "queues not initialized");
-			continue;
+			if(xQueueReceive(keys_q, &key_event, 0))
+			{
+				ESP_LOGI("MAIN_TASK", "Key event received");
+				keys_get_report_from_event(&key_layouts[current_layout],key_event,report_state);
+			}
 		}
 
-		// Check if the report was modified, if so send it
-		if (memcmp(past_report, report_state, sizeof past_report) != 0)
-		{
-			DEEP_SLEEP = false;
-			void *pReport;
-			memcpy(past_report, report_state, sizeof past_report);
-
-#ifndef NKRO
-			uint8_t trunc_report[REPORT_LEN] = {0};
-			trunc_report[0] = report_state[0];
-			trunc_report[1] = report_state[1];
-
-			uint16_t cur_index = 2;
-			// Phone's mtu size is usuaully limited to 20 bytes
-			for (uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE;
-				 ++i)
-			{
-				if (report_state[i] != 0)
-				{
-					trunc_report[cur_index] = report_state[i];
-					++cur_index;
-				}
-			}
-
-			pReport = (void *)&trunc_report;
-#endif
-#ifdef NKRO
-			pReport = (void *)&report_state;
-#endif
-
-			if (BLE_EN == 1)
-			{
-				xQueueSend(keyboard_q, pReport, (TickType_t)0);
-			}
-			if (input_str_q != NULL)
-			{
-				xQueueSend(input_str_q, pReport, (TickType_t)0);
-			}
-		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
+
 
 void rgb_leds_task(void *pvParameters)
 {

@@ -27,6 +27,8 @@
 #include "keyboard_config.h"
 #include "esp_sleep.h"
 #include "esp_log.h"
+#include "esp_timer.h"
+
 #define GPIO_TAG "GPIO"
 /* Define pins, notice that:
  * GPIO6-11 are usually used for SPI flash
@@ -40,14 +42,14 @@ const gpio_num_t MATRIX_COLS_PINS[] = { GPIO_NUM_16, GPIO_NUM_15, GPIO_NUM_14,
 		GPIO_NUM_13 };
 
 // matrix states
-uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
-uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+// uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
 
 uint32_t lastDebounceTime = 0;
 
-uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS] = { &MATRIX_STATE,
-		&SLAVE_MATRIX_STATE, };
+// uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS] = { &MATRIX_STATE,
+// 		&SLAVE_MATRIX_STATE, };
 
 //used for debouncing
 static uint32_t millis() {
@@ -125,7 +127,7 @@ void matrix_setup(void) {
 	// Initializing columns
 	for (uint8_t col = 0; col < MATRIX_COLS; col++) {
 
-		gpio_pad_select_gpio(MATRIX_COLS_PINS[col]);
+		esp_rom_gpio_pad_select_gpio(MATRIX_COLS_PINS[col]);
 		gpio_set_direction(MATRIX_COLS_PINS[col], GPIO_MODE_INPUT_OUTPUT);
 		gpio_set_level(MATRIX_COLS_PINS[col], 0);
 
@@ -136,7 +138,7 @@ void matrix_setup(void) {
 	// Initializing rows
 	for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 
-		gpio_pad_select_gpio(MATRIX_ROWS_PINS[row]);
+		esp_rom_gpio_pad_select_gpio(MATRIX_ROWS_PINS[row]);
 		gpio_set_direction(MATRIX_ROWS_PINS[row], GPIO_MODE_INPUT_OUTPUT);
 		gpio_set_drive_capability(MATRIX_ROWS_PINS[row], GPIO_DRIVE_CAP_0);
 		gpio_set_level(MATRIX_ROWS_PINS[row], 0);
@@ -149,7 +151,7 @@ void matrix_setup(void) {
 	// Initializing rows
 	for(uint8_t row=0; row < MATRIX_ROWS; row++) {
 
-		gpio_pad_select_gpio(MATRIX_ROWS_PINS[row]);
+		esp_rom_gpio_pad_select_gpio(MATRIX_ROWS_PINS[row]);
 		gpio_set_direction(MATRIX_ROWS_PINS[row], GPIO_MODE_INPUT_OUTPUT);
 		gpio_set_level(MATRIX_ROWS_PINS[row], 0);
 		ESP_LOGI(GPIO_TAG,"%d is level %d",MATRIX_ROWS_PINS[row],gpio_get_level(MATRIX_ROWS_PINS[row]));
@@ -158,7 +160,7 @@ void matrix_setup(void) {
 	// Initializing columns
 	for(uint8_t col=0; col < MATRIX_ROWS; col++) {
 
-		gpio_pad_select_gpio(MATRIX_COLS_PINS[col]);
+		esp_rom_gpio_pad_select_gpio(MATRIX_COLS_PINS[col]);
 		gpio_set_direction(MATRIX_COLS_PINS[col], GPIO_MODE_INPUT_OUTPUT);
 		gpio_set_drive_capability(MATRIX_COLS_PINS[col],GPIO_DRIVE_CAP_0);
 		gpio_set_level(MATRIX_COLS_PINS[col], 0);
@@ -168,10 +170,15 @@ void matrix_setup(void) {
 #endif
 }
 
-uint8_t curState = 0;
-uint32_t DEBOUNCE_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+
 // Scanning the matrix for input
-void scan_matrix(void) {
+void scan_matrix(uint8_t * current_matrix) 
+{
+	uint8_t curState = 0;
+	static uint32_t DEBOUNCE_MATRIX[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+	static uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+	static uint8_t PREV_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS] = { 0 };
+
 #ifdef COL2ROW
 	// Setting column pin as low, and checking if the input of a row pin changes.
 	for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -183,12 +190,9 @@ void scan_matrix(void) {
 				DEBOUNCE_MATRIX[row][col] = millis();
 			}
 			PREV_MATRIX_STATE[row][col] = curState;
-			if ((millis() - DEBOUNCE_MATRIX[row][col]) > DEBOUNCE) {
-
-				if (MATRIX_STATE[row][col] != curState) {
-					MATRIX_STATE[row][col] = curState;
-				}
-
+			if ((millis() - DEBOUNCE_MATRIX[row][col]) > DEBOUNCE) 
+			{
+				MATRIX_STATE[row][col] = curState;
 			}
 		}
 		gpio_set_level(MATRIX_COLS_PINS[col], 0);
@@ -218,6 +222,27 @@ void scan_matrix(void) {
 		gpio_set_level(MATRIX_ROWS_PINS[row], 0);
 	}
 #endif
+
+	// ESP_LOGI("MATRIX:","--------------%d-----------------------------",current_matrix);
+	// for(int i=0;i<4;i++)
+	// {
+	// 	for(int j=0;j<4;j++)
+	// 	{
+	// 		printf("%d ",MATRIX_STATE[i][j]);
+	// 	}
+	// 	printf("\n");
+	// }
+	memcpy(current_matrix, MATRIX_STATE, sizeof(MATRIX_STATE));
+	// printf("\n");
+	// for(int i=0;i<4;i++)
+	// {
+	// 	for(int j=0;j<4;j++)
+	// 	{
+	// 		printf("%d ",*current_matrix++);
+	// 	}
+	// 	printf("\n");
+	// }
+	// printf("\n\n\n");
 
 }
 

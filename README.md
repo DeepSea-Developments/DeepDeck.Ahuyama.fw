@@ -71,5 +71,13 @@ Here are the features:
     - 🚧 Selection of WiFi credentials (SSID and password)
     - 🚧 Modification of Layers
 
+### Known problems and errors:
+
+Trying to update the IDF to prior version 5.0 and above, the deepdeck have some unexpected behavior due the changes in declarations of many variables and the hard changes in some components, the bluetooth doesn't work normal and the LEDs routines became slow. 
+
+Actually, the project can be compiled but due the multiple-definitions of variables the declartion was changed to 'static' and that affect the performance in many tasks.
+
+Remain pending to fix the keyboard routine, validate the sharing of some flags along different files and the general status of the queues flow between tasks (in many cases there's variables used in global and results in multiple-definitions.)
+
 ### Many thanks to:
 - Gal Zaidenstein, creator of MK32, which this repo was fork from. https://github.com/Galzai/MK32

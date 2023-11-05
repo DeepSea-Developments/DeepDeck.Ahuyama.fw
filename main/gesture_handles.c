@@ -32,7 +32,7 @@ TaskHandle_t xGesture;
 
 i2c_bus_handle_t i2c_bus = NULL;
 apds9960_handle_t apds9960 = NULL;
-xTimerHandle xTimer;
+TimerHandle_t xTimer;
 int timerID = 1;
 bool flag = false;
 
@@ -147,7 +147,7 @@ void read_gesture()
 		}
 		else
 		{
-			ESP_LOGE("Gesture", "_NONE");
+			// ESP_LOGE("Gesture", "_NONE");
 		}
 
 }

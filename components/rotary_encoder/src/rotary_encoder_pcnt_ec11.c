@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/cdefs.h>
+#include <inttypes.h>
 #include "esp_compiler.h"
 #include "esp_log.h"
 #include "driver/pcnt.h"
@@ -21,8 +22,6 @@
 #include "hal/pcnt_hal.h"
 #include "rotary_encoder.h"
 
-#include "key_definitions.h"
-#include "keyboard_config.h"
 #include "hal_ble.h"
 #include "keypress_handles.h"
 
@@ -176,7 +175,7 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     ec11->parent.encoder_s_pin = config->button_gpio_num;
     ec11->parent.encoder_s_active_low = config->button_active_low;
     ec11->parent.last_encoder_count = 0;
-    ec11->parent.fsm_state = S_IDLE;
+    ec11->parent.fsm_state = S_B_IDLE;
     ec11->parent.fsm_timer = 0;
     ec11->parent.long_pressed_time =  100000;
     ec11->parent.short_pressed_time = 60000;
@@ -184,7 +183,8 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     //Configure Encoder button
     if(config->button_gpio_num != GPIO_NUM_NC)
     {
-        gpio_pad_select_gpio(config->button_gpio_num);
+
+        esp_rom_gpio_pad_select_gpio(config->button_gpio_num);
         gpio_set_direction(config->button_gpio_num, GPIO_MODE_INPUT);
         gpio_set_pull_mode(config->button_gpio_num,GPIO_PULLDOWN_ONLY);
     }
@@ -227,7 +227,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
         //FSM for the button state
         switch(encoder->fsm_state)
         {
-            case S_IDLE:
+            case S_B_IDLE:
                 //Button Pressed
                 if(encoder_push_state(encoder) == 1)
                 {
@@ -275,7 +275,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                     //Short Pressed
                     if( encoder->fsm_timer > encoder->short_pressed_time)
                     {
-                        encoder->fsm_state=S_IDLE;
+                        encoder->fsm_state=S_B_IDLE;
                         encoder->fsm_timer=0;
                         EncoderState = ENC_BUT_SHORT_PRESS;
                         //ESP_LOGI("Encoder","Pressed");
@@ -288,7 +288,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                 //Button Released
                 if(encoder_push_state(encoder) == 0)
                 {
-                    encoder->fsm_state=S_IDLE;
+                    encoder->fsm_state=S_B_IDLE;
                     encoder->fsm_timer=0;
                     //ESP_LOGI("Encoder FSM","LONG_PRESSED->IDLE");
                 }
@@ -298,7 +298,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                 //Button Released
                 if(encoder_push_state(encoder) == 0)
                 {
-                    encoder->fsm_state=S_IDLE;
+                    encoder->fsm_state=S_B_IDLE;
                     encoder->fsm_timer=0;
                     //ESP_LOGI("Encoder FSM","DOUBLE_PRESSED->IDLE");
                 }
@@ -466,5 +466,5 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]){
         }
     } 
     
-    vTaskDelay(5 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(5));
 }

@@ -63,19 +63,25 @@
 // NameSpaces
 #define LAYER_NAMESPACE "layers"
 #define MACROS_NAMESPACE "user_macros"
+#define TAPDANCE_NAMESPACE "user_tapd"
 
 #define LEDMODE_NAMESPACE "led_mode"
 
 // Keys
 #define LAYER_NUM_KEY "layer_num"
 #define MACROS_KEY "macros_key"
+#define TAPDANCE_NUM_KEY "tp_num"
 
-const static char *TAG = "NVS LAYERS";
+const static char *TAG = "NVS FUNCS";
 
 dd_layer *key_layouts;
 dd_macros *user_macros;
+dd_tapdance *user_tapdance;
+
+
 uint8_t layers_num = 0;
-int total_macros = 0;
+uint8_t total_macros = 0;
+uint8_t total_tapdance = 0;
 
 /**
  * @brief Check the number of available entries of the NVS
@@ -268,7 +274,7 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 	uint8_t layer_num;
 	char layer_key[10];
 
-	dd_layer *temp_layout = malloc(layers_num * sizeof(dd_layer));
+	dd_layer *temp_layout = pvPortMalloc(layers_num * sizeof(dd_layer));
 	nvs_read_layers(temp_layout);
 
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
@@ -287,7 +293,7 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 	}
 	// ESP_LOGI("TAG", "New layer QTY %d", layer_num);
 	// ESP_LOGI("TAG", " Name:%s", layer.name);
-	dd_layer *aux = malloc((layers_num + 1) * sizeof(dd_layer));
+	dd_layer *aux = pvPortMalloc((layers_num + 1) * sizeof(dd_layer));
 
 	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
 	for (i = 0; i < (layer_num - 1); i++)
@@ -326,8 +332,8 @@ esp_err_t nvs_create_new_layer(dd_layer layer)
 		// ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
 	}
 
-	free(temp_layout);
-	free(aux);
+	vPortFree(temp_layout);
+	vPortFree(aux);
 	nvs_close(nvs_handle_new);
 	nvs_load_layouts();
 
@@ -362,7 +368,7 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 		return error;
 	}
 
-	dd_layer **new_layouts = malloc((layers_num - 1) * sizeof(dd_layer));
+	dd_layer **new_layouts = pvPortMalloc((layers_num - 1) * sizeof(dd_layer));
 
 	// Copiar los elementos del array original al nuevo array, excepto el elemento a eliminar
 	int j = 0;
@@ -384,7 +390,7 @@ esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	}
 
-	free(new_layouts);
+	vPortFree(new_layouts);
 	nvs_close(nvs_handle);
 	nvs_load_layouts();
 	if (current_layout > 0)
@@ -404,7 +410,7 @@ esp_err_t nvs_update_layout_position(void)
 	esp_err_t error;
 	uint8_t layer_num;
 	char layer_key[10];
-	dd_layer *temp_layout = malloc(layers_num * sizeof(dd_layer));
+	dd_layer *temp_layout = pvPortMalloc(layers_num * sizeof(dd_layer));
 	nvs_read_layers(temp_layout);
 
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
@@ -416,7 +422,7 @@ esp_err_t nvs_update_layout_position(void)
 		return ESP_FAIL;
 	}
 
-	dd_layer *aux = malloc((layers_num) * sizeof(dd_layer));
+	dd_layer *aux = pvPortMalloc((layers_num) * sizeof(dd_layer));
 
 	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
 	for (i = 0; i < (layer_num); i++)
@@ -453,8 +459,8 @@ esp_err_t nvs_update_layout_position(void)
 		// ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
 	}
 
-	free(temp_layout);
-	free(aux);
+	vPortFree(temp_layout);
+	vPortFree(aux);
 	nvs_close(nvs_handle_new);
 	return ESP_OK;
 }
@@ -468,8 +474,8 @@ void nvs_load_layouts(void)
 
 	ESP_LOGI("NVS_TAG", "LOADING LAYOUTS");
 	layers_num = nvs_read_num_layers();
-	free(key_layouts);
-	key_layouts = malloc(layers_num * sizeof(dd_layer));
+	vPortFree(key_layouts);
+	key_layouts = pvPortMalloc(layers_num * sizeof(dd_layer));
 
 	nvs_read_layers(key_layouts);
 	nvs_check_memory_status();
@@ -545,7 +551,9 @@ void nvs_load_macros(void)
 		break;
 	}
 
-	user_macros = malloc((macro_num + 1) * sizeof(dd_macros));
+	user_macros = pvPortMalloc((macro_num + 1) * sizeof(dd_macros)); //TODO: here is a malloc, but there is never a free.
+																	 // if that's ok. I guess so because this function is just called once.
+
 	for (int i = 0; i < macro_num; i++)
 	{
 		sprintf(macro_key, "macro_%hu", (i + 1));
@@ -605,7 +613,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 		nvs_close(nvs_handle);
 		return ESP_ERR_NVS_NOT_ENOUGH_SPACE;
 	}
-	dd_macros *temp_macro = malloc((macro_num + 1) * sizeof(dd_macros));
+	dd_macros *temp_macro = pvPortMalloc((macro_num + 1) * sizeof(dd_macros));
 	user_macros = realloc(user_macros, (macro_num + 1) * sizeof(dd_macros));
 
 	size_t dd_macros_size = sizeof(dd_macros);
@@ -617,7 +625,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 		if (error != ESP_OK)
 		{
 			ESP_LOGE("MACROS", "Error (%s) reading Macro %s!\n", esp_err_to_name(error), temp_key);
-			free(temp_macro);
+			vPortFree(temp_macro);
 			nvs_close(nvs_handle);
 			return error;
 		}
@@ -635,7 +643,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 		if (error != ESP_OK)
 		{
 			ESP_LOGE("MACROS", "Error (%s) saving Macro %s!\n", esp_err_to_name(error), macro_key);
-			free(temp_macro);
+			vPortFree(temp_macro);
 			nvs_close(nvs_handle);
 			return error;
 		}
@@ -646,7 +654,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 	total_macros = macro_num;
 	nvs_close(nvs_handle);
-	free(temp_macro);
+	vPortFree(temp_macro);
 	return ESP_OK;
 }
 
@@ -727,7 +735,7 @@ esp_err_t nvs_restore_default_macros(void)
 
 esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 {
-	// ESP_LOGI("MACROS", "WRITING DEFAULT MACROS");
+	ESP_LOGI(TAG, "WRITING DEFAULT MACROS");
 	char macro_key[10];
 	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, MACROS_KEY, MACROS_NUM));
 	for (int i = 0; i < MACROS_NUM; i++)
@@ -739,6 +747,122 @@ esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
 
 	return ESP_OK;
 }
+
+
+/**********
+ * TAPDANCE
+*/
+
+void nvs_load_tapdance(void)
+{
+	ESP_LOGI(TAG, "LOADING USER TAPDANCEs");
+
+	nvs_handle_t nvs_handle;
+	size_t dd_tapdance_size = sizeof(dd_tapdance);
+	esp_err_t error;
+	esp_err_t res;
+	uint8_t tapdance_num = 0;
+	
+	char tapdance_key[10];
+
+	error = nvs_open(TAPDANCE_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK) //TODO: assert instead of print this errors.
+	{
+		ESP_LOGI(TAG, "TAPDANCE_NAMESPACE OK");
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+	}
+
+	error = nvs_get_u8(nvs_handle, TAPDANCE_NUM_KEY, &tapdance_num);
+
+	switch (error)
+	{
+	case ESP_ERR_NVS_NOT_FOUND:
+		ESP_LOGE("--", "Value not set yet. Running routine to write default values");
+		nvs_write_default_tapdance(nvs_handle);
+		ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, TAPDANCE_NUM_KEY, &tapdance_num));
+		break;
+	case ESP_OK:
+
+		ESP_LOGI("--", "%d TapDances loaded", tapdance_num);
+
+		break;
+	default:
+		ESP_LOGE("--", "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
+		break;
+	}
+
+	user_tapdance = pvPortMalloc((tapdance_num + 1) * sizeof(dd_macros));
+	for (int i = 0; i < tapdance_num; i++)
+	{
+		sprintf(tapdance_key, "tapdance_%hu", (i + 1));
+		res = nvs_get_blob(nvs_handle, tapdance_key, (void *)&user_tapdance[i], &dd_tapdance_size);
+		if (res != ESP_OK)
+		{
+			ESP_LOGE("++", "Error (%s) reading Tapdance %s!\n", esp_err_to_name(res), tapdance_key);
+		}
+	}
+	total_tapdance = tapdance_num;
+	nvs_close(nvs_handle);
+	nvs_check_memory_status();
+	//nvs_macros_state(); TODO: see if its necessary to have one of this for tapdance
+}
+
+
+esp_err_t nvs_write_default_tapdance(nvs_handle_t nvs_handle)
+{
+	ESP_LOGI(TAG, "WRITING DEFAULT TAPDANCE");
+	char tapdance_key[10]; //TODO: Reference a default, not a magic number.
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, TAPDANCE_NUM_KEY, TAPDANCE_NUM)); //TODO: Put only max tapdance defined, not total ones.
+	for (int i = 0; i < TAPDANCE_NUM; i++)
+	{
+		sprintf(tapdance_key, "td_%hu", (i + 1));
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, tapdance_key, (void *)(&default_tapdance[i]), sizeof(dd_tapdance)));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	return ESP_OK;
+}
+
+esp_err_t nvs_update_tapdance(dd_tapdance tapdance)
+{
+	ESP_LOGI(NVS_TAG, "UPDATING TAPDANCE");
+	nvs_handle_t nvs_handle;
+	dd_tapdance temp;
+	esp_err_t error;
+	size_t dd_tapdance_size = sizeof(dd_tapdance);
+	char tapdance_key[10]; // TODO: use define instead of magic number.
+	ESP_ERROR_CHECK(nvs_open(TAPDANCE_NAMESPACE, NVS_READWRITE, &nvs_handle));
+
+	sprintf(tapdance_key, "macro_%hu", (1 + tapdance.keycode - TAPDANCE_BASE_VAL));
+	ESP_LOGI(NVS_TAG, "Reading  %s", tapdance_key);
+	error = nvs_get_blob(nvs_handle, tapdance_key, (void *)&temp, &dd_tapdance_size);
+	if (error != ESP_OK) // TODO: Assert instead of nice handle.
+	{ 
+		ESP_LOGE(NVS_TAG, "Error (%s) reading Macro %s!\n", esp_err_to_name(error), tapdance_key);
+		nvs_close(nvs_handle);
+		return error;
+	}
+	else
+	{
+		ESP_LOGI(NVS_TAG, "TapDance Name  %s, TapDance Keycode %d", temp.name, temp.keycode);
+	}
+
+	ESP_LOGI(NVS_TAG, "updating  %s", tapdance_key);
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, tapdance_key, (void *)&tapdance, sizeof(dd_tapdance)));
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	nvs_close(nvs_handle);
+	nvs_load_tapdance();
+	return ESP_OK;
+}
+
+
+// TODO: Finish TAPDANCE functions
+esp_err_t nvs_create_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_delete_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_restore_default_tapdance(dd_tapdance tapdance);
 
 
 

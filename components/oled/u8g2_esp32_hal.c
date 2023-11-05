@@ -12,9 +12,9 @@
 static const char *TAG = "u8g2_hal";
 static const unsigned int I2C_TIMEOUT_MS = 1000;
 
-static spi_device_handle_t handle_spi;	// SPI handle.
+static spi_device_handle_t handle_spi;		// SPI handle.
 static i2c_cmd_handle_t handle_i2c;		// I2C handle.
-static u8g2_esp32_hal_t u8g2_esp32_hal; // HAL state data.
+static u8g2_esp32_hal_t u8g2_esp32_hal; 	// HAL state data.
 
 #undef ESP_ERROR_CHECK
 #define ESP_ERROR_CHECK(x)                         \
@@ -46,7 +46,7 @@ void u8g2_esp32_hal_init(u8g2_esp32_hal_t u8g2_esp32_hal_param)
 uint8_t u8g2_esp32_spi_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
 	ESP_LOGD(TAG, "spi_byte_cb: Received a msg: %d, arg_int: %d, arg_ptr: %p", msg, arg_int, arg_ptr);
-	switch (msg)
+	switch(msg)
 	{
 	case U8X8_MSG_BYTE_SET_DC:
 		if (u8g2_esp32_hal.dc != U8G2_ESP32_HAL_UNDEFINED)
@@ -139,21 +139,6 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
 			break;
 		}
 
-		//		    i2c_config_t conf;
-		//			conf.clk_flags = 0;
-		//		    conf.mode = I2C_MODE_MASTER;
-		//			ESP_LOGI(TAG, "sda_io_num %d", u8g2_esp32_hal.sda);
-		//		    conf.sda_io_num = u8g2_esp32_hal.sda;
-		//		    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-		//			ESP_LOGI(TAG, "scl_io_num %d", u8g2_esp32_hal.scl);
-		//		    conf.scl_io_num = u8g2_esp32_hal.scl;
-		//		    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-		//			ESP_LOGI(TAG, "clk_speed %d", I2C_MASTER_FREQ_HZ);
-		//		    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-		//			ESP_LOGI(TAG, "i2c_param_config %d", conf.mode);
-		//		    ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
-		//			ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
-		//		    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
 		break;
 	}
 
@@ -189,10 +174,10 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
 		i2s_user_unlock();
 		ESP_LOGD(TAG, "End I2C transfer.");
 		ESP_ERROR_CHECK(i2c_master_stop(handle_i2c));
-		ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, I2C_TIMEOUT_MS / portTICK_RATE_MS));
-		i2c_cmd_link_delete(handle_i2c);
-		break;
-	}
+			ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
+			i2c_cmd_link_delete(handle_i2c);
+			break;
+		}
 	}
 	return 0;
 } // u8g2_esp32_i2c_byte_cb

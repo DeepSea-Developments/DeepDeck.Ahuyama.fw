@@ -1,6 +1,31 @@
-idf_component_register(SRCS  "spiffs.c" "main.c" "deepdeck_tasks.c" "keymap.c" "matrix.c" "keypress_handles.c" "gesture_handles.c" "server.c" "wifi_handles.c"
-                    INCLUDE_DIRS "."
-                    REQUIRES "spiffs" "mdns" "esp_http_server" "mqtt_dd" "battery" "ble" "oled" "nvsfuncs" "plugins" "rotary_encoder" "rgb_led" "menu" "bus" "apds9960" "uuid_master") 
-
+idf_component_register(SRCS  "spiffs.c" "main.c" 
+                                        "deepdeck_tasks.c" 
+                                        "keymap.c" 
+                                        "keypress_handles.c" 
+                                        "gesture_handles.c" 
+                                        "server.c" 
+                                        "wifi_handles.c"
+                    REQUIRES            "driver"
+                                        "spiffs" 
+                                        "mdns"
+                                        "bootloader"
+                                        "esp_http_server" 
+                                        "esp_timer"
+                                        "mqtt_dd" 
+                                        "battery" 
+                                        "ble" 
+                                        "oled" 
+                                        "nvsfuncs" 
+                                        "plugins" 
+                                        "rotary_encoder" 
+                                        "keys"
+                                        "rgb_led" 
+                                        "menu" 
+                                        "bus" 
+                                        "apds9960" 
+                                        "uuid_master"
+                    INCLUDE_DIRS ".")
 
                     spiffs_create_partition_image(www_0 ../spiffs_image FLASH_IN_PROJECT)
+
+set(COMPONENT_REQUIRES driver bootloader_support)

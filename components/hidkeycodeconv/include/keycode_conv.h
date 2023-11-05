@@ -15,11 +15,11 @@
 #include "keyboard_config.h"
 
 //Flag to enable or disable sending reports via BLE
-int BLE_EN;
+static int BLE_EN; //Todo Review and remove the static declaration
 
 /** @brief Queue for receiving keyboard input
  *  */
-QueueHandle_t input_str_q;
+static QueueHandle_t input_str_q;
 
 /*
  * @pause sending key reports and use keypress to enter char

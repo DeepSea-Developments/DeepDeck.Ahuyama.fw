@@ -78,6 +78,7 @@
 #include "wifi_handles.h"
 #include "server.h"
 #include "spiffs.h"
+#include "keys.h"
 
 
 // plugin functions
@@ -98,7 +99,7 @@ SemaphoreHandle_t user_i2c_mutex = NULL;
 esp_err_t i2s_user_lock(void)
 {
 
-	//ESP_LOGW("MAIN", "i2s_user_lock");
+	// ESP_LOGW("MAIN", "i2c_user_lock");
 	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
 	BaseType_t ret = xSemaphoreTake(user_i2c_mutex, portMAX_DELAY);
 	USER_CHECK(pdTRUE == ret, "Take semaphore failed", ESP_FAIL);
@@ -107,7 +108,7 @@ esp_err_t i2s_user_lock(void)
 
 esp_err_t i2s_user_unlock(void)
 {
-	//ESP_LOGW("MAIN", "i2s_user_unlock");
+	// ESP_LOGW("MAIN", "i2s_user_unlock");
 	USER_CHECK(user_i2c_mutex != NULL, "mutex handle invalid", ESP_ERR_INVALID_ARG);
 	BaseType_t ret = xSemaphoreGive(user_i2c_mutex);
 	USER_CHECK(pdTRUE == ret, "Give semaphore failed", ESP_FAIL);
@@ -162,7 +163,8 @@ void app_main()
 	esp_log_level_set("*", ESP_LOG_INFO);
 
 	generate_uuid();	   // generate uuid for each keymap layoutS
-	init_default_macros(); // init default macros
+	init_default_macros(); // init default macros //TODO: Remove. not neccesary and you could do the same as tapdance to init it.
+
 	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
 	nvs_load_macros();
@@ -229,11 +231,11 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
-#ifdef MASTER
-	BLE_EN = 1;
-	xTaskCreate(key_reports, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL);
-	ESP_LOGI("Keyboard task", "initialized");
-#endif
+// #ifdef MASTER
+// 	BLE_EN = 1;
+// 	xTaskCreate(main_task, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
+// 	ESP_LOGI("Keyboard task", "initialized");
+// #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
@@ -259,5 +261,14 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
 	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
+
+
+
+
+	init_keys_task();
+
+	xTaskCreate(main_task, "MainTask", MEM_KEYBOARD_TASK, NULL, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
+	ESP_LOGI("Keyboard task", "initialized");
+	
 }
 

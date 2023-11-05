@@ -16,9 +16,9 @@
 #include <inttypes.h>
 #include "keyboard_config.h"
 
-extern uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
-extern uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
-extern uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS];
+// extern uint8_t MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
+// extern uint8_t SLAVE_MATRIX_STATE[MATRIX_ROWS][MATRIX_COLS];
+// extern uint8_t (*matrix_states[])[MATRIX_ROWS][MATRIX_COLS];
 
 /*
  * @brief deinitialize rtc pins
@@ -35,9 +35,9 @@ void rtc_matrix_setup(void);
  */
 void matrix_setup(void);
 
-/*
- * @brief scan matrix
- */
-void scan_matrix(void);
+// /*
+//  * @brief scan matrix
+//  */
+// void scan_matrix(uint8_t * current_matrix);
 
 #endif /* MATRIX_H_ */

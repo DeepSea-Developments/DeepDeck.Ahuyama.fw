@@ -33,7 +33,7 @@
 
 static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
 	do                                                                                 \
@@ -327,7 +327,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 	json_response(string);
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	dd_macros new_macro;
@@ -340,8 +340,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
-			free(buf);
-			free(buf);
+			vPortFree(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}

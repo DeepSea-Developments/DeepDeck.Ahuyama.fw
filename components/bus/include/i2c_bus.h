@@ -25,10 +25,10 @@ extern "C"
 {
 #endif
 
-#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0))
+//#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0))
 #define gpio_pad_select_gpio esp_rom_gpio_pad_select_gpio
 #define portTICK_RATE_MS portTICK_PERIOD_MS
-#endif
+//#endif
 
 /**************************************** Public Functions (Application level)*********************************************/
 

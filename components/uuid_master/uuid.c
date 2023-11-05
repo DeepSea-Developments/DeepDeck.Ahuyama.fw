@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "esp_system.h"
+#include "esp_random.h"
 
 void uuid_generate(uuid_t out)
 {

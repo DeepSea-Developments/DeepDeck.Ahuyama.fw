@@ -16,8 +16,6 @@
 #include "freertos/task.h"
 
 
-#define TRUNC_SIZE 20
-
 #ifdef OLED_ENABLE
 extern TaskHandle_t xOledTask;
 #endif
@@ -53,6 +51,8 @@ void battery_reports(void *pvParameters);
  * @param pvParameters 
  */
 void key_reports(void *pvParameters);
+
+void main_task(void *pvParameters);
 
 /**
  * @brief Task that handles RGB lights
