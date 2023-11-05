@@ -30,9 +30,9 @@ enum layer_holds
 
 enum custom_tapdance
 {
-	KC_TD_1 = TAPDANCE_BASE_VAL,
-	KC_TD_2,
-	KC_TP_3
+	KC_TD1 = TAPDANCE_BASE_VAL,
+	KC_TD2,
+	KC_TD3
 };
 
 enum custom_modtap
@@ -223,6 +223,24 @@ char *default_macro_name[] = {	"Copy",
 								"M40", 
 								};
 
+dd_tapdance default_tapdance[TAPDANCE_NUM]={
+	{ .name="tap1",
+	  .tap_list={1,2,3,10,15},
+	  .keycode_list = {KC_1, KC_2, KC_AUDIO_MUTE, KC_3, KC_A},
+	  .keycode = KC_TD1},
+	
+	{ .name="td_num",
+	  .tap_list={1,2,3,4,5},
+	  .keycode_list = {KC_1, KC_2, KC_3, KC_4, KC_5},
+	  .keycode = KC_TD2},
+	
+	{ .name="td_med",
+	  .tap_list={1,2,3,4,0},
+	  .keycode_list = {KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_PREV_TRACK, KC_MUTE},
+	  .keycode = KC_TD3},
+};
+
+
 // Fillers to make layering more clear
 #define _______ KC_TRNS
 #define XXXXXXX KC_NO
@@ -276,11 +294,11 @@ dd_layer layer2 =
 		 * `-----------------------------------------------------------------------'
 		 */
 		.key_map = {
-			{KC_7, KC_8, KC_9, RAISE},
+			{KC_TD3, KC_TD2, KC_TD1, RAISE},
 			{KC_4, KC_5, KC_6, KC_KP_SLASH},
 			{KC_1, KC_2, KC_3, KC_KP_ASTERISK},
-			{KC_TD_1, KC_MT_1, KC_KP_MINUS, KC_LK}},
-		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "KC_MT_1", "-", "LK"}},
+			{KC_TD1, KC_TD2, KC_TD3, KC_LK}},
+		.key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "TD_2", "TD_3", "LK"}},
 		// Knobs - {CW, CCW, Single Press, Long Press, Double press}
 		.left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},
 		.right_encoder_map = {KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB},
@@ -318,17 +336,12 @@ dd_layer layer3 =
 		.active = true,
 };
 
-// dd_layer user_layer[3] = {
-// 	DD_LAYER_INIT("USER1"),
-// 	DD_LAYER_INIT("USER2"),
-// 	DD_LAYER_INIT("USER3"),
-// };
 
 dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
 uint8_t current_layout = 0;
 
-dd_macros default_macros[USER_MACROS_NUM]={0};
-dd_macros *ptr_default_macros [USER_MACROS_NUM];; 
+dd_macros default_macros[MACROS_NUM]={0};
+dd_macros *ptr_default_macros [MACROS_NUM];
 
 void generate_uuid()
 {
@@ -356,7 +369,6 @@ void init_default_macros()
 		strcpy(default_macros[i].name, default_macro_name[i]);
 		default_macros[i].keycode= MACRO_BASE_VAL+i;	
 	}
-
 }
 
 #endif

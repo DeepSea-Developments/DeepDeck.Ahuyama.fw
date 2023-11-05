@@ -163,7 +163,8 @@ void app_main()
 	esp_log_level_set("*", ESP_LOG_INFO);
 
 	generate_uuid();	   // generate uuid for each keymap layoutS
-	init_default_macros(); // init default macros
+	init_default_macros(); // init default macros //TODO: Remove. not neccesary and you could do the same as tapdance to init it.
+
 	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
 	nvs_load_macros();

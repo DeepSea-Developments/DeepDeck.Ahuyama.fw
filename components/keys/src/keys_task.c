@@ -53,16 +53,18 @@ void keys_task(void *pvParameters)
     };
 
     // keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
-    // keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
-    // keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
+    // keys_config.mode_vector[13] = MODE_V_TAPDANCE_ENABLE;
+    // keys_config.mode_vector[14] = MODE_V_TAPDANCE_ENABLE;
     
     while(1)
     {
-        //Check if 
+        //Check if there has been a change on the key configuration.
         if(xQueueReceive(keys_config_q,&keys_config,0))
         {  
             // TODO: Here i might only change certain parameters i'm interested in, not everything.
-            ESP_LOGW(TAG, "Configuration Received");
+            
+            
+            ESP_LOGI(TAG, "Configuration Received!!");
         }
         scan_matrix(keys_config, key_event_to_queue);
         vTaskDelay(pdMS_TO_TICKS(10));

@@ -135,86 +135,112 @@ void media_control_release(uint16_t keycode)
 	xQueueSend(media_q, (void *)&media_state, (TickType_t)0);
 }
 
-// used for debouncing
-static uint32_t millis()
+
+/**
+ * @brief Send the current keyboard config based on the parameters and the selected layer.
+ * 
+ */
+void keyboard_config(void)
 {
-	return esp_timer_get_time() / 1000;
+	keys_config_struct_t keys_config = {
+        .mode_vector = {0},
+        .general_mode = KEY_CONFIG_NORMAL_MODE,
+        .interval_time = INTERVAL_TIMEOUT,
+        .long_time = LONG_PRESS_TIMEOUT
+    };
+
+	for(uint8_t i =0; i<MATRIX_ROWS; i++)
+	{
+		for(uint8_t j = 0; j<MATRIX_COLS; j++)
+		{
+			uint16_t keycode = key_layouts[current_layout].key_map[i][j];
+
+			if (keycode >= TAPDANCE_BASE_VAL && keycode < TAPDANCE_MAX_VAL)
+			{
+				keys_config.mode_vector[i*MATRIX_COLS + j] = MODE_V_TAPDANCE_ENABLE;
+			}
+			else if (keycode >= MODTAP_BASE_VAL && keycode < MODTAP_MAX_VAL)
+			{
+				keys_config.mode_vector[i*MATRIX_COLS + j] = MODE_V_MODTAP_ENABLE;
+			}
+		}
+	}
+
+	xQueueSend(keys_config_q,&keys_config,0);
+
 }
 
-uint32_t prev_time = 0;
 // adjust current layer
 void layer_adjust(uint16_t keycode)
 {
-	uint32_t cur_time = millis();
-	int layers_num = nvs_read_num_layers();
-	if (cur_time - prev_time > DEBOUNCE)
-	{
-		if (layer_hold_flag == 0)
-		{
-			switch (keycode)
-			{
-			case DEFAULT:
-				current_layout = 0;
-				break;
 
-			case LOWER:
-				if (current_layout == 0)
+	int layers_num = nvs_read_num_layers();
+		
+	if (layer_hold_flag == 0)
+	{
+		switch (keycode)
+		{
+		case DEFAULT:
+			current_layout = 0;
+			break;
+
+		case LOWER:
+			if (current_layout == 0)
+			{
+				for (int m = (layers_num - 1); m > 0; m--)
 				{
-					for (int m = (layers_num - 1); m > 0; m--)
+					if (key_layouts[m - current_layout].active)
 					{
-						if (key_layouts[m - current_layout].active)
-						{
-							current_layout = m;
-							break;
-						}
+						current_layout = m;
+						break;
 					}
 				}
-				else
-				{
-					current_layout--;
-				}
+			}
+			else
+			{
+				current_layout--;
+			}
 
+			break;
+
+		case RAISE:
+
+			if (current_layout == (layers_num - 1))
+			{
+				current_layout = 0;
 				break;
-
-			case RAISE:
-
-				if (current_layout == (layers_num - 1))
+			}
+			if (current_layout < (layers_num - 1))
+			{
+				if (key_layouts[current_layout + 1].active)
+				{
+					current_layout++;
+					break;
+				}
+				else
 				{
 					current_layout = 0;
 					break;
 				}
-				if (current_layout < (layers_num - 1))
-				{
-					if (key_layouts[current_layout + 1].active)
-					{
-						current_layout++;
-						break;
-					}
-					else
-					{
-						current_layout = 0;
-						break;
-					}
-				}
-				current_layout++;
-
-				break;
 			}
+			current_layout++;
+
+			break;
+		}
 #ifdef OLED_ENABLE
-			xQueueSend(layer_recieve_q, &current_layout, (TickType_t)0);
+		xQueueSend(layer_recieve_q, &current_layout, (TickType_t)0);
 #endif
 
 #ifdef RGB_LEDS
-			rgb_mode_t led_mode;
-			nvs_load_led_mode(&led_mode);
-			xQueueSend(keyled_q, &led_mode, 0);
+		rgb_mode_t led_mode;
+		nvs_load_led_mode(&led_mode);
+		xQueueSend(keyled_q, &led_mode, 0);
 
 #endif
-			ESP_LOGI(TAG, "Layer modified!, Current layer: %d",
-					 current_layout);
-		}
+		ESP_LOGI(TAG, "Layer modified!, Current layer: %d",
+					current_layout);
 	}
-	prev_time = cur_time;
+
 }
 
 uint8_t matrix_prev_state[MATRIX_ROWS][MATRIX_COLS] = {0};
@@ -281,19 +307,16 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 	{
 		ESP_LOGE(TAG,"TAPDANCE EVENT with keycode %d", keycode);
 
-		uint8_t tapdance_list[5] = {1,2,3,10,15};  							//dummy to test will change with memory information!!
-		uint16_t tapdance_actions[5] = {KC_1, KC_2, KC_AUDIO_MUTE, KC_3, KC_A};	//dummy to test
-
 		uint8_t found_flag=0;
 		for(uint8_t i=0;i<5;i++)
 		{
-			if (tapdance_list[i] == key_event.counter)
+			if (default_tapdance[keycode - TAPDANCE_BASE_VAL].tap_list[i] == key_event.counter)
 			{
 				// Valid tapdance action. Set first the variables
 				iteration_type = TAPDANCE_ITERATION;
 				iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
 				// Change the keycode to desired action. Act as it was a single pressed event
-				keycode = tapdance_actions[i];
+				keycode = default_tapdance[keycode - TAPDANCE_BASE_VAL].keycode_list[i];
 				key_event.event = KEY_PRESSED;
 				found_flag = 1;
 				
@@ -413,6 +436,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
 			{
 				layer_adjust(keycode);
+				keyboard_config();
 				return;
 			}
 

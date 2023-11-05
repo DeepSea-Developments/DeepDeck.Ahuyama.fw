@@ -59,12 +59,12 @@ typedef struct dd_modtap_str {
 	uint16_t keycode_long;			// Keycode when long pressed
 }dd_modtap;
 
-typedef struct dd_tapdance_str {
-	char name[TD_NAME_LENGTH];
-	uint8_t tap_n[TD_MAX_TAP_SEQUENCES];		// Array with the number of taps to activate an action
-												// If zero, space not activated
-	uint16_t tap_key[TD_MAX_TAP_SEQUENCES];     // Keycode of correspnding tap dance of tap_n array
-} dd_tapdance;
+// typedef struct dd_tapdance_str {
+// 	char name[TD_NAME_LENGTH];
+// 	uint8_t tap_n[TD_MAX_TAP_SEQUENCES];		// Array with the number of taps to activate an action
+// 												// If zero, space not activated
+// 	uint16_t tap_key[TD_MAX_TAP_SEQUENCES];     // Keycode of correspnding tap dance of tap_n array
+// } dd_tapdance;
 
 typedef struct dd_macro_str {
 	char name[MACRO_LONG_NAME_LENGTH];       
@@ -82,7 +82,7 @@ typedef struct dd_macro_str {
 typedef struct dd_macros_str {
 	uint16_t key[MACRO_LEN];  			  //200 keys ---> MACRO_LEN = 5       
 	char name[USER_MACRO_NAME_LEN];       //  200 macros ---> Name of each macro up to 32 characters
-	int keycode;
+	uint16_t keycode;
 } dd_macros;
 
 /**
@@ -90,8 +90,10 @@ typedef struct dd_macros_str {
  * 
  */
 typedef struct dd_tapdance_str {
+	char name[TD_NAME_LENGTH];       
 	uint8_t tap_list[TAPDANCE_LEN];
-	uint8_t keycode_list[TAPDANCE_LEN];
+	uint16_t keycode_list[TAPDANCE_LEN];
+	uint16_t keycode;
 } dd_tapdance;
 
 extern dd_tapdance *user_tapdance;
@@ -100,7 +102,8 @@ extern dd_layer *key_layouts;
 
 //amount of arrays
 extern uint8_t layers_num;
-extern int total_macros;
+extern uint8_t total_macros;
+extern uint8_t total_tapdance;
 
 #endif /* NVS_KEYMAPS_H_ */
 

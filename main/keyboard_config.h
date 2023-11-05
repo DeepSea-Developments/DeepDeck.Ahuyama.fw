@@ -101,11 +101,15 @@
 #define MOD_LED_BYTES 2 //bytes for led status and modifiers
 #define MACRO_LEN 5 //keys for macros
 #define MACROS_NUM 40 //Available macro lenght
-#define USER_MACROS_NUM 200
 #define USER_MACRO_NAME_LEN 10
+
+#define INTERVAL_TIMEOUT 150
+#define LONG_PRESS_TIMEOUT 500
 
 // TapDance definitions
 #define TAPDANCE_LEN 5
+#define TAPDANCE_NUM 10		// Available Tapdance nummbers
+
 
 //Leader key definitions
 #define LK_MAX_KEYS 10
