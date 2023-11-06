@@ -101,7 +101,7 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	json_response(string);
 	size_t buf_len;
 	buf_len = (req->content_len) + 1;
-	buffer = malloc(buf_len);
+	buffer = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buffer, req->content_len);
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -151,12 +151,12 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	{
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
-		free(buffer);
+		vPortFree(buffer);
 		return ESP_OK;
 	}
 
-	free(buffer);
-	free(string);
+	vPortFree(buffer);
+	vPortFree(string);
 
 	wifi_reset = true;
 	xSemaphoreGive(Wifi_initSemaphore);
@@ -197,7 +197,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 
 	cJSON_Delete(monitor);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -303,7 +303,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 
-	free(string);
+	vPortFree(string);
 	cJSON_Delete(macro_object);
 
 	return ESP_OK;
@@ -390,7 +390,7 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		httpd_resp_set_status(req, HTTPD_200);
 	}
 	cJSON_Delete(payload);
-	free(buf);
+	vPortFree(buf);
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
 	httpd_resp_send(req, NULL, 0);
@@ -416,7 +416,7 @@ esp_err_t delete_macro_url_handler(httpd_req_t *req)
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -439,7 +439,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	json_response(string);
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	dd_macros new_macro;
@@ -452,7 +452,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
-			free(buf);
+			vPortFree(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
@@ -504,7 +504,7 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	httpd_resp_sendstr(req, string);
 	httpd_resp_send(req, NULL, 0);
 	cJSON_Delete(payload);
-	free(buf);
+	vPortFree(buf);
 
 	return ESP_OK;
 }
@@ -568,7 +568,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
 	{
-		buf = malloc(buf_len);
+		buf = pvPortMalloc(buf_len);
 		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
 		{
 			ESP_LOGI(TAG, "Found URL query: %s", buf);
@@ -585,7 +585,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 				return ESP_OK;
 			}
 		}
-		free(buf);
+		vPortFree(buf);
 	}
 	else
 	{
@@ -699,7 +699,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	// Clean before ending the function
 	cJSON_Delete(layer_object);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -813,7 +813,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(layer_data, "uuid", layout_uuid);
 	}
 
-	string = malloc(100);
+	string = pvPortMalloc(100);
 	string = cJSON_Print(monitor);
 	if (string == NULL)
 	{
@@ -826,7 +826,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 
 	cJSON_Delete(monitor);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -866,7 +866,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
 	{
-		buf = malloc(buf_len);
+		buf = pvPortMalloc(buf_len);
 		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
 		{
 			ESP_LOGI(TAG, "Found URL query: %s", buf);
@@ -896,7 +896,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
-		free(buf);
+		vPortFree(buf);
 	}
 
 	int found_flag = 0;
@@ -1008,7 +1008,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	size_t buf_len;
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
@@ -1156,8 +1156,11 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		temp_layout.active = false;
 	}
 	cJSON_Delete(payload);
-	free(buf);
-	nvs_write_layer(temp_layout, pos);
+	vPortFree(buf);
+
+	ESP_LOGW("LAYER RESULT", "%s with is %s in pos %d",temp_layout.name, temp_layout.uuid_str, pos);
+
+	nvs_write_layer(&temp_layout, pos);
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
@@ -1202,7 +1205,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	json_response(string);
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	dd_layer new_layer;
@@ -1216,7 +1219,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	{
 		fprintf(stderr, "Failed to print monitor.\n");
 	}
-	ESP_LOGE("+", "%s", str);
+	ESP_LOGE(TAG, "%s", str);
 #endif
 
 	if (NULL == payload)
@@ -1336,7 +1339,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 
 	cJSON_Delete(payload);
-	free(buf);
+	vPortFree(buf);
 	current_layout = 0;
 	res = nvs_create_new_layer(new_layer);
 	rgb_mode_t led_mode;
@@ -1444,7 +1447,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	char *string = NULL;
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
@@ -1511,7 +1514,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	}
 
 	json_response(string);
-	free(buf);
+	vPortFree(buf);
 	cJSON_Delete(payload);
 	nvs_save_led_mode(led_mode);
 
@@ -1747,7 +1750,7 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	return server;
 err_start:
-	free(rest_context);
+	vPortFree(rest_context);
 err:
 	return NULL;
 }

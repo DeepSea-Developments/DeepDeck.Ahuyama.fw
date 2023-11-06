@@ -240,7 +240,7 @@ esp_err_t nvs_restore_default_layers()
  * @param layer_num
  * @return esp_err_t
  */
-esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
+esp_err_t nvs_write_layer(dd_layer * layer, uint8_t layer_num)
 {
 	nvs_handle_t nvs_layer_handle;
 	char layer_key[10];
@@ -248,11 +248,15 @@ esp_err_t nvs_write_layer(dd_layer layer, uint8_t layer_num)
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
 
 	sprintf(layer_key, "layer_%d", layer_num);
-	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *)&layer, sizeof(dd_layer)));
+
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_layer_handle, layer_key, (void *)layer, sizeof(dd_layer)));
 	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
 
 	nvs_close(nvs_layer_handle);
+
+	// TODO: Very inefficient way to reorganize layers. works for now, but should be removed!
 	nvs_update_layout_position();
+
 	nvs_load_layouts();
 
 	return ESP_OK;
@@ -410,19 +414,19 @@ esp_err_t nvs_update_layout_position(void)
 	esp_err_t error;
 	uint8_t layer_num;
 	char layer_key[10];
-	dd_layer *temp_layout = pvPortMalloc(layers_num * sizeof(dd_layer));
-	nvs_read_layers(temp_layout);
 
 	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
 	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
-
 	if (error != ESP_OK)
 	{
 		ESP_LOGE("TAG", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
 		return ESP_FAIL;
 	}
 
-	dd_layer *aux = pvPortMalloc((layers_num) * sizeof(dd_layer));
+	dd_layer *temp_layout = pvPortMalloc(layer_num * sizeof(dd_layer));
+	nvs_read_layers(temp_layout);
+
+	dd_layer *aux = pvPortMalloc(layer_num * sizeof(dd_layer));
 
 	// Copia las estructuras que tienen el atributo active en true al arreglo auxiliar
 	for (i = 0; i < (layer_num); i++)
@@ -454,7 +458,7 @@ esp_err_t nvs_update_layout_position(void)
 	{
 		sprintf(layer_key, "layer_%d", i);
 
-		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle_new, layer_key, &aux[i], sizeof(dd_layer)));
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle_new, layer_key, (void *)(&aux[i]), sizeof(dd_layer)));
 		ESP_ERROR_CHECK(nvs_commit(nvs_handle_new));
 		// ESP_LOGI("new layer", " Name:%s pos[%d]", aux[i].name, i);
 	}
