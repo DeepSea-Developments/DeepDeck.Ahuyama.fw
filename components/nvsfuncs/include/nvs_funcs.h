@@ -1,11 +1,37 @@
 /**
  * @file nvs_funcs.h
- * @author ElectroNBick (nick@dsd.dev)
- * @brief functions to load layers from NVS
+ * @author ElectroNick (nick@dsd.dev)
+ * @brief
  * @version 0.1
- * @date 2022-12-11
+ * @date 2023-11-06
  *
- * @copyright Copyright (c) 2022
+ * @copyright Copyright (c) 2023
+ * Based on the code of Gal Zaidenstein.
+ *
+ * MIT License
+ * Copyright (c) 2022
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * DeepDeck, a product by DeepSea Developments.
+ * More info on DeepDeck @ www.deepdeck.co
+ * DeepseaDev.com
  *
  */
 
@@ -25,6 +51,13 @@
 #define NVS_CONFIG_ERR 0
 
 /**
+ * @brief List of available layers in order
+ * 
+ */
+typedef char layer_list_def[MAX_LAYER][NVS_NS_NAME_MAX_SIZE]; 
+
+
+/**
  * @brief Check the number of entries used and available of the nvs
  *
  */
@@ -37,12 +70,21 @@ void nvs_check_memory_status(void);
  */
 uint8_t nvs_read_num_layers(void);
 
+
+
 /**
  * @brief Read layers in memory
  *
  * @param layers_array array of dd_layer elements (layers in memory)
  */
 void nvs_read_layers(dd_layer *layers_array);
+
+/**
+ * @brief Read and returns the list of layers
+ * 
+ * @param list list of the nvs keynames of the layers in order.
+ */
+void nvs_read_list_layers(layer_list_def * list);
 
 /**
  * @brief Write default layers in memory

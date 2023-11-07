@@ -1,8 +1,38 @@
-/*
- * nvs_keymaps.h
+/**
+ * @file nvs_funcs.h
+ * @author ElectroNick (nick@dsd.dev)
+ * @brief
+ * @version 0.1
+ * @date 2023-11-06
  *
- *  Created on: 19 Sep 2018
- *      Author: gal
+ * @copyright Copyright (c) 2023
+ * Based on the code of Gal Zaidenstein.
+ *
+ * MIT License
+ * Copyright (c) 2022
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * DeepDeck, a product by DeepSea Developments.
+ * More info on DeepDeck @ www.deepdeck.co
+ * DeepseaDev.com
+ *
  */
 
 #ifndef NVS_KEYMAPS_H_
@@ -10,9 +40,10 @@
 #include <keyboard_config.h>
 #include "uuid.h"
 
-
-//*************new*********
-
+/**
+ * @brief Structure to hold DeepDeck layers
+ * 
+ */
 typedef struct dd_layer_str {
 	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
 	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
@@ -59,13 +90,6 @@ typedef struct dd_modtap_str {
 	uint16_t keycode_long;			// Keycode when long pressed
 }dd_modtap;
 
-// typedef struct dd_tapdance_str {
-// 	char name[TD_NAME_LENGTH];
-// 	uint8_t tap_n[TD_MAX_TAP_SEQUENCES];		// Array with the number of taps to activate an action
-// 												// If zero, space not activated
-// 	uint16_t tap_key[TD_MAX_TAP_SEQUENCES];     // Keycode of correspnding tap dance of tap_n array
-// } dd_tapdance;
-
 typedef struct dd_macro_str {
 	char name[MACRO_LONG_NAME_LENGTH];       
 	char short_name[MACRO_SHORT_NAME_LENGTH];       
@@ -96,14 +120,14 @@ typedef struct dd_tapdance_str {
 	uint16_t keycode;
 } dd_tapdance;
 
+
 extern dd_tapdance *user_tapdance;
 extern dd_macros *user_macros;
 extern dd_layer *key_layouts;
 
-//amount of arrays
-extern uint8_t layers_num;
-extern uint8_t total_macros;
-extern uint8_t total_tapdance;
+
+extern uint8_t total_macros; //TODO: remove this kind of global variables
+
 
 #endif /* NVS_KEYMAPS_H_ */
 

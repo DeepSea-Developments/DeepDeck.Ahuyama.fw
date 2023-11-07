@@ -554,6 +554,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
+	uint8_t layers_num = nvs_read_num_layers();
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
@@ -997,6 +998,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	uint8_t layers_num = nvs_read_num_layers();
 
 	char *string = NULL;
 	json_response(string);
