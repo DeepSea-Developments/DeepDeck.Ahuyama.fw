@@ -26,6 +26,7 @@ jobs:
       - run: pip install mkdocs-glightbox
       - run: pip install pillow cairosvg
       - run: pip install mkdocs-minify-plugin
+      - run: pip install mkdocs-render-swagger-plugin
       - run: pip install git+https://${GH_TOKEN}@github.com/electronick-co/mkdocs-material-insiders.git
       - run: mkdocs gh-deploy --force
 

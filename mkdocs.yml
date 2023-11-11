@@ -114,6 +114,7 @@ plugins:
       archive_toc: false
       categories: false
       categories_toc: false
+  - render_swagger
 
 # Continuous integration
   - group:
@@ -150,6 +151,7 @@ nav:
       - Knob: en/Setup/knob-configuration.md
   - Documentation:
     - DeepDeck installer: en/Docs/installer.md
+    - API: en/Docs/api.md
   - Download: 
     - en/Resources/index.md
     - 3d printed accesories: en/Resources/3d-prints.md
