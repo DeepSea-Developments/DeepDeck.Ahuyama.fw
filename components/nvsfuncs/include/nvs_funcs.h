@@ -100,7 +100,7 @@ void nvs_write_default_layers(nvs_handle_t nvs_handle);
  * @param layer_num
  * @return esp_err_t
  */
-esp_err_t nvs_write_layer(dd_layer * layer, uint8_t layer_num);
+esp_err_t nvs_write_layer(dd_layer * layer, uint8_t layer_pos);
 
 /**
  * @brief

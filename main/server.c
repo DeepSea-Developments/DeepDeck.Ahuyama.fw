@@ -1005,8 +1005,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	json_response(string);
 
 	int position = 0;
-	// char buffer[1024];
-	// httpd_req_recv(req, buffer, req->content_len);
 	char *buf;
 	size_t buf_len;
 
@@ -1033,7 +1031,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
 	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
 	{
-		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
+		ESP_LOGI(TAG,"Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 	}
 
 	int found_flag = 0;
@@ -1054,23 +1052,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		return ESP_OK;
 	}
 
-	// cJSON *layer_pos = cJSON_GetObjectItem(payload, "pos");
-	// if (cJSON_IsNumber(layer_pos) && (layer_pos->valueint))
-	// {
-	// 	printf("Layer pos = \"%d\"\n", layer_pos->valueint);
-	// 	position = layer_pos->valueint;
-	// }
-
-	// if (strcmp(key_layouts[position].uuid_str, layer_uuid->valuestring) != 0)
-	// {
-
-	// 	ESP_LOGI(TAG, "key layout uuid %s", key_layouts[position].uuid_str);
-	// 	ESP_LOGI(TAG, "The string value = %s", layer_uuid->valuestring);
-
-	// 	httpd_resp_set_status(req, HTTPD_400);
-	// 	httpd_resp_send(req, NULL, 0);
-	// 	return ESP_OK;
-	// }
 	strcpy(temp_layout.uuid_str, layer_uuid->valuestring);
 
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "name");
@@ -1096,7 +1077,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	fill_row(row3, names[3], codes[3]);
 
 	int i, j;
-	// printf("Names:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
@@ -1104,16 +1084,12 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 			strcpy(temp_layout.key_map_names[i][j], names[i][j]);
 		}
 	}
-	// printf("\nCodes:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			// printf("%d\t", codes[i][j]);
-
 			temp_layout.key_map[i][j] = codes[i][j];
 		}
-		// printf("\n");
 	}
 
 	cJSON *item;
@@ -1126,7 +1102,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	}
 	cJSON_ArrayForEach(item, left_encoder_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.left_encoder_map[i] = item->valueint;
 		i++;
 	}
@@ -1135,15 +1110,14 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *right_encoder_map = cJSON_GetObjectItem(payload, "right_encoder_map");
 	cJSON_ArrayForEach(item, right_encoder_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.right_encoder_map[i] = item->valueint;
 		i++;
 	}
+	
 	i = 0;
 	cJSON *gesture_map = cJSON_GetObjectItem(payload, "gesture_map");
 	cJSON_ArrayForEach(item, gesture_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.gesture_map[i] = item->valueint;
 		i++;
 	}
@@ -1161,9 +1135,10 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON_Delete(payload);
 	vPortFree(buf);
 
-	ESP_LOGW("LAYER RESULT", "%s with is %s in pos %d",temp_layout.name, temp_layout.uuid_str, pos);
+	ESP_LOGI("LAYER RESULT", "%s with is %s in pos %d",temp_layout.name, temp_layout.uuid_str, pos);
 
 	nvs_write_layer(&temp_layout, pos);
+
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
