@@ -85,7 +85,7 @@ void update_oled(void)
 
 		erase_area(0, 13, 128, 22);
 		u8g2_SetFont(&u8g2, u8g2_font_courB18_tf);
-		u8g2_DrawStr(&u8g2, 0, 33, key_layouts[curr_layout].name);
+		u8g2_DrawStr(&u8g2, 0, 33, g_user_layers[curr_layout].name);
 
 		erase_area(0, 35, 128, 29);
 		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
@@ -93,7 +93,7 @@ void update_oled(void)
 		{
 			for (int j = 0; j < MATRIX_ROWS; j++)
 			{
-				u8g2_DrawStr(&u8g2, j * 32, 42 + i * 7, key_layouts[curr_layout].key_map_names[i][j]);
+				u8g2_DrawStr(&u8g2, j * 32, 42 + i * 7, g_user_layers[curr_layout].key_map_names[i][j]);
 			}
 		}
 
@@ -174,14 +174,14 @@ void ble_connected_oled(void)
 	u8g2_DrawStr(&u8g2, 40 + offset_x_batt, 8 + offset_y_batt, current_ip);
 
 	u8g2_SetFont(&u8g2, u8g2_font_courB18_tf);
-	u8g2_DrawStr(&u8g2, 0, 33, key_layouts[curr_layout].name);
+	u8g2_DrawStr(&u8g2, 0, 33, g_user_layers[curr_layout].name);
 
 	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
 	for (int i = 0; i < MATRIX_COLS; i++)
 	{
 		for (int j = 0; j < MATRIX_ROWS; j++)
 		{
-			u8g2_DrawStr(&u8g2, j * 32, 42 + i * 7, key_layouts[curr_layout].key_map_names[i][j]);
+			u8g2_DrawStr(&u8g2, j * 32, 42 + i * 7, g_user_layers[curr_layout].key_map_names[i][j]);
 		}
 	}
 

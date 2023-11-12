@@ -181,7 +181,7 @@ void main_task(void *pvParameters)
 			if(xQueueReceive(keys_q, &key_event, 0))
 			{
 				ESP_LOGI("MAIN_TASK", "Key event received");
-				keys_get_report_from_event(&key_layouts[current_layout],key_event,report_state);
+				keys_get_report_from_event(&g_user_layers[current_layout],key_event,report_state);
 			}
 		}
 
@@ -263,7 +263,7 @@ void encoder_report(void *pvParameters)
 			else
 			{
 				encoder_command(encoder1_status,
-								key_layouts[current_layout].left_encoder_map);
+								g_user_layers[current_layout].left_encoder_map);
 			}
 			past_encoder1_state = encoder1_status;
 		}
@@ -291,7 +291,7 @@ void encoder_report(void *pvParameters)
 			else
 			{
 				encoder_command(encoder2_status,
-								key_layouts[current_layout].right_encoder_map);
+								g_user_layers[current_layout].right_encoder_map);
 			}
 
 			past_encoder2_state = encoder2_status;

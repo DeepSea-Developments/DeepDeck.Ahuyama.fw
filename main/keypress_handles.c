@@ -153,7 +153,7 @@ void keyboard_config(void)
 	{
 		for(uint8_t j = 0; j<MATRIX_COLS; j++)
 		{
-			uint16_t keycode = key_layouts[current_layout].key_map[i][j];
+			uint16_t keycode = g_user_layers[current_layout].key_map[i][j];
 
 			if (keycode >= TAPDANCE_BASE_VAL && keycode < TAPDANCE_MAX_VAL)
 			{
@@ -189,7 +189,7 @@ void layer_adjust(uint16_t keycode)
 			{
 				for (int m = (layers_num - 1); m > 0; m--)
 				{
-					if (key_layouts[m - current_layout].active)
+					if (g_user_layers[m - current_layout].active)
 					{
 						current_layout = m;
 						break;
@@ -212,7 +212,7 @@ void layer_adjust(uint16_t keycode)
 			}
 			if (current_layout < (layers_num - 1))
 			{
-				if (key_layouts[current_layout + 1].active)
+				if (g_user_layers[current_layout + 1].active)
 				{
 					current_layout++;
 					break;
@@ -445,7 +445,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			{
 				for (uint8_t i = 0; i < MACRO_LEN; i++)
 				{
-					uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+					uint16_t key = g_user_macros[keycode - MACRO_BASE_VAL].key[i];
 
 					if (key == KC_NO)
 					{
@@ -480,7 +480,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			{
 				for (uint8_t i = 0; i < MACRO_LEN; i++)
 				{
-					uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
+					uint16_t key = g_user_macros[keycode - MACRO_BASE_VAL].key[i];
 					report_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
 					modifier &= ~check_modifier(key);
 				}

@@ -223,7 +223,7 @@ char *default_macro_name[] = {	"Copy",
 								"M40", 
 								};
 
-dd_tapdance default_tapdance[TAPDANCE_NUM]={
+dd_tapdance default_tapdance[DEFAULT_TAPDANCE]={
 	{ .name="tap1",
 	  .tap_list={1,2,3,10,15},
 	  .keycode_list = {KC_1, KC_2, KC_AUDIO_MUTE, KC_3, KC_A},
@@ -337,7 +337,7 @@ dd_layer layer3 =
 };
 
 
-dd_layer *default_layouts[LAYERS] = {&layer1, &layer2, &layer3};
+dd_layer *default_layouts[DEFAULT_LAYERS] = {&layer1, &layer2, &layer3}; //TODO: should be used without the pointer right?
 uint8_t current_layout = 0;
 
 dd_macros default_macros[MACROS_NUM]={0};
@@ -348,7 +348,7 @@ void generate_uuid()
 	uuid_t uu;
 	char uu_str[SHORT_UUID_STR_LEN];
 
-	for (int i = 0; i < LAYERS; i++)
+	for (int i = 0; i < DEFAULT_LAYERS; i++)
 	{
 		uuid_generate(uu);
 		short_uuid_unparse(uu, uu_str);

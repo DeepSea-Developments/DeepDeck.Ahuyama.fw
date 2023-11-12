@@ -26,7 +26,9 @@
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4 
 
-#define LAYERS 3 // number of layers defined
+// The default number of items define (hardcoded. If you want to add or remove, you should modify this!)
+#define DEFAULT_LAYERS 3 	// number of layers predefined
+#define DEFAULT_TAPDANCE 3	// number of tapdances predefined
 
 // Select diode direction
 #define COL2ROW
@@ -85,8 +87,8 @@
 #define LONG_PRESS_TIMEOUT 500
 
 // TapDance definitions
-#define TAPDANCE_LEN 5
-#define TAPDANCE_NUM 10		// Available Tapdance nummbers
+#define TAPDANCE_LEN 6
+#define MAX_TAPDANCE 10		// Available Tapdances
 
 //Leader key definitions
 #define LK_MAX_KEYS 10
@@ -140,13 +142,13 @@ typedef struct config_data {
 extern uint8_t current_layout;
 extern uint8_t curr_led;
 
-extern uint16_t default_encoder_map[LAYERS][ENCODER_SIZE];
-extern uint16_t default_slave_encoder_map[LAYERS][ENCODER_SIZE];
+extern uint16_t default_encoder_map[DEFAULT_LAYERS][ENCODER_SIZE];
+extern uint16_t default_slave_encoder_map[DEFAULT_LAYERS][ENCODER_SIZE];
 
 #define MAX_LAYOUT_NAME_LENGTH 15
 #define MAX_LAYOUT_NUMBER 10
 // array to hold names of layouts for oled
-extern char default_layout_names[LAYERS][MAX_LAYOUT_NAME_LENGTH];
+extern char default_layout_names[DEFAULT_LAYERS][MAX_LAYOUT_NAME_LENGTH];
 
 extern TaskHandle_t xKeyreportTask;
 

@@ -39,21 +39,7 @@
 #define NVS_KEYMAPS_H_
 #include <keyboard_config.h>
 #include "uuid.h"
-
-/**
- * @brief Structure to hold DeepDeck layers
- * 
- */
-typedef struct dd_layer_str {
-	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
-	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
-	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7];       // Name of each key up to 6 characters
-	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
-	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for rigth encoder
-	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
-	bool active;
-	char uuid_str[SHORT_UUID_STR_LEN];
-} dd_layer;
+#include "nvs.h"
 
 
 #define MG_NAME_LENGTH 13
@@ -69,10 +55,52 @@ typedef struct dd_layer_str {
 #define MACRO_SHORT_NAME_LENGTH 7
 #define MACRO_LONG_NAME_LENGTH 13
 
+
+/**
+ * @brief Structure to hold DeepDeck layers
+ * 
+ */
+typedef struct dd_layer_str {
+	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
+	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
+	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7];       // Name of each key up to 6 characters
+	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
+	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for right encoder
+	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
+	bool active;
+	char uuid_str[SHORT_UUID_STR_LEN];
+} dd_layer;
+
+/**
+ * @brief List of available layers in order
+ * 
+ */
+typedef char layer_list_def[MAX_LAYER][NVS_NS_NAME_MAX_SIZE]; 
+
+/**
+ * @brief structure to hold tapdance actions. 
+ * 
+ */
+typedef struct dd_tapdance_str {
+	char name[TD_NAME_LENGTH];       
+	uint8_t tap_list[TAPDANCE_LEN];
+	uint16_t keycode_list[TAPDANCE_LEN];
+	uint16_t keycode;
+} dd_tapdance;
+
+/**
+ * @brief List of available tapdance in order
+ * 
+ */
+typedef char tapdance_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE]; 
+
+
+
 typedef struct dd_macro_group_str 
 {
 	char name[MG_NAME_LENGTH];
 }dd_macro_group;
+
 
 /**
  * @brief 
@@ -89,6 +117,8 @@ typedef struct dd_modtap_str {
 	uint16_t keycode_short;			// Keycode when short pressed
 	uint16_t keycode_long;			// Keycode when long pressed
 }dd_modtap;
+
+
 
 typedef struct dd_macro_str {
 	char name[MACRO_LONG_NAME_LENGTH];       
@@ -109,21 +139,11 @@ typedef struct dd_macros_str {
 	uint16_t keycode;
 } dd_macros;
 
-/**
- * @brief structure to hold tapdance actions. 
- * 
- */
-typedef struct dd_tapdance_str {
-	char name[TD_NAME_LENGTH];       
-	uint8_t tap_list[TAPDANCE_LEN];
-	uint16_t keycode_list[TAPDANCE_LEN];
-	uint16_t keycode;
-} dd_tapdance;
 
 
-extern dd_tapdance *user_tapdance;
-extern dd_macros *user_macros;
-extern dd_layer *key_layouts;
+extern dd_tapdance *g_user_tapdance;
+extern dd_macros *g_user_macros;
+extern dd_layer *g_user_layers;
 
 
 extern uint8_t total_macros; //TODO: remove this kind of global variables

@@ -50,11 +50,6 @@
 #define NVS_CONFIG_OK 1
 #define NVS_CONFIG_ERR 0
 
-/**
- * @brief List of available layers in order
- * 
- */
-typedef char layer_list_def[MAX_LAYER][NVS_NS_NAME_MAX_SIZE]; 
 
 
 /**
@@ -100,7 +95,7 @@ void nvs_write_default_layers(nvs_handle_t nvs_handle);
  * @param layer_num
  * @return esp_err_t
  */
-esp_err_t nvs_write_layer(dd_layer * layer, uint8_t layer_pos);
+esp_err_t nvs_update_layer(dd_layer * layer, uint8_t layer_pos);
 
 /**
  * @brief
@@ -108,7 +103,7 @@ esp_err_t nvs_write_layer(dd_layer * layer, uint8_t layer_pos);
  * @param layer
  * @return esp_err_t
  */
-esp_err_t nvs_create_new_layer(dd_layer layer);
+esp_err_t nvs_create_layer(dd_layer layer);
 
 /**
  * @brief
@@ -146,11 +141,18 @@ esp_err_t nvs_delete_macro(dd_macros macro);
 esp_err_t nvs_restore_default_macros(void);
 
 void nvs_load_tapdance(void);
-esp_err_t nvs_write_default_tapdance(nvs_handle_t nvs_handle);
+void nvs_write_default_tapdance(nvs_handle_t nvs_handle);
 esp_err_t nvs_create_tapdance(dd_tapdance tapdance);
 esp_err_t nvs_update_tapdance(dd_tapdance tapdance);
-esp_err_t nvs_delete_tapdance(dd_tapdance tapdance);
-esp_err_t nvs_restore_default_tapdance(dd_tapdance tapdance);
+esp_err_t nvs_delete_tapdance(uint8_t delete_tapdance_num);
+esp_err_t nvs_restore_default_tapdance(void);
+
+void nvs_load_modtap(void);
+void nvs_write_default_modtap(nvs_handle_t nvs_handle);
+esp_err_t nvs_create_modtap(dd_modtap modtap);
+esp_err_t nvs_update_modtap(dd_modtap modtap);
+esp_err_t nvs_delete_modtap(uint8_t delete_modtap_num);
+esp_err_t nvs_restore_default_modtap(void);
 
 // TODO: Document led functions
 esp_err_t nvs_save_led_mode(rgb_mode_t led_mode);

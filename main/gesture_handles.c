@@ -143,7 +143,7 @@ void read_gesture()
 				ESP_LOGE("Gesture", "_NEAR");
 			}
 			gesture_command(gesture,
-							key_layouts[current_layout].gesture_map);
+							g_user_layers[current_layout].gesture_map);
 		}
 		else
 		{
@@ -177,7 +177,7 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 			ESP_LOGI("gesture", "MACRO: %d", action);
 			for (uint8_t i = 0; i < MACRO_LEN; i++)
 			{
-				uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
+				uint16_t key = g_user_macros[action - MACRO_BASE_VAL].key[i];
 
 				if (key == KC_NO)
 				{
@@ -194,7 +194,7 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 			for (uint8_t i = 0; i < MACRO_LEN; i++)
 			{
 				// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
-				uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
+				uint16_t key = g_user_macros[action - MACRO_BASE_VAL].key[i];
 
 				// ESP_LOGI("releaseMacro", "keycode: %d", keycode - MACRO_BASE_VAL);
 				key_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons

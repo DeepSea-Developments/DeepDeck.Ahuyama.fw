@@ -216,7 +216,7 @@ void key_led_modes(void)
                     for (int index_col = 0; index_col < MATRIX_COLS; index_col++)
                     {
 
-                        if (key_layouts[current_layout].key_map[index][index_col] != 0)
+                        if (g_user_layers[current_layout].key_map[index][index_col] != 0)
                         {
                             // Write RGB values to strip driver
                             // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
