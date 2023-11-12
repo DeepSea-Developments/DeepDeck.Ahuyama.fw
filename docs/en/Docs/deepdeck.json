@@ -14,16 +14,12 @@
   },
   "servers": [
     {
-      "url": "https://virtserver.swaggerhub.com/NICOLASVELASQUEZ531/DeepDeck/1.0.0",
+      "url": "https://virtserver.swaggerhub.com/DeepDeckAhuyama/DeepDeck/1.0.0",
       "description": "SwaggerHub API Auto Mocking"
     },
     {
-      "url": "http://192.168.4.1",
-      "description": "Local DeepDeck connected"
-    },
-    {
       "url": "http://{DeepDeckIP}",
-      "description": "DeepDeck",
+      "description": "Your DeepDeck (you have to allow unsafe content)",
       "variables": {
         "DeepDeckIP": {
           "description": "IP of DeepDeck",
@@ -35,11 +31,11 @@
   "tags": [
     {
       "name": "layers",
-      "description": "Layer-related calls"
+      "description": "Operations for Layers"
     },
     {
-      "name": "developers",
-      "description": "Operations available to regular developers"
+      "name": "macros",
+      "description": "Operations for Macros"
     }
   ],
   "paths": {
@@ -53,39 +49,53 @@
         "operationId": "getLAyerNames",
         "responses": {
           "200": {
-            "description": "search results matching criteria"
-          },
-          "400": {
-            "description": "bad input parameter"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "admins"
-        ],
-        "summary": "adds an inventory item",
-        "description": "Adds an item to the system",
-        "operationId": "addInventory",
-        "requestBody": {
-          "description": "Inventory item to add",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryItem"
+            "description": "List of layer returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerDataArray"
+                }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/api/layers": {
+      "get": {
+        "tags": [
+          "layers"
+        ],
+        "summary": "Return information of the selected layer",
+        "description": "Return the content of the layer\n",
+        "operationId": "getLayer",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "query",
+            "description": "The layer ID",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "62d8ba"
+            }
+          }
+        ],
         "responses": {
-          "201": {
-            "description": "item created"
+          "200": {
+            "description": "Layer returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Layer"
+                }
+              }
+            }
           },
           "400": {
-            "description": "invalid input, object invalid"
-          },
-          "409": {
-            "description": "an existing item already exists"
+            "description": "Layer not found"
           }
         }
       }
@@ -93,52 +103,323 @@
   },
   "components": {
     "schemas": {
-      "InventoryItem": {
-        "required": [
-          "id",
-          "manufacturer",
-          "name",
-          "releaseDate"
-        ],
+      "LayerDataArray": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "d290f1ee-6c54-4b01-90e6-d701748f0851"
-          },
-          "name": {
-            "type": "string",
-            "example": "Widget Adapter"
-          },
-          "releaseDate": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2016-08-29T09:12:33.001Z"
-          },
-          "manufacturer": {
-            "$ref": "#/components/schemas/Manufacturer"
+          "data": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Media",
+                "pos": 0,
+                "active": true,
+                "uuid": "62d8ba"
+              },
+              {
+                "name": "Numpad",
+                "pos": 1,
+                "active": true,
+                "uuid": "8531d4"
+              },
+              {
+                "name": "Chrome",
+                "pos": 2,
+                "active": false,
+                "uuid": "17df94"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LayerInfo"
+            }
           }
         }
       },
-      "Manufacturer": {
-        "required": [
-          "name"
-        ],
+      "LayerInfo": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "example": "ACME Corporation"
+            "example": "Media"
           },
-          "homePage": {
-            "type": "string",
-            "format": "url",
-            "example": "https://www.acme-corp.com"
+          "pos": {
+            "type": "integer",
+            "example": 0
           },
-          "phone": {
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "uuid": {
             "type": "string",
-            "example": "408-867-5309"
+            "example": "62d8ba"
+          }
+        }
+      },
+      "Layer": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Media"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "row0": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Play",
+                "key_code": 171
+              },
+              {
+                "name": "next",
+                "key_code": 168
+              },
+              {
+                "name": "mute",
+                "key_code": 172
+              },
+              {
+                "name": "layer",
+                "key_code": 402
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row0"
+            }
+          },
+          "row1": {
+            "type": "array",
+            "example": [
+              {
+                "name": "nWind",
+                "key_code": 502
+              },
+              {
+                "name": "PWind",
+                "key_code": 503
+              },
+              {
+                "name": "F11",
+                "key_code": 68
+              },
+              {
+                "name": "PrtSC",
+                "key_code": 70
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row1"
+            }
+          },
+          "row2": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Copy",
+                "key_code": 500
+              },
+              {
+                "name": "Paste",
+                "key_code": 501
+              },
+              {
+                "name": "up",
+                "key_code": 82
+              },
+              {
+                "name": "Enter",
+                "key_code": 40
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row2"
+            }
+          },
+          "row3": {
+            "type": "array",
+            "example": [
+              {
+                "name": "window",
+                "key_code": 227
+              },
+              {
+                "name": "left",
+                "key_code": 80
+              },
+              {
+                "name": "down",
+                "key_code": 81
+              },
+              {
+                "name": "right",
+                "key_code": 79
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row3"
+            }
+          },
+          "left_encoder_map": {
+            "$ref": "#/components/schemas/Layer_left_encoder_map"
+          },
+          "right_encoder_map": {
+            "$ref": "#/components/schemas/Layer_right_encoder_map"
+          },
+          "gesture_map": {
+            "$ref": "#/components/schemas/Layer_gesture_map"
+          }
+        }
+      },
+      "Layer_row0": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Play"
+          },
+          "key_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 171
+          }
+        }
+      },
+      "Layer_row1": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "nWind"
+          },
+          "key_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 502
+          }
+        }
+      },
+      "Layer_row2": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Copy"
+          },
+          "key_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 500
+          }
+        }
+      },
+      "Layer_row3": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "window"
+          },
+          "key_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 227
+          }
+        }
+      },
+      "Layer_left_encoder_map": {
+        "type": "object",
+        "properties": {
+          "cw": {
+            "type": "integer",
+            "format": "int32",
+            "example": 174
+          },
+          "ccw": {
+            "type": "integer",
+            "format": "int32",
+            "example": 173
+          },
+          "single_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 171
+          },
+          "long_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 172
+          },
+          "double_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 168
+          }
+        }
+      },
+      "Layer_right_encoder_map": {
+        "type": "object",
+        "properties": {
+          "cw": {
+            "type": "integer",
+            "format": "int32",
+            "example": 505
+          },
+          "ccw": {
+            "type": "integer",
+            "format": "int32",
+            "example": 504
+          },
+          "single_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 506
+          },
+          "long_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 509
+          },
+          "double_press": {
+            "type": "integer",
+            "format": "int32",
+            "example": 508
+          }
+        }
+      },
+      "Layer_gesture_map": {
+        "type": "object",
+        "properties": {
+          "up": {
+            "type": "integer",
+            "format": "int32",
+            "example": 174
+          },
+          "down": {
+            "type": "integer",
+            "format": "int32",
+            "example": 173
+          },
+          "left": {
+            "type": "integer",
+            "format": "int32",
+            "example": 171
+          },
+          "right": {
+            "type": "integer",
+            "format": "int32",
+            "example": 172
+          },
+          "near": {
+            "type": "integer",
+            "format": "int32",
+            "example": 168
+          },
+          "far": {
+            "type": "integer",
+            "format": "int32",
+            "example": 168
           }
         }
       }
