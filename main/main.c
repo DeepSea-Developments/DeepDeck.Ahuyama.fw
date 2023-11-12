@@ -168,6 +168,7 @@ void app_main()
 	// Loading layouts from nvs (if found)
 	nvs_load_layouts();
 	nvs_load_macros();
+	nvs_load_tapdance();
 
 	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);

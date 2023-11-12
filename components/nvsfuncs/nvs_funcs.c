@@ -79,9 +79,8 @@ dd_macros *g_user_macros;
 dd_tapdance *g_user_tapdance;
 
 
-uint8_t layers_num = 0;
-uint8_t total_macros = 0;
-uint8_t total_tapdance = 0;
+uint8_t g_macro_num = 0;
+uint8_t g_tapdance_num = 0;
 
 
 /**
@@ -629,7 +628,7 @@ void nvs_load_macros(void)
 			ESP_LOGE("++", "Error (%s) reading Macro %s!\n", esp_err_to_name(res), macro_key);
 		}
 	}
-	total_macros = macro_num;
+	g_macro_num = macro_num;
 	nvs_close(nvs_handle);
 	nvs_check_memory_status();
 	nvs_macros_state();
@@ -718,7 +717,7 @@ esp_err_t nvs_create_new_macro(dd_macros macro)
 		g_user_macros[i] = temp_macro[i];
 	}
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	total_macros = macro_num;
+	g_macro_num = macro_num;
 	nvs_close(nvs_handle);
 	vPortFree(temp_macro);
 	return ESP_OK;
@@ -869,7 +868,7 @@ void nvs_load_tapdance(void) //TODO: Test
 	{
 		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle, tapdance_list[i], (void *)&g_user_tapdance[i], &dd_tapdance_size));
 	}
-	total_tapdance = tapdance_num;
+	g_tapdance_num = tapdance_num;
 	nvs_close(nvs_handle);
 	nvs_check_memory_status();
 	//nvs_macros_state(); TODO: see if its necessary to have one of this for tapdance
@@ -897,7 +896,8 @@ void nvs_write_default_tapdance(nvs_handle_t nvs_handle) //TODO: Test
 		short_uuid_unparse(uu, uu_str);
 		sprintf(tapdance_list[i], "td_%s", uu_str);
 		
-		ESP_LOGI(TAG,"Storing tapdance %s with keycode %s in memory key %s", default_tapdance[i].name ,default_tapdance[i].keycode,tapdance_list[i]);
+		ESP_LOGI(TAG,	"Storing tapdance %s with keycode %d in memory key %s", 
+						default_tapdance[i].name ,default_tapdance[i].keycode,tapdance_list[i]);
 
 		ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
 										tapdance_list[i], 
@@ -980,6 +980,7 @@ esp_err_t nvs_update_tapdance(dd_tapdance tapdance) // TODO: Test (with API)
 
 	return ESP_OK;
 }
+
 
 esp_err_t nvs_create_tapdance(dd_tapdance tapdance) // TODO: Test (with API)
 {

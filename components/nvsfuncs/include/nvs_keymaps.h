@@ -146,8 +146,8 @@ extern dd_macros *g_user_macros;
 extern dd_layer *g_user_layers;
 
 
-extern uint8_t total_macros; //TODO: remove this kind of global variables
-
+extern uint8_t g_macro_num; //TODO: remove this kind of global variables
+extern uint8_t g_tapdance_num;
 
 #endif /* NVS_KEYMAPS_H_ */
 
