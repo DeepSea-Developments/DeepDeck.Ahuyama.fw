@@ -36,6 +36,10 @@
     {
       "name": "macros",
       "description": "Operations for Macros"
+    },
+    {
+      "name": "tapdance",
+      "description": "Operations for Tapdance"
     }
   ],
   "paths": {
@@ -96,6 +100,233 @@
           },
           "400": {
             "description": "Layer not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "layers"
+        ],
+        "summary": "Update layer",
+        "description": "Update layer\n",
+        "operationId": "updateLayer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerWithID"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Layer returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Layer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Json not found or not valid"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "layers"
+        ],
+        "summary": "Create new layer",
+        "description": "Create a new layer\n",
+        "operationId": "createLayer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Layer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Layer returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Layer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Json not found or not valid"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "layers"
+        ],
+        "summary": "Delete the selected layer",
+        "description": "Delete the selected layer\n",
+        "operationId": "deleteLayer",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "query",
+            "description": "The layer ID",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "62d8ba"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Layer deleted succesfully"
+          },
+          "400": {
+            "description": "Layer id not found"
+          }
+        }
+      }
+    },
+    "/api/layers/restore": {
+      "put": {
+        "tags": [
+          "layers"
+        ],
+        "summary": "Restore default layers",
+        "description": "Restore default layers\n",
+        "operationId": "restoreLayers",
+        "responses": {
+          "200": {
+            "description": "Layers restored to default"
+          }
+        }
+      }
+    },
+    "/api/macros": {
+      "get": {
+        "tags": [
+          "macros"
+        ],
+        "summary": "Return all macros",
+        "description": "Return all macros\n",
+        "operationId": "getMacros",
+        "responses": {
+          "200": {
+            "description": "Macros returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MacrosList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "macros"
+        ],
+        "summary": "Update a macro",
+        "description": "Update selected Macro\n",
+        "operationId": "updateMacro",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Macros"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update selected macro"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "macros"
+        ],
+        "summary": "Create new macro.",
+        "description": "Create new Macro\n",
+        "operationId": "createMacro",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Macros"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Macro created"
+          },
+          "500": {
+            "description": "No more space"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "macros"
+        ],
+        "summary": "Delete the selected macro",
+        "description": "Delete the selected macro\n",
+        "operationId": "deleteMacro",
+        "parameters": [
+          {
+            "name": "keycode",
+            "in": "query",
+            "description": "The macro keycode",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "example": 501
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Macro deleted succesfully"
+          },
+          "400": {
+            "description": "Macro keycode not found"
+          }
+        }
+      }
+    },
+    "/api/macros/restore": {
+      "put": {
+        "tags": [
+          "macros"
+        ],
+        "summary": "Restore default macros",
+        "description": "Restore default macros\n",
+        "operationId": "restoreMacros",
+        "responses": {
+          "200": {
+            "description": "Macros restored to default"
           }
         }
       }
@@ -269,6 +500,202 @@
           },
           "gesture_map": {
             "$ref": "#/components/schemas/Layer_gesture_map"
+          }
+        }
+      },
+      "LayerWithID": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Media"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "uuid": {
+            "type": "string",
+            "example": "4e7a48abf8"
+          },
+          "row0": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Play",
+                "key_code": 171
+              },
+              {
+                "name": "next",
+                "key_code": 168
+              },
+              {
+                "name": "mute",
+                "key_code": 172
+              },
+              {
+                "name": "layer",
+                "key_code": 402
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row0"
+            }
+          },
+          "row1": {
+            "type": "array",
+            "example": [
+              {
+                "name": "nWind",
+                "key_code": 502
+              },
+              {
+                "name": "PWind",
+                "key_code": 503
+              },
+              {
+                "name": "F11",
+                "key_code": 68
+              },
+              {
+                "name": "PrtSC",
+                "key_code": 70
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row1"
+            }
+          },
+          "row2": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Copy",
+                "key_code": 500
+              },
+              {
+                "name": "Paste",
+                "key_code": 501
+              },
+              {
+                "name": "up",
+                "key_code": 82
+              },
+              {
+                "name": "Enter",
+                "key_code": 40
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row2"
+            }
+          },
+          "row3": {
+            "type": "array",
+            "example": [
+              {
+                "name": "window",
+                "key_code": 227
+              },
+              {
+                "name": "left",
+                "key_code": 80
+              },
+              {
+                "name": "down",
+                "key_code": 81
+              },
+              {
+                "name": "right",
+                "key_code": 79
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Layer_row3"
+            }
+          },
+          "left_encoder_map": {
+            "$ref": "#/components/schemas/Layer_left_encoder_map"
+          },
+          "right_encoder_map": {
+            "$ref": "#/components/schemas/Layer_right_encoder_map"
+          },
+          "gesture_map": {
+            "$ref": "#/components/schemas/Layer_gesture_map"
+          }
+        }
+      },
+      "Macros": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "keycode": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "key": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "example": {
+          "name": "Copy",
+          "keycode": 500,
+          "key": [
+            224,
+            6,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "MacrosList": {
+        "type": "object",
+        "properties": {
+          "macros": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Copy",
+                "keycode": 500,
+                "key": [
+                  224,
+                  6,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "name": "Paste",
+                "keycode": 501,
+                "key": [
+                  224,
+                  25,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "name": "AltTab",
+                "keycode": 502,
+                "key": [
+                  226,
+                  43,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Macros"
+            }
           }
         }
       },
