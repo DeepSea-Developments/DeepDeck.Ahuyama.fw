@@ -40,6 +40,10 @@
     {
       "name": "tapdance",
       "description": "Operations for Tapdance"
+    },
+    {
+      "name": "modtap",
+      "description": "Operations for ModTap"
     }
   ],
   "paths": {
@@ -327,6 +331,238 @@
         "responses": {
           "200": {
             "description": "Macros restored to default"
+          }
+        }
+      }
+    },
+    "/api/tapdance": {
+      "get": {
+        "tags": [
+          "tapdance"
+        ],
+        "summary": "Return all tapdance",
+        "description": "Return all tapdance\n",
+        "operationId": "getTapdance",
+        "responses": {
+          "200": {
+            "description": "Tapdance returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapdanceList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "tapdance"
+        ],
+        "summary": "Update a tapdance",
+        "description": "Update selected Tapdance\n",
+        "operationId": "updateTapdance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tapdance"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update selected Tapdance"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tapdance"
+        ],
+        "summary": "Create new tapdance.",
+        "description": "Create new Tapdance\n",
+        "operationId": "createTapdance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tapdance"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tapdance created"
+          },
+          "500": {
+            "description": "No more space"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tapdance"
+        ],
+        "summary": "Delete the selected tapdance",
+        "description": "Delete the selected tapdance\n",
+        "operationId": "deleteTapdance",
+        "parameters": [
+          {
+            "name": "keycode",
+            "in": "query",
+            "description": "The tapdance keycode",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "example": 501
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tapdance deleted succesfully"
+          },
+          "400": {
+            "description": "Tapdance keycode not found"
+          }
+        }
+      }
+    },
+    "/api/tapdance/restore": {
+      "put": {
+        "tags": [
+          "tapdance"
+        ],
+        "summary": "Restore default tapdance",
+        "description": "Restore default tapdance\n",
+        "operationId": "restoreTapdance",
+        "responses": {
+          "200": {
+            "description": "Tapdance restored to default"
+          }
+        }
+      }
+    },
+    "/api/modtap": {
+      "get": {
+        "tags": [
+          "modtap"
+        ],
+        "summary": "Return all modtap",
+        "description": "Return all modtap\n",
+        "operationId": "getModtap",
+        "responses": {
+          "200": {
+            "description": "Modtap returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModtapList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "modtap"
+        ],
+        "summary": "Update a modtap",
+        "description": "Update selected Modtap\n",
+        "operationId": "updateModtap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Modtap"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update selected Modtap"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "modtap"
+        ],
+        "summary": "Create new modtap.",
+        "description": "Create new Modtap\n",
+        "operationId": "createModtap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Modtap"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Modtap created"
+          },
+          "500": {
+            "description": "No more space"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "modtap"
+        ],
+        "summary": "Delete the selected modtap",
+        "description": "Delete the selected modtap\n",
+        "operationId": "deleteModtap",
+        "parameters": [
+          {
+            "name": "keycode",
+            "in": "query",
+            "description": "The tapdance keycode",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "example": 501
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Modtap deleted succesfully"
+          },
+          "400": {
+            "description": "Modtap keycode not found"
+          }
+        }
+      }
+    },
+    "/api/modtap/restore": {
+      "put": {
+        "tags": [
+          "modtap"
+        ],
+        "summary": "Restore default modtap",
+        "description": "Restore default modtap\n",
+        "operationId": "restoreModtap",
+        "responses": {
+          "200": {
+            "description": "Modtap restored to default"
           }
         }
       }
@@ -695,6 +931,138 @@
             ],
             "items": {
               "$ref": "#/components/schemas/Macros"
+            }
+          }
+        }
+      },
+      "Tapdance": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tap_list": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "keycode_list": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "keycode": {
+            "type": "integer"
+          }
+        },
+        "example": {
+          "name": "Media",
+          "tap_list": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "keycode_list": [
+            171,
+            168,
+            169,
+            172
+          ],
+          "keycode": 601
+        }
+      },
+      "TapdanceList": {
+        "type": "object",
+        "properties": {
+          "tapdance": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Media",
+                "tap_list": [
+                  1,
+                  2,
+                  3,
+                  4
+                ],
+                "keycode_list": [
+                  171,
+                  168,
+                  169,
+                  172
+                ],
+                "keycode": 601
+              },
+              {
+                "name": "num",
+                "tap_list": [
+                  1,
+                  3,
+                  5,
+                  7
+                ],
+                "keycode_list": [
+                  30,
+                  32,
+                  34,
+                  36
+                ],
+                "keycode": 602
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Tapdance"
+            }
+          }
+        }
+      },
+      "Modtap": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "keycode_short": {
+            "type": "integer"
+          },
+          "keycode_long": {
+            "type": "integer"
+          },
+          "keycode": {
+            "type": "integer"
+          }
+        },
+        "example": {
+          "name": "Num12",
+          "keycode": 651,
+          "keycode_short": 30,
+          "keycode_long": 31
+        }
+      },
+      "ModtapList": {
+        "type": "object",
+        "properties": {
+          "tapdance": {
+            "type": "array",
+            "example": [
+              {
+                "name": "Num12",
+                "keycode": 651,
+                "keycode_short": 30,
+                "keycode_long": 31
+              },
+              {
+                "name": "Num23",
+                "keycode": 652,
+                "keycode_short": 32,
+                "keycode_long": 33
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Modtap"
             }
           }
         }
