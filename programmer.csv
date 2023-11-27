@@ -1,0 +1,5 @@
+file,memory
+bootloader.bin,0x1000
+DeepDeck.bin,0x20000
+partition-table.bin,0x8000
+www_0.bin,0x220000
