@@ -1,3 +1,7 @@
+---
+comments: true
+---
+
 # Support
 
 If you need support, or any questions that are not answered in this wiki you can:
