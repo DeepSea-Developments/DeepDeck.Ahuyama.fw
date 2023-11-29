@@ -272,7 +272,6 @@ typedef enum {
 
 void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,uint8_t * report_state)
 {
-
 	// Send RGB notification on key changed.
 	uint8_t row = key_event.key_pos/MATRIX_ROWS;
 	uint8_t col = key_event.key_pos%MATRIX_ROWS;
@@ -308,18 +307,43 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		ESP_LOGE(TAG,"TAPDANCE EVENT with keycode %d", keycode);
 
 		uint8_t found_flag=0;
-		for(uint8_t i=0;i<5;i++)
+		//Check if specific tapdance is registered
+		dd_tapdance tapdance_aux;
+		for (int i = 0; i < g_tapdance_num; i++)
 		{
-			if (default_tapdance[keycode - TAPDANCE_BASE_VAL].tap_list[i] == key_event.counter)
+			if (g_user_tapdance[i].keycode == keycode)
+			{
+				tapdance_aux = g_user_tapdance[i];
+				found_flag = 1;
+				break;
+				/* code */
+			}
+			
+		}
+		if(!found_flag)
+		{
+			keycode = KC_NO;
+			return;
+		}
+
+		found_flag=0;
+
+		for(uint8_t i=0;i<TAPDANCE_LEN;i++)
+		{
+			if (tapdance_aux.tap_list[i] == key_event.counter) 
 			{
 				// Valid tapdance action. Set first the variables
 				iteration_type = TAPDANCE_ITERATION;
 				iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
 				// Change the keycode to desired action. Act as it was a single pressed event
-				keycode = default_tapdance[keycode - TAPDANCE_BASE_VAL].keycode_list[i];
+				keycode = tapdance_aux.keycode_list[i];
 				key_event.event = KEY_PRESSED;
 				found_flag = 1;
 				
+				break;
+			}
+			else if (tapdance_aux.tap_list[i] == 0)
+			{
 				break;
 			}
 		}
@@ -333,31 +357,47 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 	// Check if its modtap
 	else if((keycode >= MODTAP_BASE_VAL) && (keycode <= MODTAP_MAX_VAL))
 	{
-		ESP_LOGE(TAG,"MODTAP EVENT with keycode %d", keycode);
+		ESP_LOGE(TAG,"MODTAP EVENT with keycode %d", keycode); //TODO: test
 
-		uint8_t modtap_actions[2] = {KC_1,KC_2};  							//dummy to test will change with memory information!!
-
-		switch (key_event.event)
+		uint8_t i;
+		uint8_t found_f = 0;
+		for( i = 0; i < g_modtap_num; i++)
 		{
-		case KEY_MT_SHORT:
-			iteration_type = MODTAP_ITERATION;
-			iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
-			// Change the keycode to desired action. Act as it was a single pressed event
-			keycode = modtap_actions[0];
-			key_event.event = KEY_PRESSED;
-		break;
-		case KEY_MT_LONG_TIMEOUT:
-			keycode = modtap_actions[1];
-			key_event.event = KEY_PRESSED;
-		break;
-		case KEY_MT_LONG:
-			keycode = modtap_actions[1];
-			key_event.event = KEY_RELEASED;
-		break;
-		
-		default:
-			ESP_LOGE(TAG,"Why am i here?");
+			if (g_user_modtap[i].keycode == keycode)
+			{
+				found_f = 1;
+				break;
+			}
+			
+		}
+		if(found_f)
+		{
+			switch (key_event.event)
+			{
+			case KEY_MT_SHORT:
+				iteration_type = MODTAP_ITERATION;
+				iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
+				// Change the keycode to desired action. Act as it was a single pressed event
+				keycode = g_user_modtap[i].keycode_short;
+				key_event.event = KEY_PRESSED;
 			break;
+			case KEY_MT_LONG_TIMEOUT:
+				keycode = g_user_modtap[i].keycode_long;;
+				key_event.event = KEY_PRESSED;
+			break;
+			case KEY_MT_LONG:
+				keycode = g_user_modtap[i].keycode_long;;
+				key_event.event = KEY_RELEASED;
+			break;
+			
+			default:
+				ESP_LOGE(TAG,"Why am i here?");
+				break;
+			}
+		}
+		else
+		{
+			keycode = KC_NO;
 		}
 	}
 	//Leader key is pressed. Will activate Leader key mode. 
@@ -377,6 +417,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 	}
 	else if (key_event.event == KEY_LEADER)
 	{
+		// TODO: Change
 		// Init dummy events to be reviewed. ToDo take this into other place and NVS.
 		uint8_t dummy_sequences[3][LK_MAX_KEYS] = {{0,1,2,3},
 												   {0,5,10,15,15},

@@ -37,9 +37,9 @@ enum custom_tapdance
 
 enum custom_modtap
 {
-	KC_MT_1 = MODTAP_BASE_VAL,
-	KC_MT_2,
-	KC_MT_3
+	KC_MT1 = MODTAP_BASE_VAL,
+	KC_MT2,
+	KC_MT3
 };
 
 /* select a keycode for your macro
@@ -238,6 +238,23 @@ dd_tapdance default_tapdance[DEFAULT_TAPDANCE]={
 	  .tap_list={1,2,3,4,0},
 	  .keycode_list = {KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_PREV_TRACK, KC_MUTE},
 	  .keycode = KC_TD3},
+};
+
+dd_modtap default_modtap[DEFAULT_MODTAP]={
+	{ .name="mt1",
+	  .keycode_short = KC_1,
+	  .keycode_long = KC_2,
+	  .keycode = KC_MT1},
+	
+	{ .name="mt2",
+	  .keycode_short = KC_2,
+	  .keycode_long = KC_3,
+	  .keycode = KC_MT2},
+	
+	{ .name="mt3",
+	  .keycode_short = KC_4,
+	  .keycode_long = KC_5,
+	  .keycode = KC_MT3},
 };
 
 

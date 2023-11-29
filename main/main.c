@@ -169,6 +169,7 @@ void app_main()
 	nvs_load_layouts();
 	nvs_load_macros();
 	nvs_load_tapdance();
+	nvs_load_modtap();
 
 	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);

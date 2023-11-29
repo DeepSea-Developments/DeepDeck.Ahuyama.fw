@@ -27,8 +27,10 @@
 #define MATRIX_COLS 4 
 
 // The default number of items define (hardcoded. If you want to add or remove, you should modify this!)
-#define DEFAULT_LAYERS 3 	// number of layers predefined
-#define DEFAULT_TAPDANCE 3	// number of tapdances predefined
+#define DEFAULT_LAYERS 		3 	// number of layers predefined
+#define DEFAULT_TAPDANCE 	3	// number of tapdances predefined
+#define DEFAULT_MODTAP 		3	// number of tapdances predefined
+#define DEFAULT_LEADERKEY 	3	// number of tapdances predefined
 
 // Select diode direction
 #define COL2ROW
@@ -90,7 +92,11 @@
 #define TAPDANCE_LEN 6
 #define MAX_TAPDANCE 10		// Available Tapdances
 
-//Leader key definitions
+// Modtap definitions
+#define MAX_MODTAP 15		// Available modtaps
+
+//Leader key 
+#define MAX_LEADERKEY 15		// Available leaderkey
 #define LK_MAX_KEYS 10
 
 extern uint16_t macros[MACROS_NUM][MACRO_LEN];

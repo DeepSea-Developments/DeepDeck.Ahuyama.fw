@@ -95,6 +95,21 @@ typedef struct dd_tapdance_str {
 typedef char tapdance_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE]; 
 
 
+typedef struct dd_modtap_str {
+	char name[MT_NAME_LENGTH];
+	uint16_t keycode_short;			// Keycode when short pressed
+	uint16_t keycode_long;			// Keycode when long pressed
+	uint16_t keycode;				// Keycode that triggers this modtap
+}dd_modtap;
+
+/**
+ * @brief List of available tapdance in order
+ * 
+ */
+typedef char modtap_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE]; 
+
+
+
 
 typedef struct dd_macro_group_str 
 {
@@ -112,11 +127,6 @@ typedef struct dd_leaderkey_str {
 	uint8_t sequence[LK_MAX_SEQUENCE];	// Sequence of key pressed. in a 4x4 K14 would be 4, and K21 would be 5.
 }dd_leaderkey;
 
-typedef struct dd_modtap_str {
-	char name[MT_NAME_LENGTH];
-	uint16_t keycode_short;			// Keycode when short pressed
-	uint16_t keycode_long;			// Keycode when long pressed
-}dd_modtap;
 
 
 
@@ -144,10 +154,13 @@ typedef struct dd_macros_str {
 extern dd_tapdance *g_user_tapdance;
 extern dd_macros *g_user_macros;
 extern dd_layer *g_user_layers;
-
+extern dd_modtap *g_user_modtap;
+extern dd_leaderkey *g_user_leaderkey;
 
 extern uint8_t g_macro_num; //TODO: remove this kind of global variables
 extern uint8_t g_tapdance_num;
+extern uint8_t g_modtap_num;
+extern uint8_t g_leaderkey_num;
 
 #endif /* NVS_KEYMAPS_H_ */
 

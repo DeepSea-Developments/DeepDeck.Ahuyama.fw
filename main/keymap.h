@@ -25,6 +25,7 @@ extern dd_macros default_macros[MACROS_NUM];
 extern dd_macros *ptr_default_macros[MACROS_NUM];
 
 extern dd_tapdance default_tapdance[DEFAULT_TAPDANCE];
+extern dd_modtap default_modtap[DEFAULT_MODTAP];
 
 
 extern char encoder_items_names[ENCODER_SIZE][15];

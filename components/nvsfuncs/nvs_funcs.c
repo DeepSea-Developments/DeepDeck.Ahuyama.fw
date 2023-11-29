@@ -59,9 +59,20 @@
 #define LAYER_LIST_KEY 	"layer_list"
 
 // Tapdances
-#define TAPDANCE_NAMESPACE "tapdances"
-#define TAPDANCE_NUM_KEY "tp_num"
+#define TAPDANCE_NAMESPACE 	"tapdances"
+#define TAPDANCE_NUM_KEY 	"tp_num"
 #define TAPDANCE_LIST_KEY 	"tp_list"
+
+// Modtap
+#define MODTAP_NAMESPACE 	"modtaps"
+#define MODTAP_NUM_KEY 		"mt_num"
+#define MODTAP_LIST_KEY 	"mt_list"
+
+// Leaderkey
+#define LEADERKEY_NAMESPACE 	"leaderkeys"
+#define LEADERKEY_NUM_KEY 		"lk_num"
+#define LEADERKEY_LIST_KEY 		"lk_list"
+
 
 
 // NameSpaces
@@ -77,10 +88,14 @@ const static char *TAG = "NVS FUNCS";
 dd_layer *g_user_layers;
 dd_macros *g_user_macros;
 dd_tapdance *g_user_tapdance;
+dd_modtap *g_user_modtap;
+dd_leaderkey *g_user_leaderkey;
 
 
 uint8_t g_macro_num = 0;
 uint8_t g_tapdance_num = 0;
+uint8_t g_modtap_num = 0;
+uint8_t g_leaderkey_num = 0;
 
 
 /**
@@ -557,6 +572,8 @@ void nvs_load_layouts(void)
  * MACROS
  */
 
+// TODO: check all of these to see if they are working
+
 void nvs_macros_state(void)
 {
 	// Example of nvs_get_used_entry_count() to get amount of all key-value pairs in one namespace:
@@ -574,10 +591,6 @@ void nvs_macros_state(void)
 	nvs_close(handle);
 }
 
-/**
- * @brief load the macros from nvs
- *
- */
 void nvs_load_macros(void)
 {
 	ESP_LOGI("--", "LOADING USER MACROS");
@@ -634,7 +647,7 @@ void nvs_load_macros(void)
 	nvs_macros_state();
 }
 
-esp_err_t nvs_create_new_macro(dd_macros macro)
+esp_err_t nvs_create_new_macro(dd_macros macro) // TODO: Check if keycode or name does not repeat.
 {
 	nvs_handle_t nvs_handle;
 	esp_err_t error;
@@ -963,7 +976,8 @@ esp_err_t nvs_update_tapdance(dd_tapdance tapdance) // TODO: Test (with API)
 	}
 	if(!found)
 	{
-		ESP_LOGE(TAG,"TAOPDANCE not found");
+		ESP_LOGE(TAG,"TAPDANCE not found");
+		nvs_close(nvs_handle);
 		return ESP_ERR_NOT_FOUND;
 	}
 
@@ -1106,7 +1120,7 @@ esp_err_t nvs_delete_tapdance(uint8_t delete_tapdance_num)// TODO: Test (with ap
 	
 	nvs_close(nvs_handle);
 	
-	nvs_load_layouts();
+	nvs_load_tapdance();
 
 	return ESP_OK;
 
@@ -1137,12 +1151,322 @@ esp_err_t nvs_restore_default_tapdance(void) // TODO: test with API
 /**********
  * MODTAP
 ***********/
-void nvs_load_modtap(void);
-void nvs_write_default_modtap(nvs_handle_t nvs_handle);
-esp_err_t nvs_create_modtap(dd_modtap modtap);
-esp_err_t nvs_update_modtap(dd_modtap modtap);
-esp_err_t nvs_delete_modtap(uint8_t delete_modtap_num);
-esp_err_t nvs_restore_default_modtap(void);
+void nvs_load_modtap(void) 
+{
+	ESP_LOGI(TAG, "LOADING USER MODTAPS");
+
+	nvs_handle_t nvs_handle;
+	size_t dd_modtap_size = sizeof(dd_modtap);
+	esp_err_t error;
+	size_t modtap_list_size = sizeof(modtap_list_def);
+	modtap_list_def modtap_list;
+
+	uint8_t modtap_num = 0;
+
+	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE,  
+								NVS_READWRITE, 
+								&nvs_handle));
+
+	error = nvs_get_u8(	nvs_handle, 
+						MODTAP_NUM_KEY, 
+						&modtap_num);
+	switch (error)
+	{
+		case ESP_ERR_NVS_NOT_FOUND:
+			ESP_LOGE(TAG, "MODTAP Value not set yet. Running routine to write default values");
+			nvs_write_default_modtap(nvs_handle);
+			ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
+										MODTAP_NUM_KEY, 
+										&modtap_num));
+			break;
+		case ESP_OK:
+			ESP_LOGI(TAG, "%d Modtap loaded", modtap_num);
+			break;
+		default:
+			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
+			break;
+	}
+
+	// Get modtap list
+	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&modtap_list, 
+									&modtap_list_size
+								));
+
+	vPortFree(g_user_modtap); 
+	g_user_modtap = pvPortMalloc(modtap_num * sizeof(dd_modtap));
+
+	for (int i = 0; i < modtap_num; i++)
+	{
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle, modtap_list[i], (void *)&g_user_modtap[i], &dd_modtap_size));
+	}
+	g_modtap_num = modtap_num;
+	nvs_close(nvs_handle);
+	nvs_check_memory_status();
+}
+
+void nvs_write_default_modtap(nvs_handle_t nvs_handle) 
+{
+	ESP_LOGI(TAG, "WRITING DEFAULT MODTAP");
+
+	// Set the number of modtaps (by default DEFAULT_MODTAPS)
+	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								DEFAULT_MODTAP));
+	modtap_list_def modtap_list = {{0}};
+	size_t blob_size = sizeof(dd_modtap);
+
+	uuid_t uu;
+	char uu_str[SHORT_UUID_STR_LEN];
+
+	// Store each of the default modtaps
+	for (int i = 0; i < DEFAULT_MODTAP; i++)
+	{
+		// Generate short id for each modtap
+		uuid_generate(uu);
+		short_uuid_unparse(uu, uu_str);
+		sprintf(modtap_list[i], "mt_%s", uu_str);
+		ESP_LOGI(TAG,	"Storing modtap %s with keycode %d in memory key %s", 
+						default_modtap[i].name ,default_modtap[i].keycode,modtap_list[i]);
+
+		ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
+										modtap_list[i], 
+										(void *)&default_modtap[i], 
+										blob_size
+									));
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	// Store the array list
+	blob_size = sizeof(modtap_list_def);
+	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle,
+									MODTAP_LIST_KEY, 
+									(void *)(&modtap_list),
+									blob_size
+								));
+
+	// Commit memory to make sure everything is stored.
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+
+}
+
+esp_err_t nvs_create_modtap(dd_modtap modtap) // TODO: Check if keycode or name does not repeat.
+{
+	nvs_handle_t nvs_handle;
+	uint8_t modtap_num;
+	modtap_list_def current_list;
+	dd_modtap aux_modtap = modtap;
+	uuid_t uu;
+	char uu_str[SHORT_UUID_STR_LEN];
+
+	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
+								NVS_READWRITE, 
+								&nvs_handle));
+
+	// Read modtap list
+	size_t blob_size = sizeof(modtap_list_def);
+	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&current_list, 
+									&blob_size
+								));
+
+	// Read modtap number
+	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								&modtap_num));
+	
+	// Check if modtap_num + 1 will overflow the modtap list
+	if (modtap_num + 1 > MAX_MODTAP)
+	{
+		return ESP_ERR_NO_MEM;
+	}
+	
+	// Generate short id
+	uuid_generate(uu);
+	short_uuid_unparse(uu, uu_str);
+	sprintf(current_list[modtap_num], "mt_%s", uu_str);
+
+	// Store new modtap with new key
+	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
+									current_list[modtap_num], 
+									(void *)&aux_modtap, 
+									sizeof(dd_modtap)));
+
+	// Increase modtap num
+	modtap_num++;
+
+	// Save number of modtaps
+	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								modtap_num));
+
+	// Save modtap list
+	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&current_list, 
+									sizeof(modtap_list_def)
+								));
+	
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	
+	nvs_close(nvs_handle);	
+	nvs_load_modtap();
+
+	return ESP_OK;
+}
+
+esp_err_t nvs_update_modtap(dd_modtap modtap)
+{
+	nvs_handle_t nvs_handle;
+	modtap_list_def modtap_list;
+	dd_modtap modtap_aux = modtap;
+	uint8_t modtap_num;
+	size_t modtap_list_size = sizeof(modtap_list_def);
+	uint8_t found = 0;
+
+	// Open Namespace
+	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
+								NVS_READWRITE, 
+								&nvs_handle));
+	
+	// Get modtap number
+	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								&modtap_num));
+	
+	// Get modtap list
+	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&modtap_list, 
+									&modtap_list_size
+								));
+
+	for(int i=0; i<modtap_num;i++)
+	{
+		ESP_LOGI(TAG,"modtap %i = %s", i, modtap_list[i]);
+	}
+
+	// Iteration to identify the modtap based on the keycode
+	uint8_t i;
+	for(i=0; i<modtap_num; i++)
+	{
+		if(g_user_modtap[i].keycode == modtap_aux.keycode)
+		{
+			found = 1;
+			break;
+		}
+	}
+	if(!found)
+	{
+		ESP_LOGE(TAG,"MODTAP not found");
+		nvs_close(nvs_handle);
+		return ESP_ERR_NOT_FOUND;
+	}
+
+	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
+									modtap_list[i], 
+									(void *)&modtap_aux, 
+									sizeof(dd_modtap)
+								));
+
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+
+	nvs_close(nvs_handle);
+	nvs_load_modtap();
+
+	return ESP_OK;
+}
+
+esp_err_t nvs_delete_modtap(uint8_t delete_modtap_num)
+{
+	nvs_handle_t nvs_handle;
+	uint8_t modtap_num;
+	modtap_list_def current_list;
+	size_t modtap_list_size = sizeof(modtap_list_def);
+
+	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
+								NVS_READWRITE, 
+								&nvs_handle));
+
+	// Read modtap list
+	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&current_list, 
+									&modtap_list_size
+								));
+
+	// Read modtap number
+	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								&modtap_num));
+	
+
+
+	// Erase key
+	ESP_ERROR_CHECK(nvs_erase_key(	nvs_handle,
+									current_list[delete_modtap_num]
+								));
+
+	// Decrease modtap num
+	modtap_num--;
+
+	// Remove item in list and reorganize it.
+	for(int i=delete_modtap_num; i<modtap_num; i++)
+	{
+		strcpy(current_list[i],current_list[i+1]);
+	}
+
+	strcpy(current_list[modtap_num],"");
+
+	// Save number of modtaps
+	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
+								MODTAP_NUM_KEY, 
+								modtap_num));
+
+	// Save modtap list
+	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
+									MODTAP_LIST_KEY, 
+									(void *)&current_list, 
+									sizeof(modtap_list_def)
+								));
+	
+	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+
+	nvs_close(nvs_handle);	
+	nvs_load_modtap();
+
+	return ESP_OK;
+
+}
+
+esp_err_t nvs_restore_default_modtap(void) 
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	error = nvs_open(MODTAP_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error == ESP_OK)
+	{	
+		nvs_erase_all(nvs_handle); // Check if this works and does not create issues.
+		nvs_commit(nvs_handle);
+		nvs_write_default_modtap(nvs_handle);
+		nvs_close(nvs_handle);
+		nvs_load_modtap();
+	}
+	else
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		return error;
+	}
+
+	return ESP_OK;
+}
+
+/**********
+ * LEADERKEY
+***********/
+
 
 /**********
  * LED
