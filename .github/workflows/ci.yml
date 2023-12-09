@@ -28,7 +28,7 @@ jobs:
       - run: pip install mkdocs-minify-plugin
       - run: pip install mkdocs-render-swagger-plugin
       - run: pip install git+https://${GH_TOKEN}@github.com/electronick-co/mkdocs-material-insiders.git
-      - run: mkdocs gh-deploy --force
+      - run: CI=true INSIDERS=true mkdocs gh-deploy --force
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

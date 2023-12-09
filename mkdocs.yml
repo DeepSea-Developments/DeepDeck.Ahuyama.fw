@@ -107,7 +107,6 @@ plugins:
   - social
   - search
   - tags
-  - meta
   - glightbox
   - blog:
       archive: false
@@ -116,7 +115,7 @@ plugins:
       categories_toc: false
   - render_swagger
 
-# Continuous integration
+    # CI=1 mkdocs build
   - group:
       enabled: !ENV CI
       plugins:
@@ -128,7 +127,12 @@ plugins:
             branch: mkdocs
         - minify:
             minify_html: true
-        # - optimize
+
+  # INSIDERS=1 mkdocs build
+  - group:
+      enabled: !ENV INSIDERS
+      plugins:
+        - meta
 
 
   # Page tree
