@@ -70,10 +70,17 @@ void encoder_report(void *pvParameters);
 
 
 /**
- * @brief Tasks that hanlde deep sleep mode
+ * @brief Tasks that handles deep sleep mode
  * 
  * @param pvParameters 
  */
 void deep_sleep(void *pvParameters);
+
+/**
+ * @brief Tasks that handles screensaer mode
+ * 
+ * @param pvParameters 
+ */
+void screensaver(void *pvParameters);
 
 #endif

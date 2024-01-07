@@ -213,6 +213,11 @@ void app_main()
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
+#ifdef SCREENSAVER_MINS
+	xTaskCreate(screensaver, "screensaver task", MEM_SCREENSAVER_TASK, NULL, PRIOR_SCREENSAVER_TASK, NULL);
+	ESP_LOGI("Screensaver", "initialized");
+#endif
+
 #ifdef WIFI_ENABLE
 	// spiffs_init();
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
