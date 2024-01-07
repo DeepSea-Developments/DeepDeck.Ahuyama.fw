@@ -28,7 +28,8 @@
  */
 typedef enum {
 	S_NORMAL = 0,
-    S_SETTINGS
+    S_SETTINGS,
+    S_SCREENSAVER
 	
 } deepdeck_status_t;
 

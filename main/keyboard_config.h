@@ -88,6 +88,8 @@
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
 //#define SLEEP_MINS 50 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
+// for screensaver
+#define SCREENSAVER_MINS 1
 
 
 /*
@@ -154,6 +156,7 @@ extern TaskHandle_t xKeyreportTask;
 
 #define MEM_WIFI_TASK				1024*4
 #define MEM_SLEEP_TASK				1024*4
+#define MEM_SCREENSAVER_TASK		1024*4
 #define	MEM_BATTERY_TASK			1024*4
 #define MEM_KEYBOARD_TASK			1024*8
 #define	MEM_LEDS_TASK				1024*4
@@ -170,6 +173,7 @@ extern TaskHandle_t xKeyreportTask;
 #define PRIOR_ENCODER_TASK			4
 #define PRIOR_OLED_TASK				3
 #define PRIOR_GESTURE_TASK			4
+#define PRIOR_SCREENSAVER_TASK		6
 
 
 #endif
