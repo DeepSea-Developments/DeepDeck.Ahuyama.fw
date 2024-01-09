@@ -54,13 +54,14 @@ TaskHandle_t xKeyreportTask;
  *
  */
 bool DEEP_SLEEP = true; // flag to check if we need to go to deep sleep
+bool SCREENSAVER_ON = false; // flag to check if we should save the screen
 
 void oled_task(void *pvParameters)
 {
 	deepdeck_status = S_NORMAL; // sSet the status of the screen.
 	ble_connected_oled();
 	bool CON_LOG_FLAG = false; // Just because I don't want it to keep logging the same thing a billion times
-
+	bool INIT_FROM_SCREENSAVER = false;
 	while (1)
 	{
 		switch (deepdeck_status)
@@ -78,12 +79,19 @@ void oled_task(void *pvParameters)
 			}
 			else
 			{
+				if (INIT_FROM_SCREENSAVER == true)
+				{
+					// wake up screen
+					u8g2_SetPowerSave(&u8g2, 0);
+				}
+				
 				if (CON_LOG_FLAG == true)
 				{
 					ble_connected_oled();
 				}
 				update_oled();
 				CON_LOG_FLAG = false;
+				INIT_FROM_SCREENSAVER = false;
 			}
 			break;
 		case S_SETTINGS: // Settings mode, showing the internal menu
@@ -100,9 +108,29 @@ void oled_task(void *pvParameters)
 			// apds9960_free();
 			config_interrup_pin();
 			break;
+		case S_SCREENSAVER: 
+			// power down screen
+			u8g2_SetPowerSave(&u8g2, 1); 
+			INIT_FROM_SCREENSAVER = true;
+			break;
 		}
 		vTaskDelay(pdMS_TO_TICKS(100));
 	}
+}
+
+/*
+ * Turns off screensaver if enabled
+ * and returns true if action was taken
+*/
+bool turnOffScreensaver() {
+	if (deepdeck_status == S_SCREENSAVER)
+	{
+		deepdeck_status = S_NORMAL;
+		SCREENSAVER_ON = false;
+		return true;
+	}
+
+	return false;
 }
 
 void gesture_task(void *pvParameters)
@@ -187,9 +215,14 @@ void key_reports(void *pvParameters)
 		// Check if the report was modified, if so send it
 		if (memcmp(past_report, report_state, sizeof past_report) != 0)
 		{
-			DEEP_SLEEP = false;
+			// wake up
+			DEEP_SLEEP = false; 
+			turnOffScreensaver(deepdeck_status);
+			
 			void *pReport;
 			memcpy(past_report, report_state, sizeof past_report);
+
+
 
 #ifndef NKRO
 			uint8_t trunc_report[REPORT_LEN] = {0};
@@ -391,4 +424,56 @@ void deep_sleep(void *pvParameters)
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
+#endif
+
+/* If no key press has been recieved in SCREENSAVER_MINS amount of minutes, truen on screensaver
+ * Any Key press should remove screensaver
+ *  */
+#ifdef SCREENSAVER_MINS
+#ifdef OLED_ENABLE
+void screensaver(void *pvParameters)
+{
+	uint64_t initial_time = esp_timer_get_time(); // notice that timer returns time passed in microseconds!
+	uint64_t current_time_passed = 0;
+	while (1)
+	{
+		current_time_passed = (esp_timer_get_time() - initial_time);
+
+		// reset time from last key press
+		if (SCREENSAVER_ON == false)
+		{
+			current_time_passed = 0;
+			initial_time = esp_timer_get_time();
+			SCREENSAVER_ON = true;
+		}
+
+		if ((((double)current_time_passed / USEC_TO_SEC) >= (double)(SEC_TO_MIN * SCREENSAVER_MINS)))
+		{
+			switch (deepdeck_status) 
+			{
+			case S_SCREENSAVER:
+				// screensave is already on, nothing to do
+				break;
+			default:
+				// screensaver is not on, turn it on
+				if (SCREENSAVER_ON == true)
+				{
+					ESP_LOGE(SYSTEM_REPORT_TAG, "Enabling Screensaver!");
+
+					deepdeck_status = S_SCREENSAVER;
+				}
+				// checks and screensaver
+				if (deepdeck_status != S_SCREENSAVER)
+				{
+					current_time_passed = 0;
+					initial_time = esp_timer_get_time();
+					deepdeck_status = S_SCREENSAVER;
+				}
+			}
+		}
+
+		vTaskDelay(pdMS_TO_TICKS(10));
+	}
+}
+#endif
 #endif
