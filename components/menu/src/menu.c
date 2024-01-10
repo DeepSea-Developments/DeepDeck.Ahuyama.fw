@@ -98,13 +98,14 @@ menu_item_t m_main_array[] =
 // };
 
 // ------------------LED modes -------------------------------
-char menu_led_mode[5][MENU_CHAR_NUM] =
+char menu_led_mode[6][MENU_CHAR_NUM] =
     {
         "Off",
         "Pulsating",
         "Progressive",
         "Rainbow",
-        "Solid"};
+        "Solid",
+        "Back"};
 menu_item_t m_led_array[] =
     {
         // Descripción                 //Acción             //Siguiente menu      ó     //Función
@@ -113,6 +114,7 @@ menu_item_t m_led_array[] =
         {menu_led_mode[2], MA_FUNCTION, NONE, &menu_rgb_mode_2},
         {menu_led_mode[3], MA_FUNCTION, NONE, &menu_rgb_mode_3},
         {menu_led_mode[4], MA_FUNCTION, NONE, &menu_rgb_mode_4},
+        {menu_led_mode[5], MA_FUNCTION, NONE, &menu_goto_main},
         {0, MA_END, 0, 0}};
 
 // ----------------------------------- Menu Array ------------------------------------------
@@ -468,6 +470,11 @@ menu_ret menu_goto_sleep(void)
 menu_ret menu_exit(void)
 {
   return mret_exit;
+}
+
+menu_ret menu_goto_main(void) 
+{
+  return mret_goto_main_menu;
 }
 
 uint8_t menu_get_goto_sleep(void)
