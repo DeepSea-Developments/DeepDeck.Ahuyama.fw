@@ -44,6 +44,10 @@
     {
       "name": "modtap",
       "description": "Operations for ModTap"
+    },
+    {
+      "name": "leaderkey",
+      "description": "Operations for LeaderKey"
     }
   ],
   "paths": {
@@ -566,6 +570,107 @@
           }
         }
       }
+    },
+    "/api/leaderkey": {
+      "get": {
+        "tags": [
+          "leaderkey"
+        ],
+        "summary": "Return all leaderkeys",
+        "description": "Return all leaderkey\n",
+        "operationId": "getLeaderkey",
+        "responses": {
+          "200": {
+            "description": "Leaderkey returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderkeyList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "leaderkey"
+        ],
+        "summary": "Update a Leaderkey",
+        "description": "Update selected Modtap\n",
+        "operationId": "updateLeaderkey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Leaderkey"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update selected Leaderkey"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "leaderkey"
+        ],
+        "summary": "Create new leaderkey.",
+        "description": "Create new LEaderkey\n",
+        "operationId": "createLeaderkey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Leaderkey"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Leaderkey created"
+          },
+          "500": {
+            "description": "No more space"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "leaderkey"
+        ],
+        "summary": "Delete the selected modtap",
+        "description": "Delete the selected Leaderkey\n",
+        "operationId": "deleteLeaderkey",
+        "parameters": [
+          {
+            "name": "keycode",
+            "in": "query",
+            "description": "The tapdance keycode",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "example": 501
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leaderkey deleted succesfully"
+          },
+          "400": {
+            "description": "Leaderkey keycode not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1063,6 +1168,65 @@
             ],
             "items": {
               "$ref": "#/components/schemas/Modtap"
+            }
+          }
+        }
+      },
+      "Leaderkey": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "keycode": {
+            "type": "integer"
+          },
+          "sequence": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "example": {
+          "name": "Num12",
+          "keycode": 651,
+          "sequence": [
+            1,
+            6,
+            11,
+            16
+          ]
+        }
+      },
+      "LeaderkeyList": {
+        "type": "object",
+        "properties": {
+          "tapdance": {
+            "type": "array",
+            "example": [
+              {
+                "name": "code1",
+                "keycode": 200,
+                "sequence": [
+                  1,
+                  6,
+                  11,
+                  16
+                ]
+              },
+              {
+                "name": "code2",
+                "keycode": 350,
+                "sequence": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Leaderkey"
             }
           }
         }
