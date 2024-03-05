@@ -1,14 +1,16 @@
 ---
-date: 2022-10-30 
+date: 2022-10-14 
 authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Crowdsupply campaing
+  - crowdsupply
 ---
 
 We are very happy to announce that our project has been funded! (147% funded at the moment of this publication!) Thanks to all the backers that made this possible and Crowd Supply for supporting and hosting our project!
+
+<!-- more -->
 
 ## What Comes Next?
 

@@ -5,7 +5,17 @@ description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Crowdsupply campaing
+  - news
+links:
+  - en/Docs/api.md 
+  - Insiders:
+    - en/Docs/api.md
+    - en/Docs/api.md
+slug: help-im-trapped-in-a-universe-factory
+image: ../../en/QuickStartGuide/assets/Deepdecksurvey.jpg
+tags:
+  - Foo
+  - Bar
 ---
 
 # Tell us about your experience with DeepDeck
@@ -15,7 +25,7 @@ categories:
   <figcaption>DeepDeck Macropad</figcaption>
 </figure>
 
-
+<!-- more -->
 
 Hi there, we are looking forward to improve our product, that's why we created a short survey for the DeepDeck community!
 

@@ -109,10 +109,17 @@ plugins:
   - tags
   - glightbox
   - blog:
-      archive: false
-      archive_toc: false
-      categories: false
-      categories_toc: false
+      archive: true
+      archive_toc: true
+      categories: true
+      categories_toc: true
+      blog_toc: true
+      post_url_format: "{slug}"
+      post_excerpt: required
+      post_excerpt_separator: <!-- more -->
+      pagination_per_page: 5
+      pagination_keep_content: true
+      authors_profiles: true 
   - render_swagger
 
     # CI=1 mkdocs build
@@ -161,4 +168,5 @@ nav:
     - en/Resources/index.md
     - 3d printed accesories: en/Resources/3d-prints.md
     - Other accesories: en/Resources/accessories.md
-  - Blog: blog/index.md
+  - Blog: 
+    - blog/index.md

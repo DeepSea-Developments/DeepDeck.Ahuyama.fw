@@ -1,16 +1,18 @@
 ---
-date: 2022-08-30 
+date: 2022-09-30 
 authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Crowdsupply campaing
+  - crowdsupply
 ---
 
 {deepdeck-2-highres | link}
 
 We are very excited that we can finally announce our project! DeepDeck is more than just an open-hardware macropad with LEDs, rotary encoders, and a screen. We see it as the _multitool_ of input devices. And, while it comes with a lot of built-in functionality, we are working hard to integrate even more. We invite you to join the DeepDeck community and help us think of new features that never would have occurred to us!
+
+<!-- more -->
 
 This campaign includes four different versions of DeepDeck, including three different kits:
 

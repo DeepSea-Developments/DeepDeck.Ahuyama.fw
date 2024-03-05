@@ -1,16 +1,18 @@
 ---
-date: 2022-10-14 
+date: 2022-10-09 
 authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Crowdsupply campaing
+  - crowdsupply
 ---
 
 This past week we went over 200% of our campaign goal! Thank you to everyone for your support. We are very excited and have been working hard on taking into account all of your suggestions and comments on our [Discord channel](https://linktr.ee/deepdeck). So we're also making development plans for extra features you will have when you receive your DeepDeck.
 
 As part of this update, we wanted to share some of the process of building DeepDeck. This week, we received our third iteration of DeepDeck:
+
+<!-- more -->
 
 {third-version}
 

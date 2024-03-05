@@ -1,12 +1,12 @@
 ---
 authors: 
   - ElectroNick
-date: 2022-10-30 
+date: 2022-10-11   
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
   a blog alongside your documentation or standalone
 categories:
-  - Crowdsupply campaing
+  - crowdsupply
 ---
 
 # Use it with visual studio code!
@@ -22,6 +22,8 @@ One of our backers send us a question that made us integrate a *new feature* int
 {deepdeck-oled-view | link,small}
 
 We also wanted to show the process of integrating a new layer into DeepDeck. We are going to make it with Visual Studio Code.
+
+<!-- more -->
 
 ### 1. Explore
 

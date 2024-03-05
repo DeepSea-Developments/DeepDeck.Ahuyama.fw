@@ -1,11 +1,11 @@
 ---
-date: 2022-10-30 
+date: 2023-04-07
 authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
-  a blog alongside your documentation or standalone
+  a blog alongside your documentation or standalone 
 categories:
-  - Crowdsupply campaing
+  - crowdsupply
 ---
 
 {shipment}
@@ -13,6 +13,8 @@ categories:
 Hi DeepDeck community!
 
 We are glad to announce that you will have the DeepDeck soon in your hands! (and if you haven't bought yours yet, Crowd Supply will have a small stock, so get yours before they run out!!)
+
+<!-- more -->
 
 # Timeline
 
