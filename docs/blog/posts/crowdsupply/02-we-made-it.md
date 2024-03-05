@@ -8,6 +8,8 @@ categories:
   - crowdsupply
 ---
 
+# We made it!!
+
 We are very happy to announce that our project has been funded! (147% funded at the moment of this publication!) Thanks to all the backers that made this possible and Crowd Supply for supporting and hosting our project!
 
 <!-- more -->

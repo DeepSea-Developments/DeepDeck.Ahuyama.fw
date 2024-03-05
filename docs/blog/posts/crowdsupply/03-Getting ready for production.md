@@ -1,5 +1,5 @@
 ---
-date: 2022-10-09 
+date: 2022-11-09 
 authors: [ElectroNick]
 description: >
   Our new blog is built with the brand new built-in blog plugin. You can build
@@ -7,6 +7,8 @@ description: >
 categories:
   - crowdsupply
 ---
+
+# Getting ready for production!
 
 This past week we went over 200% of our campaign goal! Thank you to everyone for your support. We are very excited and have been working hard on taking into account all of your suggestions and comments on our [Discord channel](https://linktr.ee/deepdeck). So we're also making development plans for extra features you will have when you receive your DeepDeck.
 

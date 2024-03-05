@@ -11,25 +11,20 @@ links:
   - Insiders:
     - en/Docs/api.md
     - en/Docs/api.md
-slug: help-im-trapped-in-a-universe-factory
-image: ../../en/QuickStartGuide/assets/Deepdecksurvey.jpg
-tags:
-  - Foo
-  - Bar
+image: crowdsupply/img/production5.JPG
 ---
 
 # Tell us about your experience with DeepDeck
 
-<figure markdown="span">
-  ![DeepDecksurvey](../../en/QuickStartGuide/assets/Deepdecksurvey.jpg){ width="600" }
-  <figcaption>DeepDeck Macropad</figcaption>
-</figure>
+Hi there, we are looking forward to improve our product, that's why we created a [short survey](https://bit.ly/49uD6Z9) for the DeepDeck community!
+
+We would love your feedback on how have you been using the macropad, as well as performance, and potential improvements you might like to see in this great open source macropad. 
 
 <!-- more -->
 
-Hi there, we are looking forward to improve our product, that's why we created a short survey for the DeepDeck community!
-
-We would love your feedback on how have you been using the macropad, as well as performance, and potential improvements you might like to see in this great open source macropad. 
+<figure markdown="span">
+  ![DeepDecksurvey](crowdsupply/img/production5.JPG){ width="400" }
+</figure>
 
 1. Are you using it for gaming?
 2. Have you improved your design skills?

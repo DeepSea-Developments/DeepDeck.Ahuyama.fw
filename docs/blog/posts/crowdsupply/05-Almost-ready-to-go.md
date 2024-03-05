@@ -6,9 +6,10 @@ description: >
   a blog alongside your documentation or standalone
 categories:
   - crowdsupply
+slug: almost-ready-to-go
 ---
 
-{production5.jpg}
+# Almost ready to go!
 
 Hi DeepDeck supporters!
 
@@ -16,18 +17,30 @@ We are very excited to announce that we are almost ready to ship! We had a coupl
 
 <!-- more -->
 
-{production3.jpg}
+<figure markdown="span">
+  ![DeepDeck production](img/production5.JPG){ width="400" }
+</figure>
+
+<figure markdown="span">
+  ![DeepDeck production](img/production3.jpeg){ width="400" }
+</figure>
+
 
 ## Switches and other fixes!
 
-{switch2}
+<figure markdown="span">
+  ![DeepDeck switch](img/switch2.jpg){ width="400" }
+</figure>
 
-Another update is that we integrated a switch into the design. Although DeepDeck does not come with a battery, it does have a connector to connect [this kind of battery] (https://www.sparkfun.com/products/13855). The switch will help save the battery, and we plan to integrate further options for battery savings!
+
+Another update is that we integrated a switch into the design. Although DeepDeck does not come with a battery, it does have a connector to connect [this kind of battery]# (https://www.sparkfun.com/products/13855). The switch will help save the battery, and we plan to integrate further options for battery savings!
 There was also an issue with the USB C connector. USB-C to USB-C cables did not work (but are now fixed) and we had a weird case of one-sided USB-C (only when you put the cable in one position, the PC detected it for programming). Everything is now solved and you can use it with any cable in any position, as it should be.
 
 ## Team behind DeepDeck
 
-{deepdeckteam.jpg} 
+<figure markdown="span">
+  ![DeepDeck team](img/DeepDeckTeam.JPG){ width="600" }
+</figure>
 
 DeepDeck was born as an internal project for our company, DeepSea developments. And the idea still stands. With this production, we will give all of our teammates a DeepDeck so they can use it in the everyday job (Developers, admin, sales, marketing) This will ensure that we will be making new layouts, new updates for different use cases, and we will also hear from the community and integrate all the cool things you do with the DeepDeck! :D
 

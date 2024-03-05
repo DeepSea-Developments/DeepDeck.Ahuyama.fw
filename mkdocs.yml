@@ -7,7 +7,7 @@ site_description: >-
   you to get more productive by using it with your work/hobby/leisure programs.
 
 # Copyright
-copyright: Copyright &copy; 2022 - 2023 DeepDeck by DeepSea Developments
+copyright: Copyright &copy; 2022 - 2024 DeepDeck by DeepSea Developments
 
 theme:
   name: material
@@ -109,7 +109,7 @@ plugins:
   - tags
   - glightbox
   - blog:
-      archive: true
+      archive: false
       archive_toc: true
       categories: true
       categories_toc: true

@@ -6,15 +6,20 @@ description: >
   a blog alongside your documentation or standalone 
 categories:
   - crowdsupply
+slug: shipment-in-progress
 ---
 
-{shipment}
+# Shipment in progress
 
 Hi DeepDeck community!
 
 We are glad to announce that you will have the DeepDeck soon in your hands! (and if you haven't bought yours yet, Crowd Supply will have a small stock, so get yours before they run out!!)
 
 <!-- more -->
+
+<figure markdown="span">
+  ![DeepDeck shipment](img/shipment.jpg){ width="600" }
+</figure>
 
 # Timeline
 
