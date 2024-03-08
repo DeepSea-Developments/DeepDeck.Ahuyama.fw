@@ -37,6 +37,7 @@ theme:
     - content.code.annotate
     - content.code.copy
     - content.code.select
+    - content.tabs.link
 
 
   palette: 
@@ -102,7 +103,10 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
- 
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
 plugins:
  
   - search

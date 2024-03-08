@@ -9,7 +9,6 @@ comments: true
 </figure>
 
 
-
 ## **Congratulations!** You now have a DeepDeck! Now what?
 
 In this guide, we will show you how to:
