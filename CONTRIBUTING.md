@@ -17,12 +17,11 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 - [I Have a Question](#i-have-a-question)
 - [I Want To Contribute](#i-want-to-contribute)
   - [Reporting Bugs](#reporting-bugs)
+  - [Understanding the repository structure](#understanding-the-repository-structure)
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Your First Code Contribution](#your-first-code-contribution)
   - [Improving The Documentation](#improving-the-documentation)
-- [Styleguides](#styleguides)
-  - [Commit Messages](#commit-messages)
-- [Join The Project Team](#join-the-project-team)
+- [Special thanks](#special-thanks)
 
 
 
@@ -99,6 +98,21 @@ Once it's filed:
 
 <!-- You might want to create an issue template for bugs and errors that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
+### Understanding the repository structure
+
+
+![gitflow](gitflow.png)
+
+We use GitFlow as the way to organize our repository. This works with several branches that keep the things organized. The branches used are:
+
+- **main:** This branch contains the latest stable code (and should be the same as the latest release).
+- **develop:** This branch contains code that is being prepared for the next release, in general terms should be functional, and if want to do a pull request, you should do it from this code. 
+- **feature branches:** This section contains branches like "feature/new_ui" where the name after the slash represents the feature that is being worked on. After the feature is ready, it is committed back to develop branch.
+
+There are other branches like _hotfix_ that are not so common.
+
+One branch that is very important and is outside the gitflow scheme, is the [**mkdocs**](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw/tree/mkdocs) branch, that have all the information of the webpage [www.deepdeck.co](https://deepdeck.co). Are you creating your own project and you like DeepDeck documentation? go ahead and copy it :) it's also open-source!
+
 
 ### Suggesting Enhancements
 
@@ -126,26 +140,57 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/DeepSe
 <!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
 ### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
 
--->
+To set up your environment to program:
+
+Follow these steps:
+- Install VScode
+- Install ESP-IDF plugin on VScode
+- Install the correct version of IDF:
+  - For code before the release 0.6.0, use IDF version 4.4
+  - For code in version 0.6.0 or above, use IDF version 5
+  - If unsure, install the lates version if IDF (should be 5)
+- Fork and clone the repository to your machine
+- Get to branch develop. Compile and test in your DeepDeck. Remember that you have to install the drivers so it is recognized as a serial port.
+  - ***Note:** if your DeepDeck had an older version, erase first all the flash and then program to avoid issues with the memory.
+  - You can start playing with the code directly
 
 ### Improving The Documentation
+
+The main documentation of DeepDeck is on the webpage [www.deepdeck.co](https://deepdeck.co)
+
+You are very welcome to help us improve it. 
+The documentation is made with mkdocs, a markdown based framework for documentation. To edit the code, you can go to the branch mkdocs. It contains just the documentation.
+
+To run the documentation locally:
+- Go to mkdocs branch on this repository.
+- Install the dependencies 'pip install -r requirements'
+- Run the docs 'python -m mkdocs serve'
+- This will run the framework and you can click on the link on the output. Every modification you do on the documents will be automatically refreshed locally.
+
+Besides mkdocs, we use the [Materials](https://squidfunk.github.io/mkdocs-material/) template, by [squidfunk](https://github.com/squidfunk). You can go to the page and explore the different things you can implement.
+
+After your contribution, you can do a pull request :)
+
 <!-- TODO
 Updating, improving and correcting the documentation
 
 -->
 
-## Styleguides
-### Commit Messages
+<!-- ## Styleguides -->
+<!-- ### Commit Messages -->
 <!-- TODO
 
 -->
 
-## Join The Project Team
+<!-- ## Join The Project Team -->
 <!-- TODO -->
 
 <!-- omit in toc -->
 ## Attribution
 This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!
+
+## Special thanks
+Special thanks to @sampsonight for taking the time to explain to us how to contribute 
+
+
