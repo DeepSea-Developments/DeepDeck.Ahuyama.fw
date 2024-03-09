@@ -62,6 +62,9 @@ extra_css:
   - stylesheets/extra.css
 
 extra:
+  analytics:
+    provider: google
+    property: G-1WMF7F09F0
   alternate:
     - name: English
       link: /
@@ -69,10 +72,7 @@ extra:
     - name: Español
       link: /es/ 
       lang: es
-  
-  analytics:
-    provider: google
-    property: G-1WMF7F09F0
+
 
   consent:
     title: Cookie consent
