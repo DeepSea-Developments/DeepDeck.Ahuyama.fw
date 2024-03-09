@@ -11,7 +11,6 @@ links:
   - Insiders:
     - en/Docs/api.md
     - en/Docs/api.md
-image: crowdsupply/img/production5.JPG
 ---
 
 # Tell us about your experience with DeepDeck
@@ -25,6 +24,8 @@ We would love your feedback on how have you been using the macropad, as well as 
 <figure markdown="span">
   ![DeepDecksurvey](crowdsupply/img/production5.JPG){ width="400" }
 </figure>
+
+
 
 1. Are you using it for gaming?
 2. Have you improved your design skills?

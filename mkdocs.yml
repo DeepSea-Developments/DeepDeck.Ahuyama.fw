@@ -69,6 +69,10 @@ extra:
     - name: Español
       link: /es/ 
       lang: es
+  
+  analytics:
+    provider: google
+    property: G-1WMF7F09F0
 
   consent:
     title: Cookie consent
@@ -106,6 +110,21 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+
+
 
 plugins:
  
