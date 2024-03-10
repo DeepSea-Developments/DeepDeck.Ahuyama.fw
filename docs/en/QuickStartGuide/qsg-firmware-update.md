@@ -88,7 +88,7 @@ To make sure the firmware is updated, open the onboard menu on the DeepDeck. To 
     A known issue is that **after flashing the deepdeck** the bluetooth connection goes crazy and it connects and disconnects. This just happens on this situation, and to solve this you should unpair the deepdeck from the device, reboot the deepdeck, and boot again.
     We will see how to solve this bug, but as the workaround is easy and **only happens after flashing** it has low priority on the development.
 
-For more information, go to the [complete guide of the DeepDeck installer](../Docs/installer.md).
+For more information, go to the [complete guide of the DeepDeck installer](../opensource/installer/installer.md).
 
 
   

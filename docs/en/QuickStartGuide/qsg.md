@@ -15,7 +15,7 @@ In this guide, we will show you how to:
 
 1. [Connect your DeepDeck](#connect-deepdeck-via-bluetooth) to you PC/Laptop/smartphone **using Bluetooth** and do a basic test
 1. [Update the firmware](qsg-firmware-update.md) of your DeepDeck so you can have the latest version with firmware
-1. Explore the [DeepDeck Webserver](qsg-webserver.md) to program and customize it!
+2. Explore the DeepDeck Webserver to program and customize it!
 
 ## Connect DeepDeck via Bluetooth
 

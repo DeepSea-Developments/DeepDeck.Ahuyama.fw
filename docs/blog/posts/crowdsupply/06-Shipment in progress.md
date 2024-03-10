@@ -36,7 +36,7 @@ If you have any question, join our [Discord server](https://discord.com/invite/9
 
 # What comes next?
 
-DeepDeck is a live project. You will receive the hardware and a basic firmware. Make sure to follow the instruction on the webpage [www.deepdeck.co](www.deepdeck.co) to update the firmware. We are preparing a major release on the firmware version, and we are doing everything we can so you have it when you receive your DeepDeck!
+DeepDeck is a live project. You will receive the hardware and a basic firmware. Make sure to follow the instruction on the webpage [www.deepdeck.co](https://deepdeck.co) to update the firmware. We are preparing a major release on the firmware version, and we are doing everything we can so you have it when you receive your DeepDeck!
 Share with us on Discord how you will be using the DeepDeck, and any ideas you have for the future. We will be gathering them to make a schedule on firmware releases!
 
 # And thank you again!

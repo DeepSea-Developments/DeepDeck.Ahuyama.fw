@@ -5,11 +5,6 @@ description: >
   Learn in this article what is a macropad, keyboard shortcuts, and what are the different uses for a macropad.
 categories:
   - macropad
-links:
-  - en/Docs/api.md 
-  - Insiders:
-    - en/Docs/api.md
-    - en/Docs/api.md
 slug: macropad-definition
 ---
 

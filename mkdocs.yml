@@ -65,6 +65,21 @@ extra:
   analytics:
     provider: google
     property: G-1WMF7F09F0
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target=_blank>feedback form</a>.
+
   alternate:
     - name: English
       link: /
@@ -82,21 +97,6 @@ extra:
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
 
-  analytics: 
-    feedback:
-      title: Was this page helpful?
-      ratings:
-        - icon: material/emoticon-happy-outline
-          name: This page was helpful
-          data: 1
-          note: >-
-            Thanks for your feedback!
-        - icon: material/emoticon-sad-outline
-          name: This page could be improved
-          data: 0
-          note: >- 
-            Thanks for your feedback! Help us improve this page by
-            using our <a href="..." target=_blank>feedback form</a>.
 
 markdown_extensions:
   - admonition
@@ -177,16 +177,16 @@ nav:
     - Add a battery: en/QuickStartGuide/battery.md
     - Support: en/Resources/support.md
     - Thank you!: en/QuickStartGuide/thankyou.md
-  - Setup:
-    - Installation: en/Setup/vscode-setup.md
-    - Configuration: 
-      - en/Setup/deepdeck-configuration.md
-      - Layer: en/Setup/layer-configuration.md
-      - Macro: en/Setup/macro-configuration.md
-      - Knob: en/Setup/knob-configuration.md
-  - Documentation:
-    - DeepDeck installer: en/Docs/installer.md
-    - API: en/Docs/api.md
+  - Open Source:
+    - Open Source: en/opensource/opensource.md
+    - Firmware: 
+      - en/opensource/fw/firmware.md
+      - How to setup VS code: en/opensource/fw/vscode-setup.md
+      - Understanding repo structure: en/opensource/fw/repository.md
+    - Installing software:
+      - DeepDeck installer: en/opensource/installer/installer.md
+    - API:
+      - ESP32 API: en/opensource/api/api.md
   - Download: 
     - en/Resources/index.md
     - 3d printed accesories: en/Resources/3d-prints.md

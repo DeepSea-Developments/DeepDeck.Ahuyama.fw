@@ -6,11 +6,6 @@ description: >
   a blog alongside your documentation or standalone
 categories:
   - news
-links:
-  - en/Docs/api.md 
-  - Insiders:
-    - en/Docs/api.md
-    - en/Docs/api.md
 ---
 
 # Tell us about your experience with DeepDeck
