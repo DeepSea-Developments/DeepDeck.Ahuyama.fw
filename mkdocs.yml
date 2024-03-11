@@ -20,18 +20,22 @@ theme:
   logo: assets/logo.png
   features:
     # - navigation.instant #Without this, the jump from home page to other subpages fails.
-    # - navigation.instant.prefetch
+    - navigation.instant.prefetch
     - navigation.tabs
     - navigation.tracking
     - navigation.expand
     - navigation.path
-    - toc.follow
-    - search.suggest
-    - search.highlight
-    - search.share
     - navigation.footer
     - navigation.indexes
     - navigation.top
+    - navigation.instant.progress
+    
+    - toc.follow
+    
+    - search.suggest
+    - search.highlight
+    - search.share
+
     - content.action.edit
     - content.action.view
     - content.code.annotate
@@ -58,8 +62,8 @@ repo_url: https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw
 repo_name: DeepDeck.Ahuyama.fw
 edit_uri: edit/mkdocs/docs/
 
-extra_css:
-  - stylesheets/extra.css
+# extra_css:
+#   - stylesheets/extra.css
 
 extra:
   analytics:
@@ -79,16 +83,6 @@ extra:
           note: >- 
             Thanks for your feedback! Help us improve this page by
             using our <a href="..." target=_blank>feedback form</a>.
-
-  alternate:
-    - name: English
-      link: /
-      lang: en
-    - name: Español
-      link: /es/ 
-      lang: es
-
-
   consent:
     title: Cookie consent
     description: >- 
