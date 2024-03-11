@@ -17,7 +17,7 @@ theme:
   # Default values, taken from mkdocs_theme.yml
   language: en
   favicon: assets/favicon.ico
-  logo: assets/logo.png
+  logo: assets/logo.svg
   features:
     # - navigation.instant #Without this, the jump from home page to other subpages fails.
     - navigation.instant.prefetch
