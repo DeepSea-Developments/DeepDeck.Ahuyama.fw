@@ -7,6 +7,11 @@
   {% include "partials/landing.html" %}
 {% endblock %}
 
+{% block styles %}
+  {{ super()}}
+  <!-- Core theme CSS (includes Bootstrap)-->
+  <link href="css/styles.css" rel="stylesheet" />
+{% endblock %}
 
 {% block container %}{% endblock %}
 {% block content %}{% endblock %}
