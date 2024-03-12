@@ -177,6 +177,7 @@ nav:
       - en/opensource/fw/firmware.md
       - How to setup VS code: en/opensource/fw/vscode-setup.md
       - Understanding repo structure: en/opensource/fw/repository.md
+      - How to contribute?: en/opensource/fw/fw_contribute.md
     - Installing software:
       - DeepDeck installer: en/opensource/installer/installer.md
     - API:

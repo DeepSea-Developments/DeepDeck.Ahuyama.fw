@@ -13,7 +13,6 @@ This guide will show you how to:
 - [Environment Setup](#environment-setup)
   - [1. Install VScode](#1-install-vscode)
   - [2. Install USB drivers](#2-install-usb-drivers)
-    - [Unzip file](#unzip-file)
   - [3. Install ESP-IDF plugin](#3-install-esp-idf-plugin)
   - [4. Clone Repository](#4-clone-repository)
   - [5. Program DeepDeck](#5-program-deepdeck)
@@ -32,16 +31,16 @@ The best way to program in ESP32 is with VScode. If you don't have it already, y
 <!-- TODO Check if in mac you have to install USB drivers -->
 
 !!! note "Only for windows users"
-    Linux and mac, you can [skip to the next section](#3-install-esp-idf-plugin)
+    Linux and Mac users, you can [skip to the next section](#3-install-esp-idf-plugin)
 
-The ESP32 we are using don't have a native USB controller. That's why it needs a chip from Slicion Labs to go from UART to USB. You need to install this driver in windows You can [check all the driver options here](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads){:target="_blank"}, or just direct download the drivers in the following button: 
+The ESP32 we are using don't have a native USB controller. That's why it needs a chip from Silicon Labs to go from UART to USB. You need to install this driver in windows You can [check all the driver options here](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads){:target="_blank"}, or just direct download the drivers in the following button: 
 
 <figure markdown="span">
   [Download USB drivers :fontawesome-brands-usb:](https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip
   ){:target="_blank" .md-button }
 </figure>
 
-### Unzip file
+**Unzip file**
 
 Go ahead and unzip the downloaded file.
 
