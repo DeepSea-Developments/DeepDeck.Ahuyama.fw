@@ -87,4 +87,8 @@ Whether you're a professional looking to streamline your workflow or a gamer see
     Macropads provide endless possibilities for customization and efficiency.
 
 
-[I want a macropad](https://bit.ly/3TbV0cd){ .md-button .md-button--primary }
+<figure markdown="span">
+  [I want a macropad](https://bit.ly/3TbV0cd){ .md-button .md-button--primary }
+</figure>
+
+
