@@ -1,14 +1,13 @@
 <div id="landing">
     <main class="flex-shrink-0">
          <!-- Bootstrap icons-->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
         <!-- Google fonts-->
         <link rel="preconnect" href="https://fonts.gstatic.com" />
         <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;1,600&amp;display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,500;0,600;0,700;1,300;1,500;1,600;1,700&amp;display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,400;1,400&amp;display=swap" rel="stylesheet" />
         
-
 
         <!-- Mashead header-->
         <header class="masthead">
@@ -20,10 +19,10 @@
                             <img src = "assets/img/DeepDeckLogo.svg" width="120%" alt="DeepDeck Logo"/>
                             <p class="lead fw-normal text-muted mb-5">DeepDeck is an OpenSource, MacroPad (mini mechanical keyboard) that enables you to get more productive by using it with your work/hobby/leisure programs..</p>
                             <div class="d-flex flex-column flex-lg-row align-items-center">
-                                <div class="col-5">
+                                <div class="col-5 my-1">
                                     <a class="btn btn-primary py-2 px-4 rounded-pill" href="https://www.crowdsupply.com/deepsea-developments/deepdeck" role="button">Buy now!</a>
                                 </div>
-                                <div class="col-7">
+                                <div class="col-7 my-1">
                                     <a class="btn btn-secondary py-2 px-4 rounded-pill" href="/en/QuickStartGuide/qsg/" role="button">Quickstart guide</a>
                                 </div>
                             </div>
@@ -50,6 +49,8 @@
                             <div class="device-wrapper">
                                 
                                 <img src = "assets/img/DeepDeck2.png" width="160%" alt="DeepDeck Ahuyama"/>
+
+                                <link rel="stylesheet" type="text/css" href="dist/device-mockups.min.css">
                                         
                                 <!-- <div class="device" data-device="iPhoneX" data-orientation="portrait" data-color="black"> -->
                                     <!-- <div class="screen bg-black"> -->
@@ -67,85 +68,163 @@
             </div>
         </header>
 
+        <!-- Press section -->
+        <section class="text-center bg-gradient-primary-to-secondary">
+            <div class="container px-5">
+                <div class="h2 fs-1 text-white mb-4">In the press</div>
+                <!-- Carousel -->
+                <div id="press-carousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <!-- First Slide -->
+                        <div class="carousel-item active">
+                            <div class="row gx-5 justify-content-center">
+                                <!-- Press Image 1 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a href="https://www.geeky-gadgets.com/deepdeck-programmable-macropad-11-08-2022/">
+                                        <img src="assets/img/geeky_gadgets.png"
+                                            alt="DeepDeck programmable, open source, ESP32 macropad" class="img-fluid">
+                                    </a>
+                                </div>
+                                <!-- Press Image 2 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a href="https://www.pcbway.com/blog/Engineering_Technical/DeepDeck_8d449b56.html">
+                                        <img src="assets/img/pcbway.png" alt="DeepDeck" class="img-fluid">
+                                    </a>
+                                </div>
+                                <!-- Press Image 3 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a
+                                        href="https://www.hackster.io/news/deepdeck-is-an-interesting-new-wireless-diy-macropad-1428d7e9bd8b">
+                                        <img src="assets/img/hackster.png"
+                                            alt="DeepDeck Is an Interesting New Wireless DIY Macropad" class="img-fluid">
+                                    </a>
+                                </div>
+                                <!-- Press Image 4 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a href="https://hackaday.com/2022/08/20/deepdeck-going-beyond-the-macro-pad/">
+                                        <img src="assets/img/hackaday.png" alt="DEEPDECK: GOING BEYOND THE MACRO PAD"
+                                            class="img-fluid">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Second Slide -->
+                        <div class="carousel-item">
+                            <div class="row gx-5 justify-content-center">
+                                <!-- Press Image 5 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a href="phttps://www.diyelectronics.us/2022/08/deepdeck-is-open-source-wireless.html">
+                                        <img src="assets/img/diy_electronics.png"
+                                            alt="DeepDeck is an open source, wireless macropad with 16 RGB buttons."
+                                            class="img-fluid">
+                                    </a>
+                                </div>
+                                <!-- Press Image 6 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a href="https://www.geeky-gadgets.com/deepdeck-programmable-wireless-macropad-07-10-2022/">
+                                        <img src="assets/img/geeky_gadgets.png"
+                                            alt="DeepDeck programmable, open source, ESP32 wireless macropad" class="img-fluid">
+                                    </a>
+                                </div>
+                                <!-- Press Image 7 -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6 mb-4">
+                                    <a
+                                        href="https://www.notebookcheck.com/DeepDeck-Makropad-mit-RGB-Beleuchtung-OLED-Drehreglern-WiFi-und-Bluetooth-ist-umfangreich-konfigurierbar.640241.0.html">
+                                        <img src="assets/img/notebookcheck.png"
+                                            alt="DeepDeck: Makropad mit RGB-Beleuchtung, OLED, Drehreglern, WiFi und Bluetooth ist umfangreich konfigurierbar"
+                                            class="img-fluid">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#press-carousel" data-bs-slide="prev"
+                style="left: -5%;">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#press-carousel" data-bs-slide="next"
+                style="right: -5%;">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+            </div>
+            </div>
+        </section>
+
         <!--<!~~ Quote/testimonial aside~~>
         <aside class="text-center bg-gradient-primary-to-secondary">
             <div class="container px-5">
                 <div class="row gx-5 justify-content-center">
                     <div class="col-xl-8">
-                        <div class="h2 fs-1 text-white mb-4">"An intuitive solution to a common problem that we all face, wrapped up in a single app!"</div>
-                        <img src="assets/img/tnw-logo.svg" alt="..." style="height: 3rem" />
+                        <div class="h2 fs-1 text-white mb-4">In the press</div>
+                        <img src="assets/img/hackster.png" alt="Hackster_press"/>
                     </div>
                 </div>
             </div>
-        </aside>
-        <!~~ App features section~~>
+        </aside>-->
+        
+        <!-- App features section-->
         <section id="features">
-            <div class="container px-5">
+            <div class="container px-1">
                 <div class="row gx-5 align-items-center">
-                    <div class="col-lg-8 order-lg-1 mb-5 mb-lg-0">
+                    <div class="col-lg-12 order-lg-1 mb-8 mb-lg-0">
                         <div class="container-fluid px-5">
                             <div class="row gx-5">
-                                <div class="col-md-6 mb-5">
-                                    <!~~ Feature item~~>
+                                <div class="col-md-4 mb-5">
+                                    <!-- Feature item-->
                                     <div class="text-center">
-                                        <i class="bi-phone icon-feature text-gradient d-block mb-3"></i>
-                                        <h3 class="font-alt">Device Mockups</h3>
-                                        <p class="text-muted mb-0">Ready to use HTML/CSS device mockups, no Photoshop required!</p>
+                                        <i class="bi-grid icon-feature text-gradient d-block mb-3"></i>
+                                        <h3 class="font-alt">Use several layers</h3>
+                                        <p class="text-muted mb-0">You can program layers with different key combination to match the program you are using.</p>
+                                    </div>
+                                    
+                                </div>
+                                <div class="col-md-4 mb-5">
+                                    <!-- Feature item-->
+                                    <div class="text-center">
+                                        <i class="bi-window-fullscreen icon-feature text-gradient d-block mb-3"></i>
+                                        <h3 class="font-alt">Configure it anywhere</h3>
+                                        <p class="text-muted mb-0">DeepDeck has a integrated webserver to add macros, modify layers, LED status, etc. You can use any browser to program it. </p>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-5">
-                                    <!~~ Feature item~~>
+                                <div class="col-md-4 mb-5">
+                                    <!-- Feature item-->
                                     <div class="text-center">
-                                        <i class="bi-camera icon-feature text-gradient d-block mb-3"></i>
-                                        <h3 class="font-alt">Flexible Use</h3>
-                                        <p class="text-muted mb-0">Put an image, video, animation, or anything else in the screen!</p>
+                                        <i class="bi-hand-index icon-feature text-gradient d-block mb-3"></i>
+                                        <h3 class="font-alt">Gesture sensor</h3>
+                                        <p class="text-muted mb-0">Swipe your hand of top of the DeepDeck to trigger actions like magic.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6 mb-5 mb-md-0">
-                                    <!~~ Feature item~~>
+                                <div class="col-md-4 mb-5 mb-md-0">
+                                    <!-- Feature item-->
                                     <div class="text-center">
-                                        <i class="bi-gift icon-feature text-gradient d-block mb-3"></i>
-                                        <h3 class="font-alt">Free to Use</h3>
-                                        <p class="text-muted mb-0">As always, this theme is free to download and use for any purpose!</p>
+                                        <i class="bi-person-arms-up icon-feature text-gradient d-block mb-3"></i>
+                                        <h3 class="font-alt">OS independent</h3>
+                                        <p class="text-muted mb-0">No matter if you use Windows, Linux, Mac, or even your cellphones, you can pair it and program it anywhere.</p>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <!~~ Feature item~~>
+                                <div class="col-md-4 mb-5">
+                                    <!-- Feature item-->
                                     <div class="text-center">
-                                        <i class="bi-patch-check icon-feature text-gradient d-block mb-3"></i>
+                                        
+                                        <i class="bi-bluetooth icon-feature text-gradient d-block mb-3">
+                                        </i>
+                                        <h3 class="font-alt">Use it with bluetooth</h3>
+                                        <p class="text-muted mb-0">DeepDeck uses wifi to pair to your devices as an wireless keyboard.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-5">
+                                    <!-- Feature item-->
+                                    <div class="text-center">
+                                        <i class="bi-gear icon-feature text-gradient d-block mb-3"></i>
                                         <h3 class="font-alt">Open Source</h3>
-                                        <p class="text-muted mb-0">Since this theme is MIT licensed, you can use it commercially!</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 order-lg-0">
-                        <!~~ Features section device mockup~~>
-                        <div class="features-device-mockup">
-                            <svg class="circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="circleGradient" gradientTransform="rotate(45)">
-                                        <stop class="gradient-start-color" offset="0%"></stop>
-                                        <stop class="gradient-end-color" offset="100%"></stop>
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="50" cy="50" r="50"></circle>
-                                </svg>
-                            <svg class="shape-1 d-none d-sm-block" viewBox="0 0 240.83 240.83" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="-32.54" y="78.39" width="305.92" height="84.05" rx="42.03" transform="translate(120.42 -49.88) rotate(45)"></rect>
-                                <rect x="-32.54" y="78.39" width="305.92" height="84.05" rx="42.03" transform="translate(-49.88 120.42) rotate(-45)"></rect></svg>
-                            <svg class="shape-2 d-none d-sm-block" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50"></circle></svg>
-                            <div class="device-wrapper">
-                                <div class="device" data-device="iPhoneX" data-orientation="portrait" data-color="black">
-                                    <div class="screen bg-black">
-                                        <!~~ PUT CONTENTS HERE:~~>
-                                        <!~~ * * This can be a video, image, or just about anything else.~~>
-                                        <!~~ * * Set the max width of your media to 100% and the height to~~>
-                                        <!~~ * * 100% like the demo example below.~~>
-                                        <video muted="muted" autoplay="" loop="" style="max-width: 100%; height: 100%"><source src="assets/img/demo-screen.mp4" type="video/mp4" /></video>
+                                        <p class="text-muted mb-0">Everything on DeepDeck is open source! feel free to explore, and change it to make it your own!</p>
                                     </div>
                                 </div>
                             </div>
@@ -154,7 +233,11 @@
                 </div>
             </div>
         </section>
-        <!~~ Basic features section~~>
+
+
+
+
+        <!--<!~~ Basic features section~~>
         <section class="bg-light">
             <div class="container px-5">
                 <div class="row gx-5 align-items-center justify-content-center justify-content-lg-between">
@@ -167,8 +250,10 @@
                     </div>
                 </div>
             </div>
-        </section>
-        <!~~ Call to action section~~>
+        </section>-->
+
+        
+        <!--<!~~ Call to action section~~>
         <section class="cta">
             <div class="cta-content">
                 <div class="container px-5">
@@ -180,8 +265,10 @@
                     <a class="btn btn-outline-light py-3 px-4 rounded-pill" href="https://startbootstrap.com/theme/new-age" target="_blank">Download for free</a>
                 </div>
             </div>
-        </section>
-        <!~~ App badge section~~>
+        </section>-->
+
+
+       <!-- <!~~ App badge section~~>
         <section class="bg-gradient-primary-to-secondary" id="download">
             <div class="container px-5">
                 <h2 class="text-center text-white font-alt mb-4">Get the app now!</h2>
@@ -196,7 +283,7 @@
     </main>
 
     <!-- Bootstrap core JS-->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Core theme JS-->
     <script src="js/scripts.js"></script>
 </div>

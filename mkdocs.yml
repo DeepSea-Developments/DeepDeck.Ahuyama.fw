@@ -62,8 +62,8 @@ repo_url: https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.fw
 repo_name: DeepDeck.Ahuyama.fw
 edit_uri: edit/mkdocs/docs/
 
-# extra_css:
-#   - stylesheets/extra.css
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   analytics:
