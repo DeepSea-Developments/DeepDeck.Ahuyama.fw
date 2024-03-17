@@ -3,7 +3,7 @@ site_name: DeepDeck
 site_url: https://deepdeck.co
 site_author: DeepSea Developments
 site_description: >-
-  DeepDeck is an OpenSource, MacroPad (mini mechanical keyboard) that enables 
+  DeepDeck is an OpenSource MacroPad (mini mechanical keyboard) that enables 
   you to get more productive by using it with your work/hobby/leisure programs.
 
 # Copyright
@@ -171,6 +171,9 @@ nav:
     - Add a battery: en/QuickStartGuide/battery.md
     - Support: en/Resources/support.md
     - Thank you!: en/QuickStartGuide/thankyou.md
+    - Hardware specs: en/QuickStartGuide/hw-specs.md
+    - Firmware specs: en/QuickStartGuide/fw-specs.md
+    - FAQ and Troubleshooting: en/QuickStartGuide/faq.md
   - Open Source:
     - Open Source: en/opensource/opensource.md
     - Firmware: 
