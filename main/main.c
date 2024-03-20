@@ -79,7 +79,7 @@
 #include "server.h"
 #include "spiffs.h"
 #include "keys.h"
-
+#include "server_nvs.h"
 
 // plugin functions
 static config_data_t config;
@@ -88,11 +88,11 @@ static config_data_t config;
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t Wifi_initSemaphore = NULL;
 
-#define USER_CHECK(a, str, ret)                                                \
-	if (!(a))                                                                  \
-	{                                                                          \
+#define USER_CHECK(a, str, ret)                                                   \
+	if (!(a))                                                                     \
+	{                                                                             \
 		ESP_LOGE("MAIN", "%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, str); \
-		return (ret);                                                          \
+		return (ret);                                                             \
 	}
 
 SemaphoreHandle_t user_i2c_mutex = NULL;
@@ -119,6 +119,7 @@ esp_err_t i2s_user_unlock(void)
  *
  * This task init all the basic hardware and then init the tasks needed to run DeepDeck
  */
+
 void app_main()
 {
 	xSemaphore = xSemaphoreCreateBinary();
@@ -138,7 +139,10 @@ void app_main()
 		ESP_ERROR_CHECK(nvs_flash_erase());
 		ret = nvs_flash_init();
 	}
-	ESP_ERROR_CHECK(ret);
+	else
+	{
+		nvs_server_auto_erase_nvs();
+	}
 
 	// Read config from NVS
 	nvs_handle my_handle;
@@ -162,14 +166,8 @@ void app_main()
 	// Set log level of the progam
 	esp_log_level_set("*", ESP_LOG_INFO);
 
-	generate_uuid();	   // generate uuid for each keymap layoutS
-	init_default_macros(); // init default macros //TODO: Remove. not neccesary and you could do the same as tapdance to init it.
-
 	// Loading layouts from nvs (if found)
-	nvs_load_layouts();
-	nvs_load_macros();
-	nvs_load_tapdance();
-	nvs_load_modtap();
+	nvs_server_init();
 
 	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
@@ -190,7 +188,7 @@ void app_main()
 	};
 	i2c_bus_handle_t i2c_bus = i2c_bus_create(i2c_master_port, &conf);
 
-user_i2c_mutex = xSemaphoreCreateMutex();
+	user_i2c_mutex = xSemaphoreCreateMutex();
 	if (user_i2c_mutex == NULL)
 	{
 		ESP_LOGE("MAIN", "%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, "user_i2c_mutex failed");
@@ -212,7 +210,7 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 	splashScreen();
 	vTaskDelay(pdMS_TO_TICKS(1000));
 
-	xTaskCreate(oled_task, "oled task", MEM_OLED_TASK, NULL,PRIOR_OLED_TASK, &xOledTask);
+	xTaskCreate(oled_task, "oled task", MEM_OLED_TASK, NULL, PRIOR_OLED_TASK, &xOledTask);
 	ESP_LOGI("Oled", "initialized");
 #endif
 
@@ -223,7 +221,7 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 #endif
 
 #ifdef RGB_LEDS
-	xTaskCreate(rgb_leds_task, "rgb_leds_task", MEM_LEDS_TASK, NULL, PRIOR_LEDS_TASK	, NULL);
+	xTaskCreate(rgb_leds_task, "rgb_leds_task", MEM_LEDS_TASK, NULL, PRIOR_LEDS_TASK, NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
 	rgb_mode_t mode;
 	nvs_load_led_mode(&mode);
@@ -233,11 +231,11 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 
 	// Start the keyboard Tasks
 	// Create the key scanning task on core 1 (otherwise it will crash)
-// #ifdef MASTER
-// 	BLE_EN = 1;
-// 	xTaskCreate(main_task, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
-// 	ESP_LOGI("Keyboard task", "initialized");
-// #endif
+	// #ifdef MASTER
+	// 	BLE_EN = 1;
+	// 	xTaskCreate(main_task, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
+	// 	ESP_LOGI("Keyboard task", "initialized");
+	// #endif
 
 #ifdef BATT_STAT
 	init_batt_monitor();
@@ -264,13 +262,8 @@ user_i2c_mutex = xSemaphoreCreateMutex();
 	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
 	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
 
-
-
-
 	init_keys_task();
 
-	xTaskCreate(main_task, "MainTask", MEM_KEYBOARD_TASK, NULL, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
+	xTaskCreate(main_task, "MainTask", MEM_KEYBOARD_TASK, NULL, PRIOR_KEYBOARD_TASK, NULL); // ToDo, organize and reform
 	ESP_LOGI("Keyboard task", "initialized");
-	
 }
-

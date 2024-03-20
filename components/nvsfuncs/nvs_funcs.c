@@ -52,51 +52,9 @@
 
 #define NVS_TAG "NVS Storage"
 
-
-// Layers
-#define LAYER_NAMESPACE "layers"
-#define LAYER_NUM_KEY 	"layer_num"
-#define LAYER_LIST_KEY 	"layer_list"
-
-// Tapdances
-#define TAPDANCE_NAMESPACE 	"tapdances"
-#define TAPDANCE_NUM_KEY 	"tp_num"
-#define TAPDANCE_LIST_KEY 	"tp_list"
-
-// Modtap
-#define MODTAP_NAMESPACE 	"modtaps"
-#define MODTAP_NUM_KEY 		"mt_num"
-#define MODTAP_LIST_KEY 	"mt_list"
-
-// Leaderkey
-#define LEADERKEY_NAMESPACE 	"leaderkeys"
-#define LEADERKEY_NUM_KEY 		"lk_num"
-#define LEADERKEY_LIST_KEY 		"lk_list"
-
-
-
-// NameSpaces
-#define MACROS_NAMESPACE "user_macros"
-#define LEDMODE_NAMESPACE "led_mode"
-
-// Keys
-#define MACROS_KEY "macros_key"
-
 const static char *TAG = "NVS FUNCS";
 
 // TODO: should not have global variables, but encapsulated ones.
-dd_layer *g_user_layers;
-dd_macros *g_user_macros;
-dd_tapdance *g_user_tapdance;
-dd_modtap *g_user_modtap;
-dd_leaderkey *g_user_leaderkey;
-
-
-uint8_t g_macro_num = 0;
-uint8_t g_tapdance_num = 0;
-uint8_t g_modtap_num = 0;
-uint8_t g_leaderkey_num = 0;
-
 
 /**
  * @brief Check the number of available entries of the NVS
@@ -106,1447 +64,708 @@ void nvs_check_memory_status(void)
 {
 	nvs_stats_t nvs_stats;
 	nvs_get_stats(NULL, &nvs_stats);
-	ESP_LOGI("NVS Status", "Count: UsedEntries = (%zu), FreeEntries = (%zu), AllEntries = (%zu), Namespace_count = (%zu)",
+	ESP_LOGI(TAG, "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGI(TAG, "Count: UsedEntries = (%zu), FreeEntries = (%zu), AllEntries = (%zu), Namespace_count = (%zu)",
 			 nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
-/**
- * @brief Read and returns the number of available layers stored
- *
- * @return uint8_t
- */
-uint8_t nvs_read_num_layers(void)
+/**********
+ * NVS COMMON
+ ***********/
+
+typedef struct
 {
-	ESP_LOGI(TAG, "READ NUM LAYERS");
+	char name[NVS_NS_NAME_MAX_SIZE];
+} lst_item_t;
+
+esp_err_t nvs_list_init(const char *list_name)
+{
+
 	nvs_handle_t nvs_handle;
-	uint8_t layer_num = 0;
-	esp_err_t error;
 
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
 
-	error = nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num);
-	switch (error)
-	{
-		case ESP_ERR_NVS_NOT_FOUND:
-			ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
-			nvs_write_default_layers(nvs_handle);
-			ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, LAYER_NUM_KEY, &layer_num));
-			break;
-		case ESP_OK:
-			ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
-			break;
-		default:
-			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
-			break;
-	}
+	// Clean namespace
+	nvs_erase_all(nvs_handle);
 
-	nvs_close(nvs_handle);
-	return layer_num;
-}
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
 
-/**
- * @brief Read and returns the list of layers
- * 
- * @param list list of the nvs keynames of the layers in order.
- */
-void nvs_read_list_layers(layer_list_def * list)
-{
-	ESP_LOGI(TAG, "Read layer list from memory");
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
+	sprintf(lst_namespace, "%s_ls", list_name);
 
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	// Init Empty List
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+								 lst_namespace,
+								 NULL,
+								 0));
 
-	size_t blob_size = sizeof(layer_list_def);
-	error = nvs_get_blob(	nvs_handle, 
-							LAYER_LIST_KEY, 
-							(void *)list, 
-							&blob_size
-						);
-	switch (error)
-	{
-		case ESP_ERR_NVS_NOT_FOUND:
-			ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
-			nvs_write_default_layers(nvs_handle);
-
-			ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-											LAYER_LIST_KEY,
-											(void *)list, 
-											&blob_size
-										));
-			break;
-		case ESP_OK:
-			ESP_LOGI(TAG, "Layer list retrieve correctly");
-			break;
-		default:
-			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
-			break;
-	}
-
-	nvs_close(nvs_handle);
-}
-
-/**
- * @brief Read all the available layers stored in the memory
- *
- * @param layers_array
- */
-void nvs_read_layers(dd_layer *layers_array)
-{
-	ESP_LOGI(TAG, "READ LAYERS");
-	
-	nvs_handle_t nvs_layer_handle;
-	uint8_t layer_num;
-	size_t dd_layer_size = sizeof(dd_layer);
-
-	esp_err_t res;
-
-	layer_list_def layer_list;
-
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
-
-	res = nvs_get_u8(nvs_layer_handle, LAYER_NUM_KEY, &layer_num);
-	switch (res)
-	{
-		case ESP_ERR_NVS_NOT_FOUND:
-			ESP_LOGE(TAG, "Value not set yet. Running routine to write default values");
-			nvs_write_default_layers(nvs_layer_handle);
-			break;
-		case ESP_OK:
-			ESP_LOGI(TAG, "Layers in memory: %d", layer_num);
-			break;
-		default:
-			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(res));
-			break;
-	}
-	
-	size_t blob_size = sizeof(layer_list_def);
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_layer_handle, 
-									LAYER_LIST_KEY, 
-									(void *)&layer_list, 
-									&blob_size
-								));
-
-	for (int i = 0; i < layer_num; i++)
-	{
-		
-		res = nvs_get_blob(nvs_layer_handle, layer_list[i], (void *)&layers_array[i], &dd_layer_size);
-		ESP_LOGI(TAG, "Reading layer with key %s, name: %s, and uuid %s",layer_list[i], layers_array[i].name, layers_array[i].uuid_str);
-		if (res != ESP_OK)
-		{
-			ESP_LOGE(TAG, "Error (%s) reading layer %s!\n", esp_err_to_name(res), layer_list[i]);
-		}
-	}
-	nvs_close(nvs_layer_handle);
-}
-
-/**
- * @brief Write default layers
- *
- * @param nvs_handle
- */
-void nvs_write_default_layers(nvs_handle_t nvs_handle)
-{
-	// Set the number of layers (by default DEFAULT_LAYERS)
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, LAYER_NUM_KEY, DEFAULT_LAYERS));
-	layer_list_def layer_list = {{0}};
-	size_t blob_size = sizeof(dd_layer);
-
-	// Store each of the default layers
-	for (int i = 0; i < DEFAULT_LAYERS; i++)
-	{
-		sprintf(layer_list[i], "l_%s", default_layouts[i]->uuid_str);
-		ESP_LOGI(TAG,"Storing layer %s with uuid %s in memory key %s", default_layouts[i]->name ,default_layouts[i]->uuid_str,layer_list[i]);
-
-		ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-										layer_list[i], 
-										(void *)default_layouts[i], 
-										blob_size
-									));
-		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	}
-
-	// Store the array list
-	blob_size = sizeof(layer_list_def);
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle,
-									LAYER_LIST_KEY, 
-									(void *)(&layer_list),
-									blob_size
-								));
-
-	// Commit memory to make sure everything is stored.
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-}
 
-/**
- * @brief Overwrite elements to go to the original declaration.
- *
- * @return esp_err_t
- */
-esp_err_t nvs_restore_default_layers(void)
+	nvs_close(nvs_handle);
+
+	return ESP_OK;
+}
+esp_err_t nvs_list_initialized(const char *list_name)
 {
 	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{	nvs_erase_all(nvs_handle); // Check if this works and does not create issues.
-		nvs_commit(nvs_handle);
-		nvs_write_default_layers(nvs_handle);
-		nvs_close(nvs_handle);
-		nvs_load_layouts();
+
+	// ESP_LOGW(TAG, "%s", __func__);
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t error = nvs_get_blob(nvs_handle,
+								   (const char *)lst_namespace,
+								   NULL,
+								   &list_size);
+
+	nvs_close(nvs_handle);
+
+	ESP_ERROR_CHECK_WITHOUT_ABORT(error);
+
+	return error;
+}
+
+esp_err_t nvs_list_add_item(const char *list_name, void *item, size_t item_size)
+{
+	nvs_handle_t nvs_handle;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		list_size = 0;
 	}
 	else
 	{
-		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		return error;
+		ESP_ERROR_CHECK(ret);
 	}
 
-	return ESP_OK;
-}
+	size_t new_size = list_size + sizeof(lst_item_t);
 
-/**
- * @brief Write new layer
- *
- * @param layer
- * @param layer_pos layer position in the list
- * @return esp_err_t
- */
-esp_err_t nvs_update_layer(dd_layer * layer, uint8_t layer_pos) 
-{
-	nvs_handle_t nvs_layer_handle;
-	layer_list_def layer_list;
+	lst_item_t *lst_item = (lst_item_t *)malloc(new_size);
 
-	uint8_t layer_num = nvs_read_num_layers();
-	nvs_read_list_layers(&layer_list);
+	// Read list to get data
 
-	for(int i=0; i<layer_num;i++)
-	{
-		ESP_LOGI(TAG,"LAYER %i = %s", i, layer_list[i]);
-	}
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
 
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_layer_handle));
+	size_t item_index = list_size / sizeof(lst_item_t);
 
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_layer_handle, 
-									layer_list[layer_pos], 
-									(void *)layer, 
-									sizeof(dd_layer)
-								));
-
-	ESP_ERROR_CHECK(nvs_commit(nvs_layer_handle));
-
-	nvs_close(nvs_layer_handle);
-
-
-	nvs_update_layout_position(); 
-	nvs_load_layouts();
-
-	return ESP_OK;
-}
-
-/**
- * @brief
- *
- * @param layer
- * @return esp_err_t
- */
-esp_err_t nvs_create_layer(dd_layer layer) 
-{
-	nvs_handle_t nvs_handle;
-	uint8_t layer_num;
-	layer_list_def current_list;
-	dd_layer aux_layer = layer;
-
-	ESP_ERROR_CHECK(nvs_open(	LAYER_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	// Read layer list
-	size_t layer_list_size = sizeof(layer_list_def);
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									LAYER_LIST_KEY, 
-									(void *)&current_list, 
-									&layer_list_size
-								));
-
-	// Read layer number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								LAYER_NUM_KEY, 
-								&layer_num));
-	
-	// Check if layer_num + 1 will overflow the layer list
-	if (layer_num + 1 > MAX_LAYOUT_NUMBER)
-	{
-		return ESP_ERR_NO_MEM;
-	}
-
+	// Generate short id
 	uuid_t uu;
-	char uu_str[SHORT_UUID_STR_LEN];
 	uuid_generate(uu);
-	short_uuid_unparse(uu, uu_str);
-	
-	//Add layer id into list
-	strcpy(aux_layer.uuid_str,uu_str);
-	sprintf(current_list[layer_num], "l_%s", uu_str);
+	short_uuid_unparse(uu, lst_item[item_index].name);
 
-	// Store new layer with new key
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									current_list[layer_num], 
-									(void *)&aux_layer, 
-									sizeof(dd_layer)));
+	// Store new item content
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+								 (const char *)lst_item[item_index].name,
+								 (void *)item,
+								 item_size));
 
-	// Increase layer num
-	layer_num++;
+	//ESP_LOG_BUFFER_HEXDUMP(TAG, item, item_size, ESP_LOG_WARN);
 
-	// Save number of layers
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								LAYER_NUM_KEY, 
-								layer_num));
+	// ESP_LOGW(TAG, "add item name[%u] : %s", item_index, lst_item[item_index].name);
 
-	// Save layer list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									LAYER_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(layer_list_def)
-								));
-	
+	// Save updated list
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+								 lst_namespace,
+								 (void *)lst_item,
+								 new_size));
+
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	
-	nvs_close(nvs_handle);
-	
-	nvs_update_layout_position(); 
-	nvs_load_layouts();
 
+	nvs_close(nvs_handle);
+
+	free(lst_item);
 	return ESP_OK;
 }
-
-/**
- * @brief
- *
- * @param delete_layer_num
- * @return esp_err_t
- */
-esp_err_t nvs_delete_layer(uint8_t delete_layer_num)
+esp_err_t nvs_list_default(const char *list_name, void *list, size_t list_len, size_t item_size)
 {
-	nvs_handle_t nvs_handle;
-	uint8_t layer_num;
-	layer_list_def current_list;
+	nvs_list_init(list_name);
 
-	ESP_ERROR_CHECK(nvs_open(	LAYER_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
+	uint32_t address = (uint32_t)list;
 
-	// Read layer list
-	size_t layer_list_size = sizeof(layer_list_def);
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									LAYER_LIST_KEY, 
-									(void *)&current_list, 
-									&layer_list_size
-								));
-
-	// Read layer number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								LAYER_NUM_KEY, 
-								&layer_num));
-	
-	// Erase key
-	ESP_ERROR_CHECK(nvs_erase_key(	nvs_handle,
-									current_list[delete_layer_num]
-								));
-
-	// Decrease layer num
-	layer_num--;
-
-	// Remove item in list and reorganize it.
-	for(int i=delete_layer_num; i<layer_num; i++)
+	for (size_t i = 0; i < list_len; i++)
 	{
-		strcpy(current_list[i],current_list[i+1]);
+		nvs_list_add_item(list_name, (void *)address, item_size);
+		address += item_size;
+	}
+	return ESP_OK;
+}
+esp_err_t nvs_list_auto_default(const char *list_name, void *list, size_t list_len, size_t item_size)
+{
+	esp_err_t ret = nvs_list_initialized(list_name);
+
+	if (ret != ESP_OK)
+	{
+		nvs_list_default(list_name, list, list_len, item_size);
+	}
+	return ESP_OK;
+}
+esp_err_t nvs_list_load(const char *list_name, void **list, size_t *list_len, size_t item_size)
+{
+
+	nvs_handle_t nvs_handle;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		list_size = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
 	}
 
-	strcpy(current_list[layer_num],"");
-	
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
 
-	// Save number of layers
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								LAYER_NUM_KEY, 
-								layer_num));
+	// Read list to get data
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
 
-	// Save layer list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									LAYER_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(layer_list_def)
-								));
-	
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	
+	list_size = list_size / sizeof(lst_item_t);
+
+	// allocate or reallocate space for load list data
+	if (*list != NULL)
+	{
+		if (list_size == 0)
+		{
+			free(*list);
+		}
+		else
+		{
+			*list = realloc(*list, item_size * list_size);
+		}
+	}
+	else
+	{
+		*list = malloc(item_size * list_size);
+	}
+
+	uint32_t address = (uint32_t)*list;
+
+	for (size_t i = 0; i < list_size; i++)
+	{
+
+		// ESP_LOGW(TAG, "read item name[%u] : %s", i, lst_item[i].name);
+
+		size_t desired_item_size = item_size;
+		// Read list to get item data
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+									 (const char *)lst_item[i].name,
+									 (void *)address,
+									 &desired_item_size));
+		// ESP_LOG_BUFFER_HEXDUMP(TAG, address, desired_item_size, ESP_LOG_WARN);
+
+		address += item_size;
+	}
+
+	*list_len = list_size;
+
 	nvs_close(nvs_handle);
-	
-	nvs_load_layouts();
 
 	return ESP_OK;
 }
 
-/**
- * @brief Update position of layers, putting the ones that are not enabled at the end.
- * 
- * @return esp_err_t 
- */
-esp_err_t nvs_update_layout_position(void) 
+esp_err_t nvs_list_update(const char *list_name, size_t index, void *item, size_t item_size)
 {
-	layer_list_def layer_list;
-	layer_list_def new_layer_list;
+	nvs_handle_t nvs_handle;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// ESP_LOGW(TAG, "lst_namespace %s", lst_namespace);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		list_size = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
+	}
+
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
+
+	// Read list to get data
+
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
+
+	size_t list_len = list_size / sizeof(lst_item_t);
+
+	if (index < list_len)
+	{
+
+		// ESP_LOGW(TAG, "update item name[%u] : %s", index, lst_item[index].name);
+
+		// Store new item content
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+									 (const char *)lst_item[index].name,
+									 (void *)item,
+									 item_size));
+
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	nvs_close(nvs_handle);
+
+	free(lst_item);
+	return ESP_OK;
+}
+
+esp_err_t nvs_list_delete_item(const char *list_name, size_t index)
+{
+	nvs_handle_t nvs_handle;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		list_size = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
+	}
+
+	size_t list_len = list_size / sizeof(lst_item_t);
+
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
+
+	if (index < list_len)
+	{
+		list_len--;
+		size_t new_size = list_size - sizeof(lst_item_t);
+
+		// Read list to get data
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+									 (const char *)lst_namespace,
+									 (void *)lst_item,
+									 &list_size));
+
+		// Erase item content
+		ESP_ERROR_CHECK(nvs_erase_key(nvs_handle,
+									  lst_item[index].name));
+
+		// Remove item in list and reorganize it.
+		for (int i = index; i < list_len; i++)
+		{
+			strcpy(lst_item[i].name, lst_item[i + 1].name);
+		}
+
+		// Save updated list
+		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+									 lst_namespace,
+									 (void *)lst_item,
+									 new_size));
+
+		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
+	}
+
+	nvs_close(nvs_handle);
+
+	free(lst_item);
+	return ESP_OK;
+}
+
+esp_err_t nvs_list_organize(const char *list_name, size_t item_size, selector_t selector_cb)
+{
+	nvs_handle_t nvs_handle;
+
+	if (!selector_cb)
+		return ESP_FAIL;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		list_size = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
+	}
+
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
+	lst_item_t *lst_item_new = (lst_item_t *)malloc(list_size);
+
+	// Read list to get data
+
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
+
+	size_t list_len = list_size / sizeof(lst_item_t);
+
+	void *item = malloc(item_size);
+
 	uint8_t aux_counter = 0;
-	uint8_t layer_num;
-	nvs_handle_t nvs_handle;
-
-	dd_layer * aux_layers;
-
-	
-	layer_num = nvs_read_num_layers();
-	nvs_read_list_layers(&layer_list);
-
-	aux_layers = pvPortMalloc(layer_num * sizeof(dd_layer));
-	nvs_read_layers(aux_layers);
-	
-
-	for (int i = 0; i < layer_num; i++)
+	for (size_t i = 0; i < list_len; i++)
 	{
-		if (aux_layers[i].active == true)
+
+		size_t desired_item_size = item_size;
+		// Read list to get item data
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+									 (const char *)lst_item[i].name,
+									 (void *)item,
+									 &desired_item_size));
+
+		if (selector_cb(item))
 		{
-			strcpy(new_layer_list[aux_counter], layer_list[i]);
+			// ESP_LOGW(TAG, "selected item name[%u] : %s", i, lst_item[i].name);
+			strcpy(lst_item_new[aux_counter].name, lst_item[i].name);
 			aux_counter++;
 		}
 	}
-	for (int i = 0; i < (layer_num); i++)
+	for (size_t i = 0; i < list_len; i++)
 	{
-		if (aux_layers[i].active == false)
+
+		// ESP_LOGW(TAG, "not selected item name[%u] : %s", i, lst_item[i].name);
+
+		size_t desired_item_size = item_size;
+		// Read list to get item data
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+									 (const char *)lst_item[i].name,
+									 (void *)item,
+									 &desired_item_size));
+
+		if (!selector_cb(item))
 		{
-			strcpy(new_layer_list[aux_counter], layer_list[i]);
+			strcpy(lst_item_new[aux_counter].name, lst_item[i].name);
 			aux_counter++;
 		}
 	}
 
-	// Finally store the new list
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
+	// Save updated list
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+								 lst_namespace,
+								 (void *)lst_item_new,
+								 list_size));
 
-	// Store the array list
-	size_t blob_size = sizeof(layer_list_def);
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle,
-									LAYER_LIST_KEY, 
-									(void *)(&new_layer_list),
-									blob_size
-								));
-
-	// Commit memory to make sure everything is stored.
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 
-	vPortFree(aux_layers);
+	nvs_close(nvs_handle);
+
+	free(lst_item);
+	free(lst_item_new);
+
 	return ESP_OK;
 }
-
-/**
- * @brief load the layouts from nvs
- *
- */
-void nvs_load_layouts(void)
+esp_err_t nvs_list_get_len(const char *list_name, size_t *lst_len)
 {
-
-	ESP_LOGI("NVS_TAG", "LOADING LAYOUTS");
-	uint8_t layer_num = nvs_read_num_layers();
-	
-	vPortFree(g_user_layers);
-	g_user_layers = pvPortMalloc(layer_num * sizeof(dd_layer));
-
-	nvs_read_layers(g_user_layers);
-	
-
-	for (int i = 0; i < layer_num; i++)
-	{
-		ESP_LOGI("NVS_TAG", "LAYER NAME %s, uuid: %s", g_user_layers[i].name,g_user_layers[i].uuid_str);
-	}
-	nvs_check_memory_status();
-	ESP_LOGI(NVS_TAG, "Layouts loaded");
-}
-
-/*******
- * MACROS
- */
-
-// TODO: check all of these to see if they are working
-
-void nvs_macros_state(void)
-{
-	// Example of nvs_get_used_entry_count() to get amount of all key-value pairs in one namespace:
-	nvs_handle_t handle;
-	nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &handle);
-	size_t used_entries;
-	// size_t total_entries_namespace;
-	if (nvs_get_used_entry_count(handle, &used_entries) == ESP_OK)
-	{
-		// the total number of entries occupied by the namespace
-		// total_entries_namespace = used_entries + 1;
-		used_entries++;
-	}
-	ESP_LOGI("MACROS", "Total entries in namespace: %zu", used_entries);
-	nvs_close(handle);
-}
-
-void nvs_load_macros(void)
-{
-	ESP_LOGI("--", "LOADING USER MACROS");
 	nvs_handle_t nvs_handle;
-	size_t dd_macros_size = sizeof(dd_macros);
-	esp_err_t error;
-	esp_err_t res;
-	uint8_t macro_num = 0;
-	char macro_key[10];
-	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
 	{
-		ESP_LOGI("MACROS", "MACROS_NAMESPACE OK");
+		list_size = 0;
 	}
 	else
 	{
-		ESP_LOGE("MACROS", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		ESP_ERROR_CHECK(ret);
 	}
 
-	error = nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num);
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
 
-	switch (error)
+	// Read list to get data
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
+
+	*lst_len = list_size / sizeof(lst_item_t);
+
+	// ESP_LOGW(TAG, "list len : %u", *lst_len);
+
+	free(lst_item);
+
+	nvs_close(nvs_handle);
+
+	return ESP_OK;
+}
+esp_err_t nvs_list_load_item(const char *list_name, size_t index, void **item, size_t item_size)
+{
+
+	nvs_handle_t nvs_handle;
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(list_name,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	char lst_namespace[NVS_NS_NAME_MAX_SIZE];
+
+	sprintf(lst_namespace, "%s_ls", list_name);
+
+	// Read list to get size
+	size_t list_size;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 NULL,
+								 &list_size);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
 	{
-	case ESP_ERR_NVS_NOT_FOUND:
-		ESP_LOGE("--", "Value not set yet. Running routine to write default values");
-		nvs_write_default_macros(nvs_handle);
-		ESP_ERROR_CHECK(nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num));
-		break;
-	case ESP_OK:
-
-		ESP_LOGI("--", "%d Macros loaded", macro_num);
-
-		break;
-	default:
-		ESP_LOGE("--", "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
-		break;
+		list_size = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
 	}
 
-	g_user_macros = pvPortMalloc((macro_num + 1) * sizeof(dd_macros)); //TODO: here is a malloc, but there is never a free.
-																	 // if that's ok. I guess so because this function is just called once.
+	lst_item_t *lst_item = (lst_item_t *)malloc(list_size);
 
-	for (int i = 0; i < macro_num; i++)
+	// Read list to get data
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)lst_namespace,
+								 (void *)lst_item,
+								 &list_size));
+
+	list_size = list_size / sizeof(lst_item_t);
+
+	if (index < list_size)
 	{
-		sprintf(macro_key, "macro_%hu", (i + 1));
-		res = nvs_get_blob(nvs_handle, macro_key, (void *)&g_user_macros[i], &dd_macros_size);
-		if (res != ESP_OK)
+
+		// allocate or reallocate space for load list data
+		if (*item != NULL)
 		{
-			ESP_LOGE("++", "Error (%s) reading Macro %s!\n", esp_err_to_name(res), macro_key);
+			if (list_size == 0)
+			{
+				free(*item);
+			}
+			else
+			{
+				*item = realloc(*item, item_size);
+				// ESP_LOGW(TAG, "realloc");
+			}
+		}
+		else
+		{
+			*item = malloc(item_size);
+			// ESP_LOGW(TAG, "malloc");
+		}
+
+		// ESP_LOGW(TAG, "read item name[%u] : %s", index, lst_item[index].name);
+
+		size_t desired_item_size = item_size;
+		// Read list to get item data
+		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+									 (const char *)lst_item[index].name,
+									 (void *)*item,
+									 &desired_item_size));
+		//ESP_LOG_BUFFER_HEXDUMP(TAG, *item, desired_item_size, ESP_LOG_WARN);
+	}
+
+	free(lst_item);
+	nvs_close(nvs_handle);
+
+	return ESP_OK;
+}
+// dynamic size items
+esp_err_t nvs_item_load(const char *namespace, const char *item_name, void **item, size_t *item_size)
+{
+
+	nvs_handle_t nvs_handle;
+
+	// ESP_LOGW(TAG, "read sub item name : %s", item_name);
+
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(namespace,
+							 NVS_READWRITE,
+							 &nvs_handle));
+
+	// Read item to get size
+	size_t item_size_nvs;
+	esp_err_t ret = nvs_get_blob(nvs_handle,
+								 (const char *)item_name,
+								 NULL,
+								 &item_size_nvs);
+
+	if (ret == ESP_ERR_NVS_NOT_FOUND)
+	{
+		item_size_nvs = 0;
+	}
+	else
+	{
+		ESP_ERROR_CHECK(ret);
+	}
+
+	// allocate or reallocate space for load item data
+	if (*item != NULL)
+	{
+		if (item_size_nvs == 0)
+		{
+			free(*item);
+		}
+		else
+		{
+			*item = realloc(*item, item_size_nvs);
 		}
 	}
-	g_macro_num = macro_num;
-	nvs_close(nvs_handle);
-	nvs_check_memory_status();
-	nvs_macros_state();
-}
-
-esp_err_t nvs_create_new_macro(dd_macros macro) // TODO: Check if keycode or name does not repeat.
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	uint8_t macro_num;
-	char macro_key[10];
-	char temp_key[10];
-
-	if (macro.keycode > MACRO_HOLD_MAX_VAL)
-	{
-		return ESP_ERR_INVALID_ARG;
-	}
-
-	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI("--", "MACROS_NAMESPACE OK");
-	}
 	else
 	{
-		ESP_LOGE("MACROS", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
+		*item = malloc(item_size_nvs);
 	}
 
-	error = nvs_get_u8(nvs_handle, MACROS_KEY, &macro_num);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI("--", "MACRO KEY FOUND ---OK");
-		ESP_LOGI("--", "MACRO QTY %d", macro_num);
-	}
-	else
-	{
-		ESP_LOGE("--", "Error (%s) READING KEY!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
-	}
-	int i = 0;
-	macro_num++;
-	if (macro_num > (MACRO_HOLD_MAX_VAL - MACRO_BASE_VAL))
-	{
-		nvs_close(nvs_handle);
-		return ESP_ERR_NVS_NOT_ENOUGH_SPACE;
-	}
-	dd_macros *temp_macro = pvPortMalloc((macro_num + 1) * sizeof(dd_macros));
-	g_user_macros = realloc(g_user_macros, (macro_num + 1) * sizeof(dd_macros));
+	size_t desired_item_size = item_size_nvs;
+	ESP_ERROR_CHECK(nvs_get_blob(nvs_handle,
+								 (const char *)item_name,
+								 (void *)*item,
+								 &desired_item_size));
 
-	size_t dd_macros_size = sizeof(dd_macros);
+	*item_size = item_size_nvs;
 
-	for (i = 0; i < macro_num - 1; i++)
-	{
-		sprintf(temp_key, "macro_%d", (i + 1));
-		error = nvs_get_blob(nvs_handle, temp_key, (void *)&temp_macro[i], &dd_macros_size);
-		if (error != ESP_OK)
-		{
-			ESP_LOGE("MACROS", "Error (%s) reading Macro %s!\n", esp_err_to_name(error), temp_key);
-			vPortFree(temp_macro);
-			nvs_close(nvs_handle);
-			return error;
-		}
-	}
-
-	temp_macro[i++] = macro;
-
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, MACROS_KEY, macro_num));
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-
-	for (i = 0; i < macro_num; i++)
-	{
-		sprintf(macro_key, "macro_%hu", (i + 1));
-		error = nvs_set_blob(nvs_handle, macro_key, (void *)&temp_macro[i], dd_macros_size);
-		if (error != ESP_OK)
-		{
-			ESP_LOGE("MACROS", "Error (%s) saving Macro %s!\n", esp_err_to_name(error), macro_key);
-			vPortFree(temp_macro);
-			nvs_close(nvs_handle);
-			return error;
-		}
-		// ESP_LOGI("-", "%s  Writed", macro_key);
-		// ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-		g_user_macros[i] = temp_macro[i];
-	}
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	g_macro_num = macro_num;
 	nvs_close(nvs_handle);
-	vPortFree(temp_macro);
-	return ESP_OK;
-}
-
-esp_err_t nvs_update_macro(dd_macros macro)
-{
-	ESP_LOGI(NVS_TAG, "UPDATING MACRO");
-	nvs_handle_t nvs_handle;
-	dd_macros temp;
-	esp_err_t error;
-	size_t dd_macros_size = sizeof(dd_macros);
-	char macro_key[10];
-	ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle));
-
-	sprintf(macro_key, "macro_%hu", (1 + macro.keycode - MACRO_BASE_VAL));
-	ESP_LOGI(NVS_TAG, "Reading  %s", macro_key);
-	error = nvs_get_blob(nvs_handle, macro_key, (void *)&temp, &dd_macros_size);
-	if (error != ESP_OK)
-	{
-		ESP_LOGE(NVS_TAG, "Error (%s) reading Macro %s!\n", esp_err_to_name(error), macro_key);
-		nvs_close(nvs_handle);
-		return error;
-	}
-	else
-	{
-		ESP_LOGI(NVS_TAG, "Macro Name  %s, Macro Keycode %d", temp.name, temp.keycode);
-	}
-
-	ESP_LOGI(NVS_TAG, "updating  %s", macro_key);
-	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	nvs_close(nvs_handle);
-	nvs_load_macros();
-	return ESP_OK;
-}
-
-esp_err_t nvs_delete_macro(dd_macros macro)
-{
-	nvs_handle_t nvs_handle;
-	char macro_key[10];
-	ESP_ERROR_CHECK(nvs_open(LAYER_NAMESPACE, NVS_READWRITE, &nvs_handle));
-	sprintf(macro_key, "macro_%hu", (macro.keycode - MACRO_BASE_VAL));
-	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)&macro, sizeof(dd_macros)));
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	nvs_close(nvs_handle);
-	nvs_load_macros();
 
 	return ESP_OK;
 }
 
-esp_err_t nvs_restore_default_macros(void)
+esp_err_t nvs_item_store(const char *namespace, const char *item_name, void *item, size_t item_size)
 {
 	nvs_handle_t nvs_handle;
-	nvs_handle_t new_nvs_handle;
-	esp_err_t error;
-	error = nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		ESP_LOGI("--", "MACROS_NAMESPACE OK");
-		ESP_ERROR_CHECK(nvs_erase_key(nvs_handle, MACROS_KEY));
-		ESP_ERROR_CHECK(nvs_erase_all(nvs_handle));
-		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-		nvs_close(nvs_handle);
 
-		ESP_ERROR_CHECK(nvs_open(MACROS_NAMESPACE, NVS_READWRITE, &new_nvs_handle));
-		nvs_write_default_macros(new_nvs_handle);
-		nvs_close(new_nvs_handle);
-		nvs_load_macros();
-	}
-	else
-	{
-		ESP_LOGE("--", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
-	}
+	// ESP_LOGW(TAG, "write sub item name : %s", item_name);
 
-	return ESP_OK;
-}
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(namespace,
+							 NVS_READWRITE,
+							 &nvs_handle));
 
-esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle)
-{
-	ESP_LOGI(TAG, "WRITING DEFAULT MACROS");
-	char macro_key[10];
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, MACROS_KEY, MACROS_NUM));
-	for (int i = 0; i < MACROS_NUM; i++)
-	{
-		sprintf(macro_key, "macro_%hu", (i + 1));
-		ESP_ERROR_CHECK(nvs_set_blob(nvs_handle, macro_key, (void *)ptr_default_macros[i], sizeof(dd_macros)));
-		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	}
-
-	return ESP_OK;
-}
-
-
-/**********
- * TAPDANCE
-***********/
-
-void nvs_load_tapdance(void) //TODO: Test
-{
-	ESP_LOGI(TAG, "LOADING USER TAPDANCEs");
-
-	nvs_handle_t nvs_handle;
-	size_t dd_tapdance_size = sizeof(dd_tapdance);
-	esp_err_t error;
-	size_t tapdance_list_size = sizeof(tapdance_list_def);
-	tapdance_list_def tapdance_list;
-
-	uint8_t tapdance_num = 0;
-
-	ESP_ERROR_CHECK(nvs_open(	TAPDANCE_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	error = nvs_get_u8(	nvs_handle, 
-						TAPDANCE_NUM_KEY, 
-						&tapdance_num);
-	switch (error)
-	{
-		case ESP_ERR_NVS_NOT_FOUND:
-			ESP_LOGE(TAG, "TAPDANCE Value not set yet. Running routine to write default values");
-			nvs_write_default_tapdance(nvs_handle);
-			ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-										TAPDANCE_NUM_KEY, 
-										&tapdance_num));
-			break;
-		case ESP_OK:
-			ESP_LOGI(TAG, "%d TapDances loaded", tapdance_num);
-			break;
-		default:
-			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
-			break;
-	}
-
-	// Get tapdance list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&tapdance_list, 
-									&tapdance_list_size
-								));
-
-	vPortFree(g_user_tapdance);
-	g_user_tapdance = pvPortMalloc(tapdance_num * sizeof(dd_tapdance));
-
-	for (int i = 0; i < tapdance_num; i++)
-	{
-		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle, tapdance_list[i], (void *)&g_user_tapdance[i], &dd_tapdance_size));
-	}
-	g_tapdance_num = tapdance_num;
-	nvs_close(nvs_handle);
-	nvs_check_memory_status();
-	//nvs_macros_state(); TODO: see if its necessary to have one of this for tapdance
-}
-
-void nvs_write_default_tapdance(nvs_handle_t nvs_handle) //TODO: Test
-{
-	ESP_LOGI(TAG, "WRITING DEFAULT TAPDANCE");
-
-	// Set the number of tapdances (by default DEFAULT_TAPDANCES)
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								DEFAULT_TAPDANCE));
-	tapdance_list_def tapdance_list = {{0}};
-	size_t blob_size = sizeof(dd_tapdance);
-
-	uuid_t uu;
-	char uu_str[SHORT_UUID_STR_LEN];
-
-	// Store each of the default tapdances
-	for (int i = 0; i < DEFAULT_TAPDANCE; i++)
-	{
-		// Generate short id for each tapdance
-		uuid_generate(uu);
-		short_uuid_unparse(uu, uu_str);
-		sprintf(tapdance_list[i], "td_%s", uu_str);
-		
-		ESP_LOGI(TAG,	"Storing tapdance %s with keycode %d in memory key %s", 
-						default_tapdance[i].name ,default_tapdance[i].keycode,tapdance_list[i]);
-
-		ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-										tapdance_list[i], 
-										(void *)&default_tapdance[i], 
-										blob_size
-									));
-		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	}
-
-	// Store the array list
-	blob_size = sizeof(tapdance_list_def);
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle,
-									TAPDANCE_LIST_KEY, 
-									(void *)(&tapdance_list),
-									blob_size
-								));
-
-	// Commit memory to make sure everything is stored.
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-
-}
-
-esp_err_t nvs_update_tapdance(dd_tapdance tapdance) // TODO: Test (with API)
-{
-	nvs_handle_t nvs_handle;
-	tapdance_list_def tapdance_list;
-	dd_tapdance tapdance_aux = tapdance;
-	uint8_t tapdance_num;
-	size_t tapdance_list_size = sizeof(tapdance_list_def);
-	uint8_t found = 0;
-
-	// Open Namespace
-	ESP_ERROR_CHECK(nvs_open(	TAPDANCE_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-	
-	// Get tapdance number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								&tapdance_num));
-	
-	// Get tapdance list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&tapdance_list, 
-									&tapdance_list_size
-								));
-
-	for(int i=0; i<tapdance_num;i++)
-	{
-		ESP_LOGI(TAG,"TAPDANCE %i = %s", i, tapdance_list[i]);
-	}
-
-	// Iteration to identify the tapdance based on the keycode
-	uint8_t i;
-	for(i=0; i<tapdance_num; i++)
-	{
-		if(g_user_tapdance[i].keycode == tapdance_aux.keycode)
-		{
-			found = 1;
-			break;
-		}
-	}
-	if(!found)
-	{
-		ESP_LOGE(TAG,"TAPDANCE not found");
-		nvs_close(nvs_handle);
-		return ESP_ERR_NOT_FOUND;
-	}
-
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									tapdance_list[i], 
-									(void *)&tapdance_aux, 
-									sizeof(dd_tapdance)
-								));
+	// Store new item content
+	ESP_ERROR_CHECK(nvs_set_blob(nvs_handle,
+								 (const char *)item_name,
+								 (void *)item,
+								 item_size));
 
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 
 	nvs_close(nvs_handle);
-	nvs_load_tapdance();
 
 	return ESP_OK;
 }
 
-
-esp_err_t nvs_create_tapdance(dd_tapdance tapdance) // TODO: Test (with API)
+esp_err_t nvs_delete_item(const char *namespace, const char *item_name)
 {
 	nvs_handle_t nvs_handle;
-	uint8_t tapdance_num;
-	tapdance_list_def current_list;
-	dd_tapdance aux_tapdance = tapdance;
-	uuid_t uu;
-	char uu_str[SHORT_UUID_STR_LEN];
 
-	ESP_ERROR_CHECK(nvs_open(	TAPDANCE_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
+	// ESP_LOGW(TAG, "delete sub item name : %s", item_name);
 
-	// Read tapdance list
-	size_t blob_size = sizeof(tapdance_list_def);
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&current_list, 
-									&blob_size
-								));
+	// Open namespace
+	ESP_ERROR_CHECK(nvs_open(namespace,
+							 NVS_READWRITE,
+							 &nvs_handle));
 
-	// Read tapdance number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								&tapdance_num));
-	
-	// Check if tapdance_num + 1 will overflow the tapdance list
-	if (tapdance_num + 1 > MAX_TAPDANCE)
-	{
-		return ESP_ERR_NO_MEM;
-	}
-	
-	// Generate short id
-	uuid_generate(uu);
-	short_uuid_unparse(uu, uu_str);
-	sprintf(current_list[tapdance_num], "td_%s", uu_str);
-
-	// Store new tapdance with new key
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									current_list[tapdance_num], 
-									(void *)&aux_tapdance, 
-									sizeof(dd_tapdance)));
-
-	// Increase tapdance num
-	tapdance_num++;
-
-	// Save number of tapdances
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								tapdance_num));
-
-	// Save tapdance list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(tapdance_list_def)
-								));
-	
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	
-	nvs_close(nvs_handle);	
-	nvs_load_tapdance();
-
-	return ESP_OK;
-}
-
-//TODO: After deleting it should move the keycodes back. or not? right now it does not do it.
-esp_err_t nvs_delete_tapdance(uint8_t delete_tapdance_num)// TODO: Test (with api)
-{
-	nvs_handle_t nvs_handle;
-	uint8_t tapdance_num;
-	tapdance_list_def current_list;
-	size_t tapdance_list_size = sizeof(tapdance_list_def);
-
-	ESP_ERROR_CHECK(nvs_open(	TAPDANCE_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	// Read tapdance list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&current_list, 
-									&tapdance_list_size
-								));
-
-	// Read tapdance number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								&tapdance_num));
-	
-
-
-	// Erase key
-	ESP_ERROR_CHECK(nvs_erase_key(	nvs_handle,
-									current_list[delete_tapdance_num]
-								));
-
-	// Decrease tapdance num
-	tapdance_num--;
-
-	// Remove item in list and reorganize it.
-	for(int i=delete_tapdance_num; i<tapdance_num; i++)
-	{
-		strcpy(current_list[i],current_list[i+1]);
-	}
-
-	strcpy(current_list[tapdance_num],"");
-
-	// Save number of tapdances
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								TAPDANCE_NUM_KEY, 
-								tapdance_num));
-
-	// Save tapdance list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									TAPDANCE_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(tapdance_list_def)
-								));
-	
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	
-	nvs_close(nvs_handle);
-	
-	nvs_load_tapdance();
-
-	return ESP_OK;
-
-}
-
-esp_err_t nvs_restore_default_tapdance(void) // TODO: test with API
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(TAPDANCE_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{	
-		nvs_erase_all(nvs_handle); // Check if this works and does not create issues.
-		nvs_commit(nvs_handle);
-		nvs_write_default_tapdance(nvs_handle);
-		nvs_close(nvs_handle);
-		nvs_load_tapdance();
-	}
-	else
-	{
-		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		return error;
-	}
-
-	return ESP_OK;
-}
-
-/**********
- * MODTAP
-***********/
-void nvs_load_modtap(void) 
-{
-	ESP_LOGI(TAG, "LOADING USER MODTAPS");
-
-	nvs_handle_t nvs_handle;
-	size_t dd_modtap_size = sizeof(dd_modtap);
-	esp_err_t error;
-	size_t modtap_list_size = sizeof(modtap_list_def);
-	modtap_list_def modtap_list;
-
-	uint8_t modtap_num = 0;
-
-	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE,  
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	error = nvs_get_u8(	nvs_handle, 
-						MODTAP_NUM_KEY, 
-						&modtap_num);
-	switch (error)
-	{
-		case ESP_ERR_NVS_NOT_FOUND:
-			ESP_LOGE(TAG, "MODTAP Value not set yet. Running routine to write default values");
-			nvs_write_default_modtap(nvs_handle);
-			ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-										MODTAP_NUM_KEY, 
-										&modtap_num));
-			break;
-		case ESP_OK:
-			ESP_LOGI(TAG, "%d Modtap loaded", modtap_num);
-			break;
-		default:
-			ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(error));
-			break;
-	}
-
-	// Get modtap list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&modtap_list, 
-									&modtap_list_size
-								));
-
-	vPortFree(g_user_modtap); 
-	g_user_modtap = pvPortMalloc(modtap_num * sizeof(dd_modtap));
-
-	for (int i = 0; i < modtap_num; i++)
-	{
-		ESP_ERROR_CHECK(nvs_get_blob(nvs_handle, modtap_list[i], (void *)&g_user_modtap[i], &dd_modtap_size));
-	}
-	g_modtap_num = modtap_num;
-	nvs_close(nvs_handle);
-	nvs_check_memory_status();
-}
-
-void nvs_write_default_modtap(nvs_handle_t nvs_handle) 
-{
-	ESP_LOGI(TAG, "WRITING DEFAULT MODTAP");
-
-	// Set the number of modtaps (by default DEFAULT_MODTAPS)
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								DEFAULT_MODTAP));
-	modtap_list_def modtap_list = {{0}};
-	size_t blob_size = sizeof(dd_modtap);
-
-	uuid_t uu;
-	char uu_str[SHORT_UUID_STR_LEN];
-
-	// Store each of the default modtaps
-	for (int i = 0; i < DEFAULT_MODTAP; i++)
-	{
-		// Generate short id for each modtap
-		uuid_generate(uu);
-		short_uuid_unparse(uu, uu_str);
-		sprintf(modtap_list[i], "mt_%s", uu_str);
-		ESP_LOGI(TAG,	"Storing modtap %s with keycode %d in memory key %s", 
-						default_modtap[i].name ,default_modtap[i].keycode,modtap_list[i]);
-
-		ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-										modtap_list[i], 
-										(void *)&default_modtap[i], 
-										blob_size
-									));
-		ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	}
-
-	// Store the array list
-	blob_size = sizeof(modtap_list_def);
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle,
-									MODTAP_LIST_KEY, 
-									(void *)(&modtap_list),
-									blob_size
-								));
-
-	// Commit memory to make sure everything is stored.
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-
-}
-
-esp_err_t nvs_create_modtap(dd_modtap modtap) // TODO: Check if keycode or name does not repeat.
-{
-	nvs_handle_t nvs_handle;
-	uint8_t modtap_num;
-	modtap_list_def current_list;
-	dd_modtap aux_modtap = modtap;
-	uuid_t uu;
-	char uu_str[SHORT_UUID_STR_LEN];
-
-	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	// Read modtap list
-	size_t blob_size = sizeof(modtap_list_def);
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&current_list, 
-									&blob_size
-								));
-
-	// Read modtap number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								&modtap_num));
-	
-	// Check if modtap_num + 1 will overflow the modtap list
-	if (modtap_num + 1 > MAX_MODTAP)
-	{
-		return ESP_ERR_NO_MEM;
-	}
-	
-	// Generate short id
-	uuid_generate(uu);
-	short_uuid_unparse(uu, uu_str);
-	sprintf(current_list[modtap_num], "mt_%s", uu_str);
-
-	// Store new modtap with new key
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									current_list[modtap_num], 
-									(void *)&aux_modtap, 
-									sizeof(dd_modtap)));
-
-	// Increase modtap num
-	modtap_num++;
-
-	// Save number of modtaps
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								modtap_num));
-
-	// Save modtap list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(modtap_list_def)
-								));
-	
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-	
-	nvs_close(nvs_handle);	
-	nvs_load_modtap();
-
-	return ESP_OK;
-}
-
-esp_err_t nvs_update_modtap(dd_modtap modtap)
-{
-	nvs_handle_t nvs_handle;
-	modtap_list_def modtap_list;
-	dd_modtap modtap_aux = modtap;
-	uint8_t modtap_num;
-	size_t modtap_list_size = sizeof(modtap_list_def);
-	uint8_t found = 0;
-
-	// Open Namespace
-	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-	
-	// Get modtap number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								&modtap_num));
-	
-	// Get modtap list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&modtap_list, 
-									&modtap_list_size
-								));
-
-	for(int i=0; i<modtap_num;i++)
-	{
-		ESP_LOGI(TAG,"modtap %i = %s", i, modtap_list[i]);
-	}
-
-	// Iteration to identify the modtap based on the keycode
-	uint8_t i;
-	for(i=0; i<modtap_num; i++)
-	{
-		if(g_user_modtap[i].keycode == modtap_aux.keycode)
-		{
-			found = 1;
-			break;
-		}
-	}
-	if(!found)
-	{
-		ESP_LOGE(TAG,"MODTAP not found");
-		nvs_close(nvs_handle);
-		return ESP_ERR_NOT_FOUND;
-	}
-
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									modtap_list[i], 
-									(void *)&modtap_aux, 
-									sizeof(dd_modtap)
-								));
+	// Erase item content
+	ESP_ERROR_CHECK(nvs_erase_key(nvs_handle,
+								  item_name));
 
 	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
 
 	nvs_close(nvs_handle);
-	nvs_load_modtap();
-
-	return ESP_OK;
-}
-
-esp_err_t nvs_delete_modtap(uint8_t delete_modtap_num)
-{
-	nvs_handle_t nvs_handle;
-	uint8_t modtap_num;
-	modtap_list_def current_list;
-	size_t modtap_list_size = sizeof(modtap_list_def);
-
-	ESP_ERROR_CHECK(nvs_open(	MODTAP_NAMESPACE, 
-								NVS_READWRITE, 
-								&nvs_handle));
-
-	// Read modtap list
-	ESP_ERROR_CHECK(nvs_get_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&current_list, 
-									&modtap_list_size
-								));
-
-	// Read modtap number
-	ESP_ERROR_CHECK(nvs_get_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								&modtap_num));
-	
-
-
-	// Erase key
-	ESP_ERROR_CHECK(nvs_erase_key(	nvs_handle,
-									current_list[delete_modtap_num]
-								));
-
-	// Decrease modtap num
-	modtap_num--;
-
-	// Remove item in list and reorganize it.
-	for(int i=delete_modtap_num; i<modtap_num; i++)
-	{
-		strcpy(current_list[i],current_list[i+1]);
-	}
-
-	strcpy(current_list[modtap_num],"");
-
-	// Save number of modtaps
-	ESP_ERROR_CHECK(nvs_set_u8(	nvs_handle, 
-								MODTAP_NUM_KEY, 
-								modtap_num));
-
-	// Save modtap list
-	ESP_ERROR_CHECK(nvs_set_blob(	nvs_handle, 
-									MODTAP_LIST_KEY, 
-									(void *)&current_list, 
-									sizeof(modtap_list_def)
-								));
-	
-	ESP_ERROR_CHECK(nvs_commit(nvs_handle));
-
-	nvs_close(nvs_handle);	
-	nvs_load_modtap();
-
-	return ESP_OK;
-
-}
-
-esp_err_t nvs_restore_default_modtap(void) 
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(MODTAP_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{	
-		nvs_erase_all(nvs_handle); // Check if this works and does not create issues.
-		nvs_commit(nvs_handle);
-		nvs_write_default_modtap(nvs_handle);
-		nvs_close(nvs_handle);
-		nvs_load_modtap();
-	}
-	else
-	{
-		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		return error;
-	}
-
-	return ESP_OK;
-}
-
-/**********
- * LEADERKEY
-***********/
-
-
-/**********
- * LED
-***********/
-
-esp_err_t nvs_save_led_mode(rgb_mode_t led_mode)
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
-		nvs_set_u8(nvs_handle, "mode", led_mode.mode);
-		nvs_set_u8(nvs_handle, "hue", led_mode.H);
-		nvs_set_u8(nvs_handle, "saturation", led_mode.S);
-		nvs_set_u8(nvs_handle, "value", led_mode.V);
-		nvs_set_u8(nvs_handle, "speed", led_mode.speed);
-		nvs_set_u8(nvs_handle, "red", led_mode.rgb[0]);
-		nvs_set_u8(nvs_handle, "green", led_mode.rgb[1]);
-		nvs_set_u8(nvs_handle, "blue", led_mode.rgb[2]);
-		nvs_close(nvs_handle);
-	}
-	else
-	{
-		ESP_LOGE("-", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
-	}
-
-	return ESP_OK;
-}
-
-esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode)
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
-		nvs_get_u8(nvs_handle, "mode", &led_mode->mode);
-		nvs_get_u8(nvs_handle, "hue", &led_mode->H);
-		nvs_get_u8(nvs_handle, "saturation", &led_mode->S);
-		nvs_get_u8(nvs_handle, "value", &led_mode->V);
-		nvs_get_u8(nvs_handle, "speed", &led_mode->speed);
-		nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
-		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
-		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
-		nvs_close(nvs_handle);
-	}
-	else
-	{
-		ESP_LOGE("-", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
-	}
-
-	return ESP_OK;
-}
-
-esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode)
-{
-	nvs_handle_t nvs_handle;
-	esp_err_t error;
-	error = nvs_open(LEDMODE_NAMESPACE, NVS_READWRITE, &nvs_handle);
-	if (error == ESP_OK)
-	{
-		// ESP_LOGI("-", "LEDMODE_NAMESPACE OK");
-		nvs_get_u8(nvs_handle, "red", &led_mode->rgb[0]);
-		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
-		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
-		nvs_close(nvs_handle);
-	}
-	else
-	{
-		ESP_LOGE("-", "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
-		nvs_close(nvs_handle);
-		return error;
-	}
 
 	return ESP_OK;
 }

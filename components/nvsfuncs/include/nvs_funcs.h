@@ -50,113 +50,28 @@
 #define NVS_CONFIG_OK 1
 #define NVS_CONFIG_ERR 0
 
-
-
 /**
  * @brief Check the number of entries used and available of the nvs
  *
  */
 void nvs_check_memory_status(void);
 
-/**
- * @brief Read the number of layers in memory
- *
- * @return uint8_t number of layers in memory
- */
-uint8_t nvs_read_num_layers(void);
+typedef bool (*selector_t)(const void *item);
 
+esp_err_t nvs_list_init(const char *list_name);
+esp_err_t nvs_list_initialized(const char *list_name);
+esp_err_t nvs_list_default(const char *list_name, void *list, size_t list_len, size_t item_size);
+esp_err_t nvs_list_auto_default(const char *list_name, void *list, size_t list_len, size_t item_size);
+esp_err_t nvs_list_load(const char *list_name, void **list, size_t *list_len, size_t item_size);
+esp_err_t nvs_list_add_item(const char *list_name, void *item, size_t item_size);
+esp_err_t nvs_list_update(const char *list_name, size_t index, void *item, size_t item_size);
+esp_err_t nvs_list_delete_item(const char *list_name, size_t index);
+esp_err_t nvs_list_organize(const char *list_name, size_t item_size, selector_t selector_cb);
+esp_err_t nvs_list_get_len(const char *list_name, size_t *lst_len);
+esp_err_t nvs_list_load_item(const char *list_name, size_t index, void **item, size_t item_size);
 
-
-/**
- * @brief Read layers in memory
- *
- * @param layers_array array of dd_layer elements (layers in memory)
- */
-void nvs_read_layers(dd_layer *layers_array);
-
-/**
- * @brief Read and returns the list of layers
- * 
- * @param list list of the nvs keynames of the layers in order.
- */
-void nvs_read_list_layers(layer_list_def * list);
-
-/**
- * @brief Write default layers in memory
- *
- * @param nvs_handle
- */
-void nvs_write_default_layers(nvs_handle_t nvs_handle);
-
-/**
- * @brief
- *
- * @param layer
- * @param layer_num
- * @return esp_err_t
- */
-esp_err_t nvs_update_layer(dd_layer * layer, uint8_t layer_pos);
-
-/**
- * @brief
- *
- * @param layer
- * @return esp_err_t
- */
-esp_err_t nvs_create_layer(dd_layer layer);
-
-/**
- * @brief
- *
- * @param delete_layer_num
- * @return esp_err_t
- */
-esp_err_t nvs_delete_layer(uint8_t delete_layer_num);
-
-/**
- * @brief
- *
- * @return esp_rr_t
- */
-esp_err_t nvs_restore_default_layers();
-
-/**
- * @brief get the layers from memory and load them to for usage
- *
- */
-void nvs_load_layouts(void);
-
-/**
- * @brief
- *
- */
-esp_err_t nvs_update_layout_position(void);
-
-// TODO: Document macro NVS functions
-void nvs_load_macros(void);
-esp_err_t nvs_write_default_macros(nvs_handle_t nvs_handle);
-esp_err_t nvs_create_new_macro(dd_macros macros);
-esp_err_t nvs_update_macro(dd_macros macro);
-esp_err_t nvs_delete_macro(dd_macros macro);
-esp_err_t nvs_restore_default_macros(void);
-
-void nvs_load_tapdance(void);
-void nvs_write_default_tapdance(nvs_handle_t nvs_handle);
-esp_err_t nvs_create_tapdance(dd_tapdance tapdance);
-esp_err_t nvs_update_tapdance(dd_tapdance tapdance);
-esp_err_t nvs_delete_tapdance(uint8_t delete_tapdance_num);
-esp_err_t nvs_restore_default_tapdance(void);
-
-void nvs_load_modtap(void);
-void nvs_write_default_modtap(nvs_handle_t nvs_handle);
-esp_err_t nvs_create_modtap(dd_modtap modtap);
-esp_err_t nvs_update_modtap(dd_modtap modtap);
-esp_err_t nvs_delete_modtap(uint8_t delete_modtap_num);
-esp_err_t nvs_restore_default_modtap(void);
-
-// TODO: Document led functions
-esp_err_t nvs_save_led_mode(rgb_mode_t led_mode);
-esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode);
-esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode);
+esp_err_t nvs_delete_item(const char *namespace, const char *item_name);
+esp_err_t nvs_item_store(const char *namespace, const char *item_name, void *item, size_t item_size);
+esp_err_t nvs_item_load(const char *namespace, const char *item_name, void **item, size_t *item_size);
 
 #endif /* NVS_FUNCS_H_ */

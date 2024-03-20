@@ -33,9 +33,9 @@
 
 #include "gesture_handles.h"
 #include "keys.h"
+#include "server_nvs.h"
 
 // static const char *TAG = "KeyReport";
-
 
 // #define TRUNC_SIZE 20
 #define USEC_TO_SEC 1000000
@@ -166,29 +166,27 @@ void battery_reports(void *pvParameters)
 	}
 }
 
-
-
 void main_task(void *pvParameters)
 {
 	uint8_t report_state[REPORT_LEN] = {0};
 	keys_event_struct_t key_event;
-	ESP_LOGI("MAIN_TASK","INTO MAIN TASK");
-	while(1)
+	ESP_LOGI("MAIN_TASK", "INTO MAIN TASK");
+	while (1)
 	{
-		//Check if there are things in the key queue, if not, continue polling.
+		// Check if there are things in the key queue, if not, continue polling.
 		if (keys_q)
 		{
-			if(xQueueReceive(keys_q, &key_event, 0))
+			if (xQueueReceive(keys_q, &key_event, 0))
 			{
 				ESP_LOGI("MAIN_TASK", "Key event received");
-				keys_get_report_from_event(&g_user_layers[current_layout],key_event,report_state);
+				dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+				keys_get_report_from_event(&dd_layer_lst.item[current_layout], key_event, report_state);
 			}
 		}
 
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
-
 
 void rgb_leds_task(void *pvParameters)
 {
@@ -262,8 +260,9 @@ void encoder_report(void *pvParameters)
 			}
 			else
 			{
+				dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
 				encoder_command(encoder1_status,
-								g_user_layers[current_layout].left_encoder_map);
+								dd_layer_lst.item[current_layout].left_encoder_map);
 			}
 			past_encoder1_state = encoder1_status;
 		}
@@ -290,8 +289,9 @@ void encoder_report(void *pvParameters)
 			}
 			else
 			{
+				dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
 				encoder_command(encoder2_status,
-								g_user_layers[current_layout].right_encoder_map);
+								dd_layer_lst.item[current_layout].right_encoder_map);
 			}
 
 			past_encoder2_state = encoder2_status;

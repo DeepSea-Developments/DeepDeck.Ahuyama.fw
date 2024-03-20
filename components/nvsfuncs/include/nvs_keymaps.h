@@ -41,11 +41,10 @@
 #include "uuid.h"
 #include "nvs.h"
 
-
 #define MG_NAME_LENGTH 13
 
 #define LK_NAME_LENGTH 13
-#define LK_MAX_SEQUENCE 6
+
 
 #define MT_NAME_LENGTH 13
 
@@ -55,34 +54,35 @@
 #define MACRO_SHORT_NAME_LENGTH 7
 #define MACRO_LONG_NAME_LENGTH 13
 
-
 /**
  * @brief Structure to hold DeepDeck layers
- * 
+ *
  */
-typedef struct dd_layer_str {
-	char name[MAX_LAYOUT_NAME_LENGTH];                     // Name up to 14 characters
-	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];            // Key maps
-	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7];       // Name of each key up to 6 characters
-	uint16_t left_encoder_map[ENCODER_SIZE];               // Map ofr left encoder
-	uint16_t right_encoder_map[ENCODER_SIZE];              // Map for right encoder
-	uint16_t gesture_map[GESTURE_SIZE];                    // Map for gesture sensor
+typedef struct dd_layer_str
+{
+	char name[MAX_LAYOUT_NAME_LENGTH];				 // Name up to 14 characters
+	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];		 // Key maps
+	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7]; // Name of each key up to 6 characters
+	uint16_t left_encoder_map[ENCODER_SIZE];		 // Map ofr left encoder
+	uint16_t right_encoder_map[ENCODER_SIZE];		 // Map for right encoder
+	uint16_t gesture_map[GESTURE_SIZE];				 // Map for gesture sensor
 	bool active;
 	char uuid_str[SHORT_UUID_STR_LEN];
 } dd_layer;
 
 /**
  * @brief List of available layers in order
- * 
+ *
  */
-typedef char layer_list_def[MAX_LAYER][NVS_NS_NAME_MAX_SIZE]; 
+typedef char layer_list_def[MAX_LAYER][NVS_NS_NAME_MAX_SIZE];
 
 /**
- * @brief structure to hold tapdance actions. 
- * 
+ * @brief structure to hold tapdance actions.
+ *
  */
-typedef struct dd_tapdance_str {
-	char name[TD_NAME_LENGTH];       
+typedef struct dd_tapdance_str
+{
+	char name[TD_NAME_LENGTH];
 	uint8_t tap_list[TAPDANCE_LEN];
 	uint16_t keycode_list[TAPDANCE_LEN];
 	uint16_t keycode;
@@ -90,79 +90,65 @@ typedef struct dd_tapdance_str {
 
 /**
  * @brief List of available tapdance in order
- * 
+ *
  */
-typedef char tapdance_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE]; 
+typedef char tapdance_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE];
 
-
-typedef struct dd_modtap_str {
+typedef struct dd_modtap_str
+{
 	char name[MT_NAME_LENGTH];
-	uint16_t keycode_short;			// Keycode when short pressed
-	uint16_t keycode_long;			// Keycode when long pressed
-	uint16_t keycode;				// Keycode that triggers this modtap
-}dd_modtap;
+	uint16_t keycode_short; // Keycode when short pressed
+	uint16_t keycode_long;	// Keycode when long pressed
+	uint16_t keycode;		// Keycode that triggers this modtap
+} dd_modtap;
 
 /**
  * @brief List of available tapdance in order
- * 
+ *
  */
-typedef char modtap_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE]; 
+typedef char modtap_list_def[MAX_TAPDANCE][NVS_NS_NAME_MAX_SIZE];
 
-
-
-
-typedef struct dd_macro_group_str 
+typedef struct dd_macro_group_str
 {
 	char name[MG_NAME_LENGTH];
-}dd_macro_group;
-
+} dd_macro_group;
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
-typedef struct dd_leaderkey_str {
+typedef struct dd_leaderkey_str
+{
+	uint8_t *sequence; // Sequence of key pressed. in a 4x4 K14 would be 4, and K21 would be 5.
+	uint8_t sequence_len;
 	char name[LK_NAME_LENGTH];
 	uint16_t keycode;
-	uint8_t sequence[LK_MAX_SEQUENCE];	// Sequence of key pressed. in a 4x4 K14 would be 4, and K21 would be 5.
-}dd_leaderkey;
+} dd_leaderkey;
 
-
-
-
-typedef struct dd_macro_str {
-	char name[MACRO_LONG_NAME_LENGTH];       
-	char short_name[MACRO_SHORT_NAME_LENGTH];       
-	uint8_t macro_group_number;
-	uint16_t macro_sequence_size;
-	uint8_t * macro_sequence;  			         
-	// int keycode;
-} dd_macro;
+typedef struct
+{
+	uint8_t sequence[LK_MAX_KEYS]; // Sequence of key pressed. in a 4x4 K14 would be 4, and K21 would be 5.
+	char name[LK_NAME_LENGTH];
+	uint16_t keycode;
+} dd_leaderkey_static;
 
 /**
  * @brief Structure for Macros // TODO: add new macros methodology
- * 
+ *
  */
-typedef struct dd_macros_str {
-	uint16_t key[MACRO_LEN];  			  //200 keys ---> MACRO_LEN = 5       
-	char name[USER_MACRO_NAME_LEN];       //  200 macros ---> Name of each macro up to 32 characters
+typedef struct dd_macros_str
+{
+	uint16_t *key; // 200 keys ---> MACRO_LEN = 5
+	uint8_t key_len;
+	char name[USER_MACRO_NAME_LEN]; //  200 macros ---> Name of each macro up to 32 characters
 	uint16_t keycode;
 } dd_macros;
 
-
-
-extern dd_tapdance *g_user_tapdance;
-extern dd_macros *g_user_macros;
-extern dd_layer *g_user_layers;
-extern dd_modtap *g_user_modtap;
-extern dd_leaderkey *g_user_leaderkey;
-
-extern uint8_t g_macro_num; //TODO: remove this kind of global variables
-extern uint8_t g_tapdance_num;
-extern uint8_t g_modtap_num;
-extern uint8_t g_leaderkey_num;
+typedef struct
+{
+	uint16_t key[MACRO_LEN];		// 200 keys ---> MACRO_LEN = 5
+	char name[USER_MACRO_NAME_LEN]; //  200 macros ---> Name of each macro up to 32 characters
+	uint16_t keycode;
+} dd_macros_static;
 
 #endif /* NVS_KEYMAPS_H_ */
-
-
-
