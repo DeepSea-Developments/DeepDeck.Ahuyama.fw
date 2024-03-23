@@ -3,36 +3,61 @@
     --md-primary-fg-color--light: #ffbe55;
     --md-primary-fg-color--dark:  #ffbe55;
   } */
+[data-md-color-scheme=deepdeck] {
+  /* Primary color shades */
+  --md-primary-fg-color: #3c6a9d;
+  /* --md-primary-fg-color--light: #e5e5e5;
+  --md-primary-fg-color--dark:  #e5e5e5;
+  --md-primary-bg-color:        #e5e5e5;
+  --md-primary-fg-color--light: #e5e5e5;
+  --md-primary-fg-color--dark:  #ffbe55; */
+  /* Accent color shades */
+  /* --md-accent-fg-color:                #ffbe55;
+  --md-accent-fg-color--transparent:   #9a7131;
+  --md-accent-bg-color:                #06668e;
+  --md-accent-bg-color--light:         #06668e;
 
-  [data-md-color-scheme="deepdeck"] {
-    /* Primary color shades */
-    --md-primary-fg-color:        #3c6a9d;
-    /* --md-primary-fg-color--light: #e5e5e5;
-    --md-primary-fg-color--dark:  #e5e5e5;
-    --md-primary-bg-color:        #e5e5e5;
-    --md-primary-fg-color--light: #e5e5e5;
-    --md-primary-fg-color--dark:  #ffbe55; */
-    
-    /* Accent color shades */
-    /* --md-accent-fg-color:                #ffbe55;
-    --md-accent-fg-color--transparent:   #9a7131;
-    --md-accent-bg-color:                #06668e;
-    --md-accent-bg-color--light:         #06668e;
+  --md-typeset-color:         #06668e;
+  --md-typeset-a-color:         #9a7131;
 
-    --md-typeset-color:         #06668e;
-    --md-typeset-a-color:         #9a7131;
+  --md-button-color:          #06668e;
 
-    --md-button-color:          #06668e;
-    
-    --md-footer-fg-color:        #ffbe55;
-    --md-footer-bg-color:        #3e3e3e; */
-    
-  }
+  --md-footer-fg-color:        #ffbe55;
+  --md-footer-bg-color:        #3e3e3e; */
+}
 
-  .md_button {
-    color:aqua;
-  }
+.md_button {
+  color: aqua;
+}
 
-  [data-md-color-scheme="slate"] {
-    --md-hue: 210; 
-  }
+[data-md-color-scheme=slate] {
+  --md-hue: 210;
+}
+
+.mdx-badge {
+  font-size: 0.85em;
+}
+.mdx-badge--heart .twemoji {
+  animation: heart 1000ms infinite;
+}
+.mdx-badge--right {
+  float: right;
+  margin-left: 0.35em;
+}
+.mdx-badge__icon {
+  padding: px2rem(4px);
+  background: var(--md-accent-fg-color--transparent);
+  border-start-start-radius: px2rem(2px);
+  border-end-start-radius: px2rem(2px);
+}
+.mdx-badge__icon:last-child {
+  border-radius: px2rem(2px);
+}
+.mdx-badge__text {
+  padding: px2rem(4px) px2rem(6px);
+  border-start-end-radius: px2rem(2px);
+  border-end-end-radius: px2rem(2px);
+  box-shadow: 0 0 0 1px inset var(--md-accent-fg-color--transparent);
+}
+
+/*# sourceMappingURL=extra.css.map */

@@ -65,6 +65,9 @@ edit_uri: edit/mkdocs/docs/
 extra_css:
   - stylesheets/extra.css
 
+hooks:
+  - overrides/hooks/shortcodes.py
+
 extra:
   analytics:
     provider: google
@@ -93,6 +96,7 @@ extra:
 
 
 markdown_extensions:
+  - abbr
   - admonition
   - pymdownx.details
   - pymdownx.superfences
@@ -176,6 +180,7 @@ nav:
     - FAQ and Troubleshooting: en/QuickStartGuide/faq.md
   - Open Source:
     - Open Source: en/opensource/opensource.md
+    - Conventions: en/opensource/conventions.md
     - Firmware: 
       - en/opensource/fw/firmware.md
       - How to setup VS code: en/opensource/fw/vscode-setup.md

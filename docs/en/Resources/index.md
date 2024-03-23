@@ -63,7 +63,7 @@ If you like this project, please star 🌟 the repositories in github!
 
     Here you can find the main schematics of the Ahuyama version.
 
-    [:octicons-arrow-right-24: View schematics](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.hw/blob/main/MK32_DSD/MK32_DSD.pdf){ .md-button }
+    [:octicons-arrow-right-24: View schematics](https://github.com/DeepSea-Developments/DeepDeck.Ahuyama.hw/blob/main/MK32_DSD/Main.pdf){ .md-button }
 
 -   :simple-html5:{ .lg .middle } __WebServer source files__
 
