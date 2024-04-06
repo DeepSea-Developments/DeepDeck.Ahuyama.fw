@@ -157,8 +157,8 @@ const dd_layer default_layer[DEFAULT_LAYERS] = {
          * |        .        |         0       |        -        |        +        |
          * `-----------------------------------------------------------------------'
          */
-        .key_map = {{KC_TD3, KC_TD2, KC_TD1, RAISE}, {KC_4, KC_5, KC_6, KC_KP_SLASH}, {KC_1, KC_2, KC_3, KC_KP_ASTERISK}, {KC_TD1, KC_TD2, KC_TD3, KC_LK}},
-        .key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {"TD_1", "TD_2", "TD_3", "LK"}},
+        .key_map = {{KC_TD3, KC_TD2, KC_TD1, RAISE}, {KC_4, KC_5, KC_6, KC_KP_SLASH}, {KC_1, KC_2, KC_3, KC_KP_ASTERISK}, {KC_DOT, KC_0, KC_MINS, KC_KP_PLUS}},
+        .key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {".", "0", "-", "+"}},
         // Knobs - {CW, CCW, Single Press, Long Press, Double press}
         .left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},
         .right_encoder_map = {KC_DOWN, KC_UP, KC_ENTER, KC_TAB, KC_TAB},
@@ -167,7 +167,7 @@ const dd_layer default_layer[DEFAULT_LAYERS] = {
         .active = true,
     },
     {
-        .name = "Chrome",
+        .name = "Chrome",   
         .uuid_str = "17df94",
         /* Chrome
          * ,-----------------------------------------------------------------------.

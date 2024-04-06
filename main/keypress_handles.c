@@ -130,11 +130,80 @@ void media_control_send(uint16_t keycode)
 	xQueueSend(media_q, (void *)&media_state, (TickType_t)0);
 }
 
-void media_control_release(uint16_t keycode)
+void media_control_release(void)
 {
 	uint8_t media_state[2] = {0};
 	xQueueSend(media_q, (void *)&media_state, (TickType_t)0);
 }
+
+// What to do on mouse actions
+void mouse_control_send(uint16_t keycode)
+{
+	uint8_t mouse_state[5] = {0, 0, 0, 0, 0};
+
+	switch (keycode)
+	{
+	case KC_MS_UP:
+		mouse_state[2] = 15;
+		break;
+
+	case KC_MS_DOWN:
+		mouse_state[2] = -15;
+		break;
+
+	case KC_MS_LEFT:
+		mouse_state[1] = 15;
+		break;
+
+	case KC_MS_RIGHT:
+		mouse_state[1] = -15;
+		break;
+
+	case KC_MS_BTN1:
+		SET_BIT(mouse_state[0], 0);
+		break;
+
+	case KC_MS_BTN2:
+		SET_BIT(mouse_state[0], 1);
+		break;
+
+	case KC_MS_BTN3:
+		SET_BIT(mouse_state[0], 2);
+		break;
+
+	case KC_MS_BTN4:
+		SET_BIT(mouse_state[0], 3);
+		break;
+	
+	case KC_MS_BTN5:
+		SET_BIT(mouse_state[0], 4);
+		break;
+
+	case KC_MS_WH_UP:
+		mouse_state[3] = 1;
+		break;
+	case KC_MS_WH_DOWN:
+		mouse_state[3] = -1;
+		break;
+	}
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+	// mouse_state[0] = 0;
+	// mouse_state[1] = 0;
+	// mouse_state[2] = 0;
+	// mouse_state[3] = 0;
+	// mouse_state[4] = 0;
+	// xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+}
+
+// TODO: This does not work. ()
+void mouse_control_release(void)
+{
+	uint8_t mouse_state[5] = {0};
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+}
+
+
+
 
 /**
  * @brief Send the current keyboard config based on the parameters and the selected layer.
@@ -414,6 +483,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		// Nothing elese to do here
 		return;
 	}
+	
 	else if (key_event.event == KEY_LEADER)
 	{
 		// TODO: Change
@@ -486,6 +556,12 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 				return;
 			}
 
+			// Review mouse actions
+        	else if (keycode >= KC_MS_UP && keycode <= KC_MS_ACCEL2)
+			{
+				mouse_control_send(keycode);
+			}
+
 			// Check if is a macro
 			else if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
 			{
@@ -531,7 +607,6 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		// If unpressed
 		if (key_event.event == KEY_RELEASED)
 		{
-			// Check if layer hold (ToDo)
 
 			// Check Macro
 			if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
@@ -555,7 +630,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			// checking for media control keycodes
 			else if ((keycode >= KC_MEDIA_NEXT_TRACK) && (keycode <= KC_AUDIO_VOL_DOWN))
 			{
-				media_control_release(keycode);
+				media_control_release();
 			}
 
 			else if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))

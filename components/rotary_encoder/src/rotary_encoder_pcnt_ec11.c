@@ -419,6 +419,18 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
                 mouse_state[0] = 2;
                 break;
 
+            case KC_MS_BTN3:
+                mouse_state[0] = 3;
+                break;
+
+            case KC_MS_BTN4:
+                mouse_state[0] = 4;
+                break;
+            
+            case KC_MS_BTN5:
+                mouse_state[0] = 5;
+                break;
+
             case KC_MS_WH_UP:
                 mouse_state[3] = 1;
                 break;
@@ -433,6 +445,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
             mouse_state[3] = 0;
             xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
         }
+        
         // Review Macro actions
         else if (action >= MACRO_BASE_VAL && action < MACRO_HOLD_MAX_VAL)
         {

@@ -40,7 +40,8 @@ static hid_report_map_t hid_rpt_map[HID_NUM_REPORTS];
  * 
  * @todo Add the joystick report descriptor here.
  */
-static const uint8_t hidReportMap[] = { 0x05, 0x01, // Usage Page (Generic Desktop)
+static const uint8_t hidReportMap[] = { 
+		0x05, 0x01, // Usage Page (Generic Desktop)
 		0x09, 0x02,  // Usage (Mouse)
 		0xA1, 0x01,  // Collection (Application)
 		0x85, 0x01,  // Report Id (1)
@@ -107,10 +108,10 @@ static const uint8_t hidReportMap[] = { 0x05, 0x01, // Usage Page (Generic Deskt
 		0x95, REPORT_COUNT_BYTES,  //   Report Count (6)
 		0x75, 0x08,  //   Report Size (8)
 		0x15, 0x00,  //   Log Min (0)
-		0x25, 0x65,  //   Log Max (101)
+		0x25, 0x73,  //   Log Max (101)
 		0x05, 0x07,  //   Usage Pg (Key Codes)
 		0x19, 0x00,  //   Usage Min (0)
-		0x29, 0x65,  //   Usage Max (101)
+		0x29, 0x73,  //   Usage Max (101)
 		0x81, 0x00,  //   Input: (Data, Array)
 		//
 		0xC0,// End Collection

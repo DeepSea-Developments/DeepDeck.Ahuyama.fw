@@ -15,4 +15,7 @@ const char gesture_items_names[GESTURE_SIZE][8] = {"up", "down", "left", "right"
 
 uint8_t current_layout = 0;
 
+// All the keys definition were moved to server_nvs.c
+// TODO: move the definitions back here - Nick. april 5 2024
+
 #endif
