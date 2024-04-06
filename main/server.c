@@ -25,6 +25,9 @@
 #include "gesture_handles.h"
 // #include "mdns.h"
 #include "esp_vfs.h"
+#include "server_nvs.h"
+
+#include "keypress_handles.h"
 
 #define DEBUG
 
@@ -101,7 +104,7 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	json_response(string);
 	size_t buf_len;
 	buf_len = (req->content_len) + 1;
-	buffer = malloc(buf_len);
+	buffer = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buffer, req->content_len);
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -151,12 +154,12 @@ esp_err_t connect_url_handler(httpd_req_t *req)
 	{
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
-		free(buffer);
+		vPortFree(buffer);
 		return ESP_OK;
 	}
 
-	free(buffer);
-	free(string);
+	vPortFree(buffer);
+	vPortFree(string);
 
 	wifi_reset = true;
 	xSemaphoreGive(Wifi_initSemaphore);
@@ -171,7 +174,6 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
-	uint8_t layers_num = nvs_read_num_layers();
 	char *string = NULL;
 	cJSON *monitor = cJSON_CreateObject();
 	if (monitor == NULL)
@@ -197,19 +199,16 @@ esp_err_t config_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 
 	cJSON_Delete(monitor);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
 
-/**
+/***********************************************
  *
+ *                 END POINTS MACROS
  *
- * END POINTS MACROS
- *
- *
- *
- */
+ ***********************************************/
 
 /**
  * @brief Read DeepDeck macros
@@ -264,20 +263,20 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	}
 
 	cJSON_AddItemToObject(macro_object, "macros", array);
-
-	for (index = 0; index < total_macros; ++index)
+	dd_macros_lst_t dd_macros_lst = nvs_get_macros_lst();
+	for (index = 0; index < dd_macros_lst.size; ++index)
 	{
 		macro_data = cJSON_CreateObject();
 		if (macro_data == NULL)
 			abort();
 		cJSON_AddItemToArray(array, macro_data);
 
-		macro_name = cJSON_CreateString((user_macros[index].name));
+		macro_name = cJSON_CreateString((dd_macros_lst.item[index].name));
 		if (macro_name == NULL)
 			abort();
 		cJSON_AddItemToObject(macro_data, "name", macro_name);
 
-		macro_keycode = cJSON_CreateNumber(user_macros[index].keycode);
+		macro_keycode = cJSON_CreateNumber(dd_macros_lst.item[index].keycode);
 		if (macro_keycode == NULL)
 			abort();
 		cJSON_AddItemToObject(macro_data, "keycode", macro_keycode);
@@ -286,9 +285,9 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 		if (macro_key == NULL)
 			abort();
 		cJSON_AddItemToObject(macro_data, "key", macro_key);
-		for (int i = 0; i < MACRO_LEN; i++)
+		for (int i = 0; i < dd_macros_lst.item[index].key_len; i++)
 		{
-			cJSON_AddItemToArray(macro_key, cJSON_CreateNumber(user_macros[index].key[i]));
+			cJSON_AddItemToArray(macro_key, cJSON_CreateNumber(dd_macros_lst.item[index].key[i]));
 		}
 	}
 
@@ -303,7 +302,7 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	httpd_resp_set_status(req, HTTPD_200);
 	httpd_resp_send(req, NULL, 0);
 
-	free(string);
+	vPortFree(string);
 	cJSON_Delete(macro_object);
 
 	return ESP_OK;
@@ -315,9 +314,198 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
  * @param req
  * @return esp_err_t
  */
+
 esp_err_t create_macro_url_handler(httpd_req_t *req)
 {
 	ESP_LOGI(TAG, "HTTP POST CREATE MACRO --> /api/macros");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_macros new_macro;
+	memset(&new_macro, 0, sizeof(dd_macros));
+
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < USER_MACRO_NAME_LEN)
+			strcpy(new_macro.name, name->valuestring);
+		else
+			strcpy(new_macro.name, "name2long");
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_macro.keycode = keycode->valueint;
+	}
+
+	cJSON *key = cJSON_GetObjectItem(payload, "key");
+
+	size_t array_size = cJSON_GetArraySize(key);
+
+	if (cJSON_IsArray(key))
+	{
+		size_t real_array_size = 0;
+		for (int i = 0; i < array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				if ((item->valueint > 0) && (item->valueint <= 1000))
+					real_array_size++;
+			}
+		}
+
+		new_macro.key = malloc(real_array_size * sizeof(new_macro.key[0]));
+		new_macro.key_len = real_array_size;
+
+		for (int i = 0; i < real_array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_macro.key[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d", new_macro.name, new_macro.keycode);
+
+	esp_err_t error;
+
+	error = nvs_create_macros(new_macro);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_macro error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	free(new_macro.key);
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/**
+ * @brief Delete a macro
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t delete_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE MACRO --> /api/macros");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+	char *string = NULL;
+	json_response(string);
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char keycode_str[5];
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = pvPortMalloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "keycode", keycode_str, sizeof(keycode_str)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", keycode_str);
+			}
+			else
+			{
+				ESP_LOGE(TAG, "There is no keycode parameter in the query");
+
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
+				return ESP_OK;
+			}
+		}
+		else
+		{
+			ESP_LOGE(TAG, "There is no keycode parameter in the query");
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		vPortFree(buf);
+	}
+
+	uint16_t keycode = atoi(keycode_str);
+
+	esp_err_t res;
+	res = nvs_delete_macros(keycode);
+
+	if (res == ESP_OK)
+	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/**
+ * @brief Update a macro url handler object
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t update_macro_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP UPDATE MACRO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
 
@@ -349,118 +537,6 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 	cJSON *name = cJSON_GetObjectItem(payload, "name");
 	if (cJSON_IsString(name) && (name->valuestring != NULL))
 	{
-		if (strlen(name->valuestring) < 6)
-			strcpy(new_macro.name, name->valuestring);
-		else
-			strcpy(new_macro.name, "  ");
-	}
-	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
-	if (cJSON_IsNumber(keycode))
-	{
-		new_macro.keycode = keycode->valueint;
-	}
-	cJSON *key = cJSON_GetObjectItem(payload, "key");
-	if (cJSON_IsArray(key))
-	{
-		for (int i = 0; i < MACRO_LEN; i++)
-		{
-			cJSON *item = cJSON_GetArrayItem(key, i);
-			if (cJSON_IsNumber(item))
-			{
-				if (item->valueint >= 0 || item->valueint <= 1000)
-					new_macro.key[i] = item->valueint;
-				else
-					new_macro.key[i] = 0;
-			}
-		}
-	}
-
-	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d, new_macro.key:{%d,%d,%d,%d,%d} ", new_macro.name, new_macro.keycode, new_macro.key[0], new_macro.key[1], new_macro.key[2], new_macro.key[3], new_macro.key[4]);
-
-	esp_err_t error;
-	error = nvs_create_new_macro(new_macro);
-	if (error != ESP_OK)
-	{
-		ESP_LOGE(TAG, "nvs_create_new_macro error %s", esp_err_to_name(error));
-		httpd_resp_set_status(req, HTTPD_400);
-	}
-	else
-	{
-
-		httpd_resp_set_status(req, HTTPD_200);
-	}
-	cJSON_Delete(payload);
-	free(buf);
-	httpd_resp_set_type(req, "application/json");
-	httpd_resp_sendstr(req, string);
-	httpd_resp_send(req, NULL, 0);
-	return ESP_OK;
-}
-
-/**
- * @brief Delete a macro
- *
- * @param req
- * @return esp_err_t
- */
-esp_err_t delete_macro_url_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "HTTP DELETE MACRO --> /api/macros");
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
-	char *string = NULL;
-	json_response(string);
-
-	httpd_resp_set_type(req, "application/json");
-	httpd_resp_sendstr(req, string);
-	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_send(req, NULL, 0);
-
-	free(string);
-
-	return ESP_OK;
-}
-
-/**
- * @brief Update a macro url handler object
- *
- * @param req
- * @return esp_err_t
- */
-esp_err_t update_macro_url_handler(httpd_req_t *req)
-{
-	ESP_LOGI(TAG, "HTTP UPDATE MACRO --> /api/macros");
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
-
-	char *buf;
-	size_t buf_len;
-	char *string = NULL;
-	json_response(string);
-
-	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
-	httpd_req_recv(req, buf, req->content_len);
-
-	dd_macros new_macro;
-	cJSON *payload = cJSON_Parse(buf);
-
-	if (NULL == payload)
-	{
-		const char *err = cJSON_GetErrorPtr();
-		if (err != NULL)
-		{
-			ESP_LOGE(TAG, "Error parsing json before %s", err);
-			cJSON_Delete(payload);
-			free(buf);
-			httpd_resp_set_status(req, "500");
-			return -1;
-		}
-	}
-
-	cJSON *name = cJSON_GetObjectItem(payload, "name");
-	if (cJSON_IsString(name) && (name->valuestring != NULL))
-	{
 		if (strlen(name->valuestring) < 7)
 			strcpy(new_macro.name, name->valuestring);
 		else
@@ -471,25 +547,39 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	{
 		new_macro.keycode = keycode->valueint;
 	}
+
 	cJSON *key = cJSON_GetObjectItem(payload, "key");
+
+	size_t array_size = cJSON_GetArraySize(key);
+
 	if (cJSON_IsArray(key))
 	{
-		for (int i = 0; i < MACRO_LEN; i++)
+		size_t real_array_size = 0;
+		for (int i = 0; i < array_size; i++)
 		{
 			cJSON *item = cJSON_GetArrayItem(key, i);
 			if (cJSON_IsNumber(item))
 			{
-				if (item->valueint >= 0 || item->valueint <= 1000)
-					new_macro.key[i] = item->valueint;
-				else
-					new_macro.key[i] = 0;
+				if ((item->valueint > 0) && (item->valueint <= 1000))
+					real_array_size++;
+			}
+		}
+
+		new_macro.key = malloc(real_array_size * sizeof(new_macro.key[0]));
+		new_macro.key_len = real_array_size;
+		for (int i = 0; i < real_array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(key, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_macro.key[i] = item->valueint;
 			}
 		}
 	}
 
-	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d, new_macro.key:{%d,%d,%d,%d,%d} ", new_macro.name, new_macro.keycode, new_macro.key[0], new_macro.key[1], new_macro.key[2], new_macro.key[3], new_macro.key[4]);
+	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d", new_macro.name, new_macro.keycode);
 	esp_err_t error;
-	error = nvs_update_macro(new_macro);
+	error = nvs_update_macros(new_macro);
 	if (error != ESP_OK)
 	{
 		ESP_LOGE(TAG, "nvs_update_macro error %s", esp_err_to_name(error));
@@ -504,7 +594,8 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 	httpd_resp_sendstr(req, string);
 	httpd_resp_send(req, NULL, 0);
 	cJSON_Delete(payload);
-	free(buf);
+	vPortFree(buf);
+	free(new_macro.key);
 
 	return ESP_OK;
 }
@@ -538,11 +629,1206 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
+/***********************************************
+ *
+ *                 END POINTS LEADERKEY
+ *
+ ***********************************************/
 
 /**
- * ENPOINTS LAYERS
+ * @brief Read DeepDeck leaderkey
  *
+ * @param req
+ * @return esp_err_t
  */
+esp_err_t get_leaderkey_url_handler(httpd_req_t *req)
+{
+	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+
+	ESP_LOGI(TAG, "HTTP GET LEADERKEY INFO --> /api/leaderkey");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	int index = 0;
+	cJSON *leaderkey_data = NULL;
+	cJSON *leaderkey_name = NULL;
+	cJSON *leaderkey_keycode = NULL;
+	cJSON *leaderkey_sequence = NULL;
+
+	cJSON *leaderkey_object = cJSON_CreateObject();
+	if (leaderkey_object == NULL)
+	{
+		// abort();
+
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(leaderkey_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *array = cJSON_CreateArray();
+	if (array == NULL)
+	{
+		// abort();
+
+		const char *err_ = cJSON_GetErrorPtr();
+		if (err_ != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err_);
+			cJSON_Delete(leaderkey_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON_AddItemToObject(leaderkey_object, "leaderkey", array);
+	dd_leaderkey_lst_t dd_leaderkey_lst = nvs_get_leaderkey_lst();
+	for (index = 0; index < dd_leaderkey_lst.size; ++index)
+	{
+		leaderkey_data = cJSON_CreateObject();
+		if (leaderkey_data == NULL)
+			abort();
+		cJSON_AddItemToArray(array, leaderkey_data);
+
+		leaderkey_name = cJSON_CreateString((dd_leaderkey_lst.item[index].name));
+		if (leaderkey_name == NULL)
+			abort();
+		cJSON_AddItemToObject(leaderkey_data, "name", leaderkey_name);
+
+		leaderkey_keycode = cJSON_CreateNumber(dd_leaderkey_lst.item[index].keycode);
+		if (leaderkey_keycode == NULL)
+			abort();
+		cJSON_AddItemToObject(leaderkey_data, "keycode", leaderkey_keycode);
+
+		leaderkey_sequence = cJSON_CreateArray();
+		if (leaderkey_sequence == NULL)
+			abort();
+		cJSON_AddItemToObject(leaderkey_data, "sequence", leaderkey_sequence);
+		for (int i = 0; i < dd_leaderkey_lst.item[index].sequence_len; i++)
+		{
+			cJSON_AddItemToArray(leaderkey_sequence, cJSON_CreateNumber(dd_leaderkey_lst.item[index].sequence[i]));
+		}
+	}
+
+	char *string = NULL;
+	// string = malloc(strlen(cJSON_Print(leaderkey_object)) + 1);
+	string = cJSON_Print(leaderkey_object);
+	if (string == NULL)
+		abort();
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	vPortFree(string);
+	cJSON_Delete(leaderkey_object);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Create new leaderkey
+ *
+ * @param req
+ * @return esp_err_t
+ */
+
+esp_err_t create_leaderkey_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST CREATE LEADERKEY --> /api/leaderkey");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_leaderkey new_leaderkey;
+	memset(&new_leaderkey, 0, sizeof(dd_leaderkey));
+
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < LK_NAME_LENGTH)
+			strcpy(new_leaderkey.name, name->valuestring);
+		else
+			strcpy(new_leaderkey.name, "name2long");
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_leaderkey.keycode = keycode->valueint;
+	}
+
+	cJSON *sequence = cJSON_GetObjectItem(payload, "sequence");
+
+	size_t array_size = cJSON_GetArraySize(sequence);
+
+	ESP_LOGW(TAG, "sequence len  %u", array_size);
+
+	if (cJSON_IsArray(sequence))
+	{
+		size_t real_array_size = 0;
+		for (int i = 0; i < array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(sequence, i);
+			if (cJSON_IsNumber(item))
+			{
+				if ((item->valueint >= 0) && (item->valueint < 255))
+					real_array_size++;
+			}
+		}
+		ESP_LOGW(TAG, "real sequence len  %u", real_array_size);
+		new_leaderkey.sequence = malloc(real_array_size * sizeof(new_leaderkey.sequence[0]));
+		new_leaderkey.sequence_len = real_array_size;
+
+		for (int i = 0; i < real_array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(sequence, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_leaderkey.sequence[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_leaderkey.name: %s, new_leaderkey.keycode: %d", new_leaderkey.name, new_leaderkey.keycode);
+
+	esp_err_t error;
+
+	error = nvs_create_leaderkey(new_leaderkey);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_leaderkey error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	free(new_leaderkey.sequence);
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+/**
+ * @brief Delete a leaderkey
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t delete_leaderkey_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE LEADERKEY --> /api/leaderkey");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+	char *string = NULL;
+	json_response(string);
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char keycode_str[5];
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = pvPortMalloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "keycode", keycode_str, sizeof(keycode_str)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", keycode_str);
+			}
+			else
+			{
+				ESP_LOGE(TAG, "There is no keycode parameter in the query");
+
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
+				return ESP_OK;
+			}
+		}
+		else
+		{
+			ESP_LOGE(TAG, "There is no keycode parameter in the query");
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		vPortFree(buf);
+	}
+
+	uint16_t keycode = atoi(keycode_str);
+
+	esp_err_t res;
+	res = nvs_delete_leaderkey(keycode);
+
+	if (res == ESP_OK)
+	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Update a leaderkey url handler object
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t update_leaderkey_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP UPDATE LEADERKEY --> /api/leaderkey");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_leaderkey new_leaderkey;
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+			httpd_resp_set_status(req, "500");
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < 7)
+			strcpy(new_leaderkey.name, name->valuestring);
+		else
+			strcpy(new_leaderkey.name, "**");
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_leaderkey.keycode = keycode->valueint;
+	}
+
+	cJSON *sequence = cJSON_GetObjectItem(payload, "sequence");
+
+	size_t array_size = cJSON_GetArraySize(sequence);
+
+	if (cJSON_IsArray(sequence))
+	{
+		size_t real_array_size = 0;
+		for (int i = 0; i < array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(sequence, i);
+			if (cJSON_IsNumber(item))
+			{
+				if ((item->valueint > 0) && (item->valueint <= 1000))
+					real_array_size++;
+			}
+		}
+
+		new_leaderkey.sequence = malloc(real_array_size * sizeof(new_leaderkey.sequence[0]));
+		new_leaderkey.sequence_len = real_array_size;
+		for (int i = 0; i < real_array_size; i++)
+		{
+			cJSON *item = cJSON_GetArrayItem(sequence, i);
+			if (cJSON_IsNumber(item))
+			{
+				new_leaderkey.sequence[i] = item->valueint;
+			}
+		}
+	}
+
+	ESP_LOGI(TAG, "new_leaderkey.name: %s, new_leaderkey.keycode: %d", new_leaderkey.name, new_leaderkey.keycode);
+	esp_err_t error;
+	error = nvs_update_leaderkey(new_leaderkey);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_update_leaderkey error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	free(new_leaderkey.sequence);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Restore default leaderkey
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t restore_default_leaderkey_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP RESTORE DEFAULT LEADERKEY --> /api/leaderkey/restore");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	esp_err_t error = nvs_restore_default_leaderkey();
+	if (error == ESP_OK)
+	{
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	httpd_resp_send(req, NULL, 0);
+
+	return ESP_OK;
+}
+/***********************************************
+ *
+ *                 END POINTS TAPDANCE
+ *
+ ***********************************************/
+
+esp_err_t get_tapdance_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET TAPDANCE INFO --> /api/tapdance");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	ESP_LOGI("", "Free memory: %d bytes", esp_get_free_heap_size());
+
+	int index = 0;
+	cJSON *tapdance_data = NULL;
+	cJSON *tapdance_name = NULL;
+	cJSON *tapdance_keycode = NULL;
+	cJSON *tapdance_tap_list = NULL;
+	cJSON *tapdance_keycode_list = NULL;
+
+	cJSON *tapdance_object = cJSON_CreateObject();
+	if (tapdance_object == NULL)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(tapdance_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *array = cJSON_CreateArray();
+	if (array == NULL)
+	{
+		const char *err_ = cJSON_GetErrorPtr();
+		if (err_ != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err_);
+			cJSON_Delete(tapdance_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON_AddItemToObject(tapdance_object, "tapdance", array);
+
+	dd_tapdance_lst_t dd_tapdance_lst = nvs_get_tapdance_lst();
+
+	for (index = 0; index < dd_tapdance_lst.size; ++index)
+	{
+		tapdance_data = cJSON_CreateObject();
+		if (tapdance_data == NULL)
+			abort();
+		cJSON_AddItemToArray(array, tapdance_data);
+
+		tapdance_name = cJSON_CreateString((dd_tapdance_lst.item[index].name));
+		if (tapdance_name == NULL)
+			abort();
+		cJSON_AddItemToObject(tapdance_data, "name", tapdance_name);
+
+		tapdance_keycode = cJSON_CreateNumber(dd_tapdance_lst.item[index].keycode);
+		if (tapdance_keycode == NULL)
+			abort();
+		cJSON_AddItemToObject(tapdance_data, "keycode", tapdance_keycode);
+
+		tapdance_keycode_list = cJSON_CreateArray();
+		if (tapdance_keycode_list == NULL)
+			abort();
+		cJSON_AddItemToObject(tapdance_data, "keycode_list", tapdance_keycode_list);
+
+		tapdance_tap_list = cJSON_CreateArray();
+		if (tapdance_tap_list == NULL)
+			abort();
+		cJSON_AddItemToObject(tapdance_data, "tap_list", tapdance_tap_list);
+
+		for (int i = 0; i < TAPDANCE_LEN; i++)
+		{
+			if (dd_tapdance_lst.item[index].keycode_list[i] == 0 ||
+				dd_tapdance_lst.item[index].tap_list[i] == 0)
+			{
+				break;
+			}
+			cJSON_AddItemToArray(tapdance_keycode_list, cJSON_CreateNumber(dd_tapdance_lst.item[index].keycode_list[i]));
+			cJSON_AddItemToArray(tapdance_tap_list, cJSON_CreateNumber(dd_tapdance_lst.item[index].tap_list[i]));
+		}
+	}
+
+	char *string = NULL;
+	// string = pvPortMalloc(strlen(cJSON_Print(tapdance_object)) + 1); //TODO: check if this is needed or not.
+	string = cJSON_Print(tapdance_object);
+	if (string == NULL)
+		abort();
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	vPortFree(string);
+	cJSON_Delete(tapdance_object);
+
+	return ESP_OK;
+}
+
+esp_err_t create_tapdance_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST CREATE TAPDANCE --> /api/tapdance");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_tapdance new_tapdance = {.name = "",
+								.keycode = 0,
+								.keycode_list = {0},
+								.tap_list = {0}};
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < TD_NAME_LENGTH)
+			strcpy(new_tapdance.name, name->valuestring);
+		else
+			strcpy(new_tapdance.name, "name2long");
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_tapdance.keycode = keycode->valueint;
+	}
+	cJSON *keycode_list = cJSON_GetObjectItem(payload, "keycode_list");
+	cJSON *tap_list = cJSON_GetObjectItem(payload, "tap_list");
+
+	if (cJSON_IsArray(keycode_list) && cJSON_IsArray(tap_list))
+	{
+		for (int i = 0; i < TAPDANCE_LEN; i++)
+		{
+			cJSON *kcode = cJSON_GetArrayItem(keycode_list, i);
+			cJSON *tapn = cJSON_GetArrayItem(tap_list, i);
+			if (cJSON_IsNumber(kcode) && cJSON_IsNumber(tapn))
+			{
+				new_tapdance.keycode_list[i] = kcode->valueint; // TODO: would be good to verify if its a valid keycode?
+				new_tapdance.tap_list[i] = tapn->valueint;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	esp_err_t error;
+	error = nvs_create_tapdance(new_tapdance);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_new_tapdance error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t delete_tapdance_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE TAPDANCE --> /api/tapdance");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char keycode_str[5];
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = pvPortMalloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "keycode", keycode_str, sizeof(keycode_str)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", keycode_str);
+			}
+			else
+			{
+				ESP_LOGE(TAG, "There is no keycode parameter in the query");
+
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
+				return ESP_OK;
+			}
+		}
+		else
+		{
+			ESP_LOGE(TAG, "There is no keycode parameter in the query");
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		vPortFree(buf);
+	}
+
+	uint16_t keycode = atoi(keycode_str);
+	esp_err_t res;
+	res = nvs_delete_macros(keycode); // Deletes the tapdance found
+
+	if (res == ESP_OK)
+	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		// TODO: Handle error -> maximum number of tapdance reached
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t update_tapdance_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP PUT UPDATE TAPDANCE --> /api/tapdance");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_tapdance new_tapdance = {.name = "",
+								.keycode = 0,
+								.keycode_list = {0},
+								.tap_list = {0}};
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < TD_NAME_LENGTH)
+			strcpy(new_tapdance.name, name->valuestring);
+		else
+			strcpy(new_tapdance.name, "name2long");
+	}
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_tapdance.keycode = keycode->valueint;
+	}
+	cJSON *keycode_list = cJSON_GetObjectItem(payload, "keycode_list");
+	cJSON *tap_list = cJSON_GetObjectItem(payload, "tap_list");
+
+	if (cJSON_IsArray(keycode_list) && cJSON_IsArray(tap_list))
+	{
+		for (int i = 0; i < TAPDANCE_LEN; i++)
+		{
+			cJSON *kcode = cJSON_GetArrayItem(keycode_list, i);
+			cJSON *tapn = cJSON_GetArrayItem(tap_list, i);
+			if (cJSON_IsNumber(kcode) && cJSON_IsNumber(tapn))
+			{
+				new_tapdance.keycode_list[i] = kcode->valueint; // TODO: would be good to verify if its a valid keycode?
+				new_tapdance.tap_list[i] = tapn->valueint;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	esp_err_t error;
+	error = nvs_update_tapdance(new_tapdance);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_new_tapdance error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t restore_default_tapdance_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP RESTORE DEFAULT TAPDANCE --> /api/tapdance/restore");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	esp_err_t error = nvs_restore_default_tapdance();
+	if (error == ESP_OK)
+	{
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	httpd_resp_send(req, NULL, 0);
+
+	return ESP_OK;
+}
+
+/***********************************************
+ *
+ *                 END POINTS MODTAP
+ *
+ ***********************************************/
+
+esp_err_t get_modtap_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET MODTAP INFO --> /api/modtap");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	ESP_LOGI("", "Free memory: %d bytes", esp_get_free_heap_size());
+
+	int index = 0;
+	cJSON *modtap_data = NULL;
+	cJSON *modtap_name = NULL;
+	cJSON *modtap_keycode = NULL;
+	cJSON *modtap_keycode_short = NULL;
+	cJSON *modtap_keycode_long = NULL;
+
+	cJSON *modtap_object = cJSON_CreateObject();
+	if (modtap_object == NULL)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(modtap_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *array = cJSON_CreateArray();
+	if (array == NULL)
+	{
+		const char *err_ = cJSON_GetErrorPtr();
+		if (err_ != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err_);
+			cJSON_Delete(modtap_object);
+			httpd_resp_set_status(req, "500");
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	dd_modtap_lst_t dd_modtap_lst = nvs_get_modtap_lst();
+
+	cJSON_AddItemToObject(modtap_object, "modtap", array);
+
+	for (index = 0; index < dd_modtap_lst.size; ++index)
+	{
+		modtap_data = cJSON_CreateObject();
+		if (modtap_data == NULL)
+			abort();
+		cJSON_AddItemToArray(array, modtap_data);
+
+		modtap_name = cJSON_CreateString((dd_modtap_lst.item[index].name));
+		if (modtap_name == NULL)
+			abort();
+		cJSON_AddItemToObject(modtap_data, "name", modtap_name);
+
+		modtap_keycode = cJSON_CreateNumber(dd_modtap_lst.item[index].keycode);
+		if (modtap_keycode == NULL)
+			abort();
+		cJSON_AddItemToObject(modtap_data, "keycode", modtap_keycode);
+
+		modtap_keycode_short = cJSON_CreateNumber(dd_modtap_lst.item[index].keycode_short);
+		if (modtap_keycode_short == NULL)
+			abort();
+		cJSON_AddItemToObject(modtap_data, "keycode_short", modtap_keycode_short);
+
+		modtap_keycode_long = cJSON_CreateNumber(dd_modtap_lst.item[index].keycode_long);
+		if (modtap_keycode_long == NULL)
+			abort();
+		cJSON_AddItemToObject(modtap_data, "keycode_long", modtap_keycode_long);
+	}
+
+	char *string = NULL;
+	// string = pvPortMalloc(strlen(cJSON_Print(modtap_object)) + 1); //TODO: check if this is needed or not.
+	string = cJSON_Print(modtap_object);
+	if (string == NULL)
+		abort();
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	vPortFree(string);
+	cJSON_Delete(modtap_object);
+
+	return ESP_OK;
+}
+
+esp_err_t create_modtap_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST CREATE MODTAP --> /api/modtap");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_modtap new_modtap = {.name = "",
+							.keycode = 0,
+							.keycode_short = 0,
+							.keycode_long = 0};
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < TD_NAME_LENGTH)
+			strcpy(new_modtap.name, name->valuestring);
+		else
+			strcpy(new_modtap.name, "name2long");
+	}
+
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_modtap.keycode = keycode->valueint;
+	}
+
+	cJSON *keycode_short = cJSON_GetObjectItem(payload, "keycode_short");
+	if (cJSON_IsNumber(keycode_short))
+	{
+		new_modtap.keycode_short = keycode_short->valueint;
+	}
+
+	cJSON *keycode_long = cJSON_GetObjectItem(payload, "keycode_long");
+	if (cJSON_IsNumber(keycode_long))
+	{
+		new_modtap.keycode_long = keycode_long->valueint;
+	}
+
+	esp_err_t error;
+	error = nvs_create_modtap(new_modtap);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_new_modtap error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t delete_modtap_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP DELETE MODTAP --> /api/modtap");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+
+	// Read the URI line and get the host
+	char *buf;
+	size_t buf_len;
+
+	char keycode_str[5];
+
+	// Read the URI line and get the parameters
+	buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1)
+	{
+		buf = pvPortMalloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+		{
+			ESP_LOGI(TAG, "Found URL query: %s", buf);
+
+			if (httpd_query_key_value(buf, "keycode", keycode_str, sizeof(keycode_str)) == ESP_OK)
+			{
+				ESP_LOGI(TAG, "The string value = %s", keycode_str);
+			}
+			else
+			{
+				ESP_LOGE(TAG, "There is no keycode parameter in the query");
+
+				httpd_resp_set_status(req, HTTPD_400);
+				httpd_resp_send(req, NULL, 0);
+				return ESP_OK;
+			}
+		}
+		else
+		{
+			ESP_LOGE(TAG, "There is no keycode parameter in the query");
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return ESP_OK;
+		}
+		vPortFree(buf);
+	}
+
+	uint16_t keycode = atoi(keycode_str);
+
+	esp_err_t res;
+	res = nvs_delete_modtap(keycode);
+
+	if (res == ESP_OK)
+	{
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t update_modtap_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP PUT UPDATE MODTAP --> /api/modtap");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type"));
+
+	char *buf;
+	size_t buf_len;
+	char *string = NULL;
+	json_response(string);
+
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
+	buf_len = (req->content_len) + 1;
+	buf = pvPortMalloc(buf_len);
+	httpd_req_recv(req, buf, req->content_len);
+
+	dd_modtap new_modtap = {.name = "",
+							.keycode = 0,
+							.keycode_short = 0,
+							.keycode_long = 0};
+	cJSON *payload = cJSON_Parse(buf);
+
+	if (NULL == payload)
+	{
+		const char *err = cJSON_GetErrorPtr();
+		if (err != NULL)
+		{
+			ESP_LOGE(TAG, "Error parsing json before %s", err);
+			cJSON_Delete(payload);
+			vPortFree(buf);
+
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+			return -1;
+		}
+	}
+
+	cJSON *name = cJSON_GetObjectItem(payload, "name");
+	if (cJSON_IsString(name) && (name->valuestring != NULL))
+	{
+		if (strlen(name->valuestring) < TD_NAME_LENGTH)
+			strcpy(new_modtap.name, name->valuestring);
+		else
+			strcpy(new_modtap.name, "name2long");
+	}
+
+	cJSON *keycode = cJSON_GetObjectItem(payload, "keycode");
+	if (cJSON_IsNumber(keycode))
+	{
+		new_modtap.keycode = keycode->valueint;
+	}
+
+	cJSON *keycode_short = cJSON_GetObjectItem(payload, "keycode_short");
+	if (cJSON_IsNumber(keycode_short))
+	{
+		new_modtap.keycode_short = keycode_short->valueint;
+	}
+
+	cJSON *keycode_long = cJSON_GetObjectItem(payload, "keycode_long");
+	if (cJSON_IsNumber(keycode_long))
+	{
+		new_modtap.keycode_long = keycode_long->valueint;
+	}
+
+	esp_err_t error;
+	error = nvs_update_modtap(new_modtap);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "nvs_create_new_modtap error %s", esp_err_to_name(error));
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	else
+	{
+
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	cJSON_Delete(payload);
+	vPortFree(buf);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_send(req, NULL, 0);
+	return ESP_OK;
+}
+
+esp_err_t restore_default_modtap_url_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP RESTORE DEFAULT MODTAP --> /api/modtap/restore");
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	char *string = NULL;
+	json_response(string);
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	esp_err_t error = nvs_restore_default_modtap();
+	if (error == ESP_OK)
+	{
+		httpd_resp_set_status(req, HTTPD_200);
+	}
+	else
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+	}
+	httpd_resp_send(req, NULL, 0);
+
+	return ESP_OK;
+}
+
+/***********************************************
+ *
+ *                 END POINTS LAYERS
+ *
+ ***********************************************/
 
 /**
  * @brief Get the layer url handler object
@@ -554,6 +1840,9 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
 	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
+
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+	uint8_t layers_num = dd_layer_lst.size;
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
@@ -568,7 +1857,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
 	{
-		buf = malloc(buf_len);
+		buf = pvPortMalloc(buf_len);
 		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
 		{
 			ESP_LOGI(TAG, "Found URL query: %s", buf);
@@ -585,7 +1874,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 				return ESP_OK;
 			}
 		}
-		free(buf);
+		vPortFree(buf);
 	}
 	else
 	{
@@ -600,7 +1889,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	int pos = 0;
 	for (pos = 0; pos < layers_num; pos++)
 	{
-		if (strcmp(key_layouts[pos].uuid_str, uuid_param) == 0) // If both are equal
+		if (strcmp(dd_layer_lst.item[pos].uuid_str, uuid_param) == 0) // If both are equal
 		{
 			found_flag = 1; // activate found flag
 			break;			// Get off the for loop
@@ -625,11 +1914,11 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 	if (layer_object == NULL)
 		abort();
 
-	cJSON *_name = cJSON_CreateString(key_layouts[pos].name);
+	cJSON *_name = cJSON_CreateString(dd_layer_lst.item[pos].name);
 	cJSON_AddItemToObject(layer_object, "name", _name);
 
 	// is_active = cJSON_CreateBool(key_layouts[index]->active);
-	is_active = cJSON_CreateBool(key_layouts[pos].active);
+	is_active = cJSON_CreateBool(dd_layer_lst.item[pos].active);
 	if (is_active == NULL)
 		abort();
 
@@ -647,8 +1936,8 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 		for (index_col = 0; index_col < MATRIX_COLS; index_col++)
 		{
 			cJSON *key = cJSON_CreateObject();
-			cJSON_AddStringToObject(key, "name", key_layouts[pos].key_map_names[index][index_col]);
-			cJSON_AddNumberToObject(key, "key_code", key_layouts[pos].key_map[index][index_col]);
+			cJSON_AddStringToObject(key, "name", dd_layer_lst.item[pos].key_map_names[index][index_col]);
+			cJSON_AddNumberToObject(key, "key_code", dd_layer_lst.item[pos].key_map[index][index_col]);
 			cJSON_AddItemToArray(row, key);
 		}
 	}
@@ -658,7 +1947,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	for (index = 0; index < ENCODER_SIZE; index++)
 	{
-		encoder_item = cJSON_CreateNumber(key_layouts[pos].left_encoder_map[index]);
+		encoder_item = cJSON_CreateNumber(dd_layer_lst.item[pos].left_encoder_map[index]);
 		if (encoder_item == NULL)
 			abort();
 		cJSON_AddItemToObject(encoder_map, encoder_items_names[index], encoder_item);
@@ -669,7 +1958,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	for (index = 0; index < ENCODER_SIZE; index++)
 	{
-		encoder_item = cJSON_CreateNumber(key_layouts[pos].right_encoder_map[index]);
+		encoder_item = cJSON_CreateNumber(dd_layer_lst.item[pos].right_encoder_map[index]);
 		if (encoder_item == NULL)
 			abort();
 
@@ -681,7 +1970,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	for (index = 0; index < GESTURE_SIZE; index++)
 	{
-		gesture_item = cJSON_CreateNumber(key_layouts[pos].gesture_map[index]);
+		gesture_item = cJSON_CreateNumber(dd_layer_lst.item[pos].gesture_map[index]);
 		if (gesture_item == NULL)
 			abort();
 		cJSON_AddItemToObject(gesture_map, gesture_items_names[index], gesture_item);
@@ -699,7 +1988,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	// Clean before ending the function
 	cJSON_Delete(layer_object);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -712,7 +2001,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layerName_url_handler(httpd_req_t *req)
 {
-	esp_log_level_set(TAG, ESP_LOG_DEBUG);
+	// esp_log_level_set(TAG, ESP_LOG_DEBUG);
 	ESP_LOGI(TAG, "HTTP GET  --> /api/layers/layer_names");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
@@ -723,7 +2012,9 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
 	// httpd_resp_set_hdr(req, "Vary", "Origin");
 
-	uint8_t layers_num = nvs_read_num_layers();
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+	uint8_t layers_num = dd_layer_lst.size;
+
 	char *string = NULL;
 	cJSON *layer_data = NULL;
 	cJSON *layer_name = NULL;
@@ -765,7 +2056,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToArray(layers, layer_data);
 
 		// layer_name = cJSON_CreateString((key_layouts[index]->name));
-		layer_name = cJSON_CreateString((key_layouts[index].name));
+		layer_name = cJSON_CreateString((dd_layer_lst.item[index].name));
 		if (layer_name == NULL)
 		{
 			cJSON_Delete(monitor);
@@ -788,7 +2079,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(layer_data, "pos", layout_pos);
 
 		// is_active = cJSON_CreateBool(key_layouts[index]->active);
-		is_active = cJSON_CreateBool(key_layouts[index].active);
+		is_active = cJSON_CreateBool(dd_layer_lst.item[index].active);
 		if (is_active == NULL)
 		{
 			cJSON_Delete(monitor);
@@ -798,7 +2089,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		}
 		cJSON_AddItemToObject(layer_data, "active", is_active);
 
-		layout_uuid = cJSON_CreateString((key_layouts[index].uuid_str));
+		layout_uuid = cJSON_CreateString((dd_layer_lst.item[index].uuid_str));
 		if (layout_uuid == NULL)
 		{
 			cJSON_Delete(monitor);
@@ -813,7 +2104,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 		cJSON_AddItemToObject(layer_data, "uuid", layout_uuid);
 	}
 
-	string = malloc(100);
+	string = pvPortMalloc(100);
 	string = cJSON_Print(monitor);
 	if (string == NULL)
 	{
@@ -826,7 +2117,7 @@ esp_err_t get_layerName_url_handler(httpd_req_t *req)
 	httpd_resp_send(req, NULL, 0);
 
 	cJSON_Delete(monitor);
-	free(string);
+	vPortFree(string);
 
 	return ESP_OK;
 }
@@ -852,7 +2143,8 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 
 	char uuid_param[SHORT_UUID_STR_LEN];
 
-	uint8_t layers_num = nvs_read_num_layers();
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+	uint8_t layers_num = dd_layer_lst.size;
 
 	if (layers_num == 1)
 	{
@@ -866,7 +2158,7 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 	buf_len = httpd_req_get_url_query_len(req) + 1;
 	if (buf_len > 1)
 	{
-		buf = malloc(buf_len);
+		buf = pvPortMalloc(buf_len);
 		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
 		{
 			ESP_LOGI(TAG, "Found URL query: %s", buf);
@@ -896,28 +2188,11 @@ esp_err_t delete_layer_url_handler(httpd_req_t *req)
 			httpd_resp_send(req, NULL, 0);
 			return ESP_OK;
 		}
-		free(buf);
+		vPortFree(buf);
 	}
 
-	int found_flag = 0;
-	int pos = 0;
-	for (pos = 0; pos < layers_num; pos++)
-	{
-		if (strcmp(key_layouts[pos].uuid_str, uuid_param) == 0) // If both are equal
-		{
-			found_flag = 1; // activate found flag
-			break;			// Get off the for loop
-		}
-	}
-	if (!found_flag) // IF not found, return http error
-	{
-		ESP_LOGE(TAG, "UUID of element to delete not found");
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-		return ESP_OK;
-	}
 	esp_err_t res;
-	res = nvs_delete_layer(pos); // Deletes the layer found
+	res = nvs_delete_layer(uuid_param); // Deletes the layer found
 
 	if (res == ESP_OK)
 	{
@@ -998,17 +2273,18 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+	uint8_t layers_num = dd_layer_lst.size;
+
 	char *string = NULL;
 	json_response(string);
 
 	int position = 0;
-	// char buffer[1024];
-	// httpd_req_recv(req, buffer, req->content_len);
 	char *buf;
 	size_t buf_len;
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
@@ -1030,44 +2306,9 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
 	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
 	{
-		printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
+		ESP_LOGI(TAG, "Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 	}
 
-	int found_flag = 0;
-	int pos = 0;
-	for (pos = 0; pos < layers_num; pos++)
-	{
-		if (strcmp(key_layouts[pos].uuid_str, layer_uuid->valuestring) == 0) // If both are equal
-		{
-			found_flag = 1; // activate found flag
-			break;			// Get off the for loop
-		}
-	}
-	if (!found_flag) // IF not found, return http error
-	{
-		ESP_LOGE(TAG, "UUID not found");
-		httpd_resp_set_status(req, HTTPD_400);
-		httpd_resp_send(req, NULL, 0);
-		return ESP_OK;
-	}
-
-	// cJSON *layer_pos = cJSON_GetObjectItem(payload, "pos");
-	// if (cJSON_IsNumber(layer_pos) && (layer_pos->valueint))
-	// {
-	// 	printf("Layer pos = \"%d\"\n", layer_pos->valueint);
-	// 	position = layer_pos->valueint;
-	// }
-
-	// if (strcmp(key_layouts[position].uuid_str, layer_uuid->valuestring) != 0)
-	// {
-
-	// 	ESP_LOGI(TAG, "key layout uuid %s", key_layouts[position].uuid_str);
-	// 	ESP_LOGI(TAG, "The string value = %s", layer_uuid->valuestring);
-
-	// 	httpd_resp_set_status(req, HTTPD_400);
-	// 	httpd_resp_send(req, NULL, 0);
-	// 	return ESP_OK;
-	// }
 	strcpy(temp_layout.uuid_str, layer_uuid->valuestring);
 
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "name");
@@ -1093,7 +2334,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	fill_row(row3, names[3], codes[3]);
 
 	int i, j;
-	// printf("Names:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
@@ -1101,16 +2341,12 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 			strcpy(temp_layout.key_map_names[i][j], names[i][j]);
 		}
 	}
-	// printf("\nCodes:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			// printf("%d\t", codes[i][j]);
-
 			temp_layout.key_map[i][j] = codes[i][j];
 		}
-		// printf("\n");
 	}
 
 	cJSON *item;
@@ -1123,7 +2359,6 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	}
 	cJSON_ArrayForEach(item, left_encoder_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.left_encoder_map[i] = item->valueint;
 		i++;
 	}
@@ -1132,15 +2367,14 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	cJSON *right_encoder_map = cJSON_GetObjectItem(payload, "right_encoder_map");
 	cJSON_ArrayForEach(item, right_encoder_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.right_encoder_map[i] = item->valueint;
 		i++;
 	}
+
 	i = 0;
 	cJSON *gesture_map = cJSON_GetObjectItem(payload, "gesture_map");
 	cJSON_ArrayForEach(item, gesture_map)
 	{
-		// printf("%s: %d\n", item->string, item->valueint);
 		temp_layout.gesture_map[i] = item->valueint;
 		i++;
 	}
@@ -1156,8 +2390,11 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		temp_layout.active = false;
 	}
 	cJSON_Delete(payload);
-	free(buf);
-	nvs_write_layer(temp_layout, pos);
+	vPortFree(buf);
+
+	ESP_LOGI("LAYER RESULT", "%s uuid is %s ", temp_layout.name, temp_layout.uuid_str);
+
+	nvs_update_layer(temp_layout);
 
 	httpd_resp_set_type(req, "application/json");
 	httpd_resp_sendstr(req, string);
@@ -1172,6 +2409,8 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
 
+	keyboard_config();
+
 	return ESP_OK;
 }
 
@@ -1183,51 +2422,46 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
  */
 esp_err_t create_layer_url_handler(httpd_req_t *req)
 {
-	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers");
-	// 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
-
-	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "*");
-	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-	// httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
-	// httpd_resp_set_hdr(req, "Access-Control-Max-Age", "3600");
-	// httpd_resp_set_hdr(req, "Access-Control-Expose-Headers", "X-Custom-Header");
-	// httpd_resp_set_hdr(req, "Vary", "Origin");
-	// char buffer[1024];
 	char *buf;
 	size_t buf_len;
 	char *string = NULL;
+
+	ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers");
+
+	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
 	json_response(string);
 
+	if (req->content_len == 0)
+	{
+		ESP_LOGE(TAG, "No payload found");
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return -1;
+	}
+
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	ESP_LOGI(TAG, "buffer lenght %d", buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	dd_layer new_layer;
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
 
-#ifdef DEBUG
-	char *str = NULL;
-	str = cJSON_Print(payload);
-	if (str == NULL)
-	{
-		fprintf(stderr, "Failed to print monitor.\n");
-	}
-	ESP_LOGE("+", "%s", str);
-#endif
-
-	if (NULL == payload)
+	if (payload == NULL)
 	{
 		const char *err = cJSON_GetErrorPtr();
 		if (err != NULL)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
+			vPortFree(buf);
 
-			httpd_resp_set_status(req, "500");
+			httpd_resp_set_status(req, HTTPD_400);
+			httpd_resp_send(req, NULL, 0);
+
 			return -1;
 		}
 	}
@@ -1245,9 +2479,15 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
 	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
 	{
-		// printf("Layer uuid = \"%s\"\n", layer_uuid->valuestring);
 		strcpy(new_layer.uuid_str, layer_uuid->valuestring);
-		// printf("ddLayer uuid = \"%s\"\n", new_layer.uuid_str);
+	}
+	else //In case you dont receive an ID, generate one
+	{
+		// Generate short id
+		uuid_t uu;
+		uuid_generate(uu);
+		short_uuid_unparse(uu, new_layer.uuid_str);
+		ESP_LOGI(TAG,"ID not found. Generated ID: %s",new_layer.uuid_str);
 	}
 
 	cJSON *is_active = cJSON_GetObjectItem(payload, "active");
@@ -1269,38 +2509,26 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	char names[ROWS][COLS][10];
 	int codes[ROWS][COLS];
 
-	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far?");
-
 	fill_row(row0, names[0], codes[0]);
 	fill_row(row1, names[1], codes[1]);
 	fill_row(row2, names[2], codes[2]);
 	fill_row(row3, names[3], codes[3]);
 
-	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far2?");
-
 	int i, j;
-	// printf("Names:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			// printf("%s\t", names[i][j]);
-			// strcpy(key_layouts[edit_layer]->key_map_names[i][j], names[i][j]);
 			strcpy(new_layer.key_map_names[i][j], names[i][j]);
 		}
-		// printf("\n");
 	}
 
-	// printf("\nCodes:\n");
 	for (i = 0; i < ROWS; i++)
 	{
 		for (j = 0; j < COLS; j++)
 		{
-			// printf("%d\t", codes[i][j]);
-			// key_layouts[edit_layer]->key_map[i][j] = codes[i][j];
 			new_layer.key_map[i][j] = codes[i][j];
 		}
-		printf("\n");
 	}
 
 	cJSON *item;
@@ -1336,9 +2564,9 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	}
 
 	cJSON_Delete(payload);
-	free(buf);
+	vPortFree(buf);
 	current_layout = 0;
-	res = nvs_create_new_layer(new_layer);
+	res = nvs_create_layer(new_layer);
 	rgb_mode_t led_mode;
 	nvs_load_led_mode(&led_mode);
 
@@ -1361,6 +2589,8 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		httpd_resp_set_status(req, HTTPD_400);
 		httpd_resp_send(req, NULL, 0);
 	}
+
+	keyboard_config();
 
 	return ESP_OK;
 }
@@ -1385,7 +2615,7 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 
 	char *string = NULL;
 	json_response(string);
-	esp_err_t error = nvs_restore_default_layers();
+	esp_err_t error = nvs_restore_default_layer();
 	if (error == ESP_OK)
 	{
 
@@ -1444,7 +2674,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	char *string = NULL;
 
 	buf_len = (req->content_len) + 1;
-	buf = malloc(buf_len);
+	buf = pvPortMalloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
@@ -1511,7 +2741,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 	}
 
 	json_response(string);
-	free(buf);
+	vPortFree(buf);
 	cJSON_Delete(payload);
 	nvs_save_led_mode(led_mode);
 
@@ -1679,8 +2909,8 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-	config.max_uri_handlers = 20;
-	config.stack_size = 1024 * 10;
+	config.max_uri_handlers = 50;
+	config.stack_size = 1024 * 14; // TODO: verify if its the correct size.
 	config.uri_match_fn = httpd_uri_match_wildcard;
 
 	// Start the httpd server
@@ -1703,19 +2933,18 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	///////LAYERS
 
-	httpd_uri_t get_layer_url = {.uri = "/api/layers", .method = HTTP_GET, .handler = get_layer_url_handler, .user_ctx = NULL};
-	httpd_register_uri_handler(server, &get_layer_url);
 	httpd_uri_t get_layerName_url = {.uri = "/api/layers/layer_names", .method = HTTP_GET, .handler = get_layerName_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &get_layerName_url);
+	httpd_uri_t get_layer_url = {.uri = "/api/layers", .method = HTTP_GET, .handler = get_layer_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_layer_url);
 	httpd_uri_t delete_layer_url = {.uri = "/api/layers", .method = HTTP_DELETE, .handler = delete_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &delete_layer_url);
 	httpd_uri_t create_layer_url = {.uri = "/api/layers", .method = HTTP_POST, .handler = create_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &create_layer_url);
-	httpd_uri_t layer_options_url = {.uri = "/api/layers", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
-	httpd_register_uri_handler(server, &layer_options_url);
-
 	httpd_uri_t update_layer_url = {.uri = "/api/layers", .method = HTTP_PUT, .handler = update_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &update_layer_url);
+	httpd_uri_t layer_options_url = {.uri = "/api/layers", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &layer_options_url);
 
 	httpd_uri_t restore_default_layer_url = {.uri = "/api/layers/restore", .method = HTTP_PUT, .handler = restore_default_layer_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_default_layer_url);
@@ -1733,8 +2962,63 @@ httpd_handle_t start_webserver(const char *base_path)
 	httpd_register_uri_handler(server, &update_macro_url);
 	httpd_uri_t option_macros_url = {.uri = "/api/macros", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &option_macros_url);
-	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
-	httpd_register_uri_handler(server, &restore_all_macro_url);
+
+	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_PUT, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &restore_all_macro_url); // TODO: review if put or post.
+	httpd_uri_t macro_restore_options_url = {.uri = "/api/macros/restore", .method = HTTP_OPTIONS, .handler = options_restore_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &macro_restore_options_url);
+
+	// Tapdance
+
+	httpd_uri_t get_tapdance_url = {.uri = "/api/tapdance", .method = HTTP_GET, .handler = get_tapdance_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_tapdance_url);
+	httpd_uri_t create_tapdance_url = {.uri = "/api/tapdance", .method = HTTP_POST, .handler = create_tapdance_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &create_tapdance_url);
+	httpd_uri_t delete_tapdance_url = {.uri = "/api/tapdance", .method = HTTP_DELETE, .handler = delete_tapdance_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &delete_tapdance_url);
+	httpd_uri_t update_tapdance_url = {.uri = "/api/tapdance", .method = HTTP_PUT, .handler = update_tapdance_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &update_tapdance_url);
+	httpd_uri_t option_tapdance_url = {.uri = "/api/tapdance", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &option_tapdance_url);
+
+	httpd_uri_t restore_all_tapdance_url = {.uri = "/api/tapdance/restore", .method = HTTP_PUT, .handler = restore_default_tapdance_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &restore_all_tapdance_url);
+	httpd_uri_t tapdance_restore_options_url = {.uri = "/api/tapdance/restore", .method = HTTP_OPTIONS, .handler = options_restore_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &tapdance_restore_options_url);
+
+	// Modtap
+	httpd_uri_t get_modtap_url = {.uri = "/api/modtap", .method = HTTP_GET, .handler = get_modtap_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_modtap_url);
+	httpd_uri_t create_modtap_url = {.uri = "/api/modtap", .method = HTTP_POST, .handler = create_modtap_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &create_modtap_url);
+	httpd_uri_t delete_modtap_url = {.uri = "/api/modtap", .method = HTTP_DELETE, .handler = delete_modtap_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &delete_modtap_url);
+	httpd_uri_t update_modtap_url = {.uri = "/api/modtap", .method = HTTP_PUT, .handler = update_modtap_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &update_modtap_url);
+	httpd_uri_t option_modtap_url = {.uri = "/api/modtap", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &option_modtap_url);
+
+	httpd_uri_t restore_all_modtap_url = {.uri = "/api/modtap/restore", .method = HTTP_PUT, .handler = restore_default_modtap_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &restore_all_modtap_url);
+	httpd_uri_t modtap_restore_options_url = {.uri = "/api/modtap/restore", .method = HTTP_OPTIONS, .handler = options_restore_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &modtap_restore_options_url);
+
+	// leaderkey
+	httpd_uri_t get_leaderkey_url = {.uri = "/api/leaderkey", .method = HTTP_GET, .handler = get_leaderkey_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_leaderkey_url);
+	httpd_uri_t create_leaderkey_url = {.uri = "/api/leaderkey", .method = HTTP_POST, .handler = create_leaderkey_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &create_leaderkey_url);
+	httpd_uri_t delete_leaderkey_url = {.uri = "/api/leaderkey", .method = HTTP_DELETE, .handler = delete_leaderkey_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &delete_leaderkey_url);
+	httpd_uri_t update_leaderkey_url = {.uri = "/api/leaderkey", .method = HTTP_PUT, .handler = update_leaderkey_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &update_leaderkey_url);
+	httpd_uri_t option_leaderkey_url = {.uri = "/api/leaderkey", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &option_leaderkey_url);
+
+	httpd_uri_t restore_all_leaderkey_url = {.uri = "/api/leaderkey/restore", .method = HTTP_PUT, .handler = restore_default_leaderkey_url_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &restore_all_leaderkey_url);
+	httpd_uri_t leaderkey_restore_options_url = {.uri = "/api/leaderkey/restore", .method = HTTP_OPTIONS, .handler = options_restore_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &leaderkey_restore_options_url);
 
 	/* URI handler for getting web server files */
 	httpd_uri_t common_get_uri = {
@@ -1747,7 +3031,7 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	return server;
 err_start:
-	free(rest_context);
+	vPortFree(rest_context);
 err:
 	return NULL;
 }

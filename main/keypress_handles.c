@@ -34,6 +34,7 @@
 #include "esp_timer.h"
 
 #include "keys.h"
+#include "server_nvs.h"
 
 static const char *TAG = "KEY_PRESS";
 
@@ -129,53 +130,122 @@ void media_control_send(uint16_t keycode)
 	xQueueSend(media_q, (void *)&media_state, (TickType_t)0);
 }
 
-void media_control_release(uint16_t keycode)
+void media_control_release(void)
 {
 	uint8_t media_state[2] = {0};
 	xQueueSend(media_q, (void *)&media_state, (TickType_t)0);
 }
 
+// What to do on mouse actions
+void mouse_control_send(uint16_t keycode)
+{
+	uint8_t mouse_state[5] = {0, 0, 0, 0, 0};
+
+	switch (keycode)
+	{
+	case KC_MS_UP:
+		mouse_state[2] = 15;
+		break;
+
+	case KC_MS_DOWN:
+		mouse_state[2] = -15;
+		break;
+
+	case KC_MS_LEFT:
+		mouse_state[1] = 15;
+		break;
+
+	case KC_MS_RIGHT:
+		mouse_state[1] = -15;
+		break;
+
+	case KC_MS_BTN1:
+		SET_BIT(mouse_state[0], 0);
+		break;
+
+	case KC_MS_BTN2:
+		SET_BIT(mouse_state[0], 1);
+		break;
+
+	case KC_MS_BTN3:
+		SET_BIT(mouse_state[0], 2);
+		break;
+
+	case KC_MS_BTN4:
+		SET_BIT(mouse_state[0], 3);
+		break;
+	
+	case KC_MS_BTN5:
+		SET_BIT(mouse_state[0], 4);
+		break;
+
+	case KC_MS_WH_UP:
+		mouse_state[3] = 1;
+		break;
+	case KC_MS_WH_DOWN:
+		mouse_state[3] = -1;
+		break;
+	}
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+	mouse_state[0] = 0;
+	mouse_state[1] = 0;
+	mouse_state[2] = 0;
+	mouse_state[3] = 0;
+	mouse_state[4] = 0;
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+}
+
+// TODO: This does not work. ()
+void mouse_control_release(void)
+{
+	uint8_t mouse_state[5] = {0};
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+}
+
+
+
 
 /**
  * @brief Send the current keyboard config based on the parameters and the selected layer.
- * 
+ *
  */
 void keyboard_config(void)
 {
 	keys_config_struct_t keys_config = {
-        .mode_vector = {0},
-        .general_mode = KEY_CONFIG_NORMAL_MODE,
-        .interval_time = INTERVAL_TIMEOUT,
-        .long_time = LONG_PRESS_TIMEOUT
-    };
+		.mode_vector = {0},
+		.general_mode = KEY_CONFIG_NORMAL_MODE,
+		.interval_time = INTERVAL_TIMEOUT,
+		.long_time = LONG_PRESS_TIMEOUT};
 
-	for(uint8_t i =0; i<MATRIX_ROWS; i++)
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+
+	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
-		for(uint8_t j = 0; j<MATRIX_COLS; j++)
+		for (uint8_t j = 0; j < MATRIX_COLS; j++)
 		{
-			uint16_t keycode = key_layouts[current_layout].key_map[i][j];
+			uint16_t keycode = dd_layer_lst.item[current_layout].key_map[i][j];
 
 			if (keycode >= TAPDANCE_BASE_VAL && keycode < TAPDANCE_MAX_VAL)
 			{
-				keys_config.mode_vector[i*MATRIX_COLS + j] = MODE_V_TAPDANCE_ENABLE;
+				keys_config.mode_vector[i * MATRIX_COLS + j] = MODE_V_TAPDANCE_ENABLE;
 			}
 			else if (keycode >= MODTAP_BASE_VAL && keycode < MODTAP_MAX_VAL)
 			{
-				keys_config.mode_vector[i*MATRIX_COLS + j] = MODE_V_MODTAP_ENABLE;
+				keys_config.mode_vector[i * MATRIX_COLS + j] = MODE_V_MODTAP_ENABLE;
 			}
 		}
 	}
 
-	xQueueSend(keys_config_q,&keys_config,0);
-
+	xQueueSend(keys_config_q, &keys_config, 0);
 }
 
 // adjust current layer
 void layer_adjust(uint16_t keycode)
 {
 
-	int layers_num = nvs_read_num_layers();
-		
+	dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+	uint8_t layers_num = dd_layer_lst.size;
+
 	if (layer_hold_flag == 0)
 	{
 		switch (keycode)
@@ -189,7 +259,7 @@ void layer_adjust(uint16_t keycode)
 			{
 				for (int m = (layers_num - 1); m > 0; m--)
 				{
-					if (key_layouts[m - current_layout].active)
+					if (dd_layer_lst.item[m - current_layout].active)
 					{
 						current_layout = m;
 						break;
@@ -212,7 +282,7 @@ void layer_adjust(uint16_t keycode)
 			}
 			if (current_layout < (layers_num - 1))
 			{
-				if (key_layouts[current_layout + 1].active)
+				if (dd_layer_lst.item[current_layout + 1].active)
 				{
 					current_layout++;
 					break;
@@ -238,167 +308,213 @@ void layer_adjust(uint16_t keycode)
 
 #endif
 		ESP_LOGI(TAG, "Layer modified!, Current layer: %d",
-					current_layout);
+				 current_layout);
 	}
-
 }
 
 uint8_t matrix_prev_state[MATRIX_ROWS][MATRIX_COLS] = {0};
 
-
-
-
-
-typedef enum {
-    /** Press event issued */
-    NO_ITERATION = 0,
-    TAPDANCE_ITERATION,
-    MODTAP_ITERATION,
-	LEADERKEY_ITERATION    
+typedef enum
+{
+	/** Press event issued */
+	NO_ITERATION = 0,
+	TAPDANCE_ITERATION,
+	MODTAP_ITERATION,
+	LEADERKEY_ITERATION
 } iteration_mode_t;
 
-/** 
+/**
  * @brief Finite state machine states for key hevaviour
- * 
+ *
  */
-typedef enum {
-    S_IDLE = 0,
-    S_PRESSED,
-    S_RELEASED,
-    S_LONG_P,
-    S_TAPDANCE
+typedef enum
+{
+	S_IDLE = 0,
+	S_PRESSED,
+	S_RELEASED,
+	S_LONG_P,
+	S_TAPDANCE
 } keys_lk_fsm_t;
 
-
-void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,uint8_t * report_state)
+void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event, uint8_t *report_state)
 {
-
 	// Send RGB notification on key changed.
-	uint8_t row = key_event.key_pos/MATRIX_ROWS;
-	uint8_t col = key_event.key_pos%MATRIX_ROWS;
+	uint8_t row = key_event.key_pos / MATRIX_ROWS;
+	uint8_t col = key_event.key_pos % MATRIX_ROWS;
 
 	iteration_mode_t iteration_type = NO_ITERATION;
-	uint8_t iteration_times = 1; //Aux variable to iterate several times
+	uint8_t iteration_times = 1; // Aux variable to iterate several times
 
 #ifdef RGB_LEDS
-	rgb_key_led_press(row , col); // report the pressed key. --> This should be somewhere else. ToDo.
+	rgb_key_led_press(row, col); // report the pressed key. --> This should be somewhere else. ToDo.
 #endif
 
 	uint16_t report_index = (2 + key_event.key_pos);
 	keycode = keymap->key_map[row][col];
 
-	#ifdef DEBUG_REPORT //print the report 
-		printf("Keyboard Report complete: ");
-		for(int i=0; i< REPORT_LEN; i++)
-		{
-			printf("%02x ",report_state[i]);
-		}
-		printf("\n");
-	#endif
+#ifdef DEBUG_REPORT // print the report
+	printf("Keyboard Report complete: ");
+	for (int i = 0; i < REPORT_LEN; i++)
+	{
+		printf("%02x ", report_state[i]);
+	}
+	printf("\n");
+#endif
 
 	// led_status = check_led_status(keycode); ----> ToDo: To be checked
 
 	// Check if is on the special conditions (TAPDANCE, MODTAP, SEQUENCE_MACRO)
-	//ToDo: verification of 
-	
-	
+	// ToDo: verification of
+
 	// Check if it is tapdance
 	if ((keycode >= TAPDANCE_BASE_VAL) && (keycode <= TAPDANCE_MAX_VAL) && key_event.event == KEY_TAP_DANCE)
 	{
-		ESP_LOGE(TAG,"TAPDANCE EVENT with keycode %d", keycode);
+		ESP_LOGE(TAG, "TAPDANCE EVENT with keycode %d", keycode);
 
-		uint8_t found_flag=0;
-		for(uint8_t i=0;i<5;i++)
+		uint8_t found_flag = 0;
+		// Check if specific tapdance is registered
+		dd_tapdance tapdance_aux;
+
+		dd_tapdance_lst_t dd_tapdance_lst = nvs_get_tapdance_lst();
+		for (int i = 0; i < dd_tapdance_lst.size; i++)
 		{
-			if (default_tapdance[keycode - TAPDANCE_BASE_VAL].tap_list[i] == key_event.counter)
+			if (dd_tapdance_lst.item[i].keycode == keycode)
 			{
-				// Valid tapdance action. Set first the variables
-				iteration_type = TAPDANCE_ITERATION;
-				iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
-				// Change the keycode to desired action. Act as it was a single pressed event
-				keycode = default_tapdance[keycode - TAPDANCE_BASE_VAL].keycode_list[i];
-				key_event.event = KEY_PRESSED;
+				tapdance_aux = dd_tapdance_lst.item[i];
 				found_flag = 1;
-				
 				break;
+				/* code */
 			}
 		}
-		if(!found_flag)
+		if (!found_flag)
 		{
 			keycode = KC_NO;
 			return;
 		}
-		ESP_LOGE(TAG,"REDO TO TAPDANCE EVENT with keycode %d and iterations %d", keycode, iteration_times);
+
+		found_flag = 0;
+
+		for (uint8_t i = 0; i < TAPDANCE_LEN; i++)
+		{
+			if (tapdance_aux.tap_list[i] == key_event.counter)
+			{
+				// Valid tapdance action. Set first the variables
+				iteration_type = TAPDANCE_ITERATION;
+				iteration_times = 2; // Just need 2 iterations. one for key set, other for key reset.
+				// Change the keycode to desired action. Act as it was a single pressed event
+				keycode = tapdance_aux.keycode_list[i];
+				key_event.event = KEY_PRESSED;
+				found_flag = 1;
+
+				break;
+			}
+			else if (tapdance_aux.tap_list[i] == 0)
+			{
+				break;
+			}
+		}
+		if (!found_flag)
+		{
+			keycode = KC_NO;
+			return;
+		}
+		ESP_LOGE(TAG, "REDO TO TAPDANCE EVENT with keycode %d and iterations %d", keycode, iteration_times);
 	}
 	// Check if its modtap
-	else if((keycode >= MODTAP_BASE_VAL) && (keycode <= MODTAP_MAX_VAL))
+	else if ((keycode >= MODTAP_BASE_VAL) && (keycode <= MODTAP_MAX_VAL))
 	{
-		ESP_LOGE(TAG,"MODTAP EVENT with keycode %d", keycode);
+		ESP_LOGE(TAG, "MODTAP EVENT with keycode %d", keycode); // TODO: test
 
-		uint8_t modtap_actions[2] = {KC_1,KC_2};  							//dummy to test will change with memory information!!
+		uint8_t i;
+		uint8_t found_f = 0;
 
-		switch (key_event.event)
+		dd_modtap_lst_t dd_modtap_lst = nvs_get_modtap_lst();
+		for (i = 0; i < dd_modtap_lst.size; i++)
 		{
-		case KEY_MT_SHORT:
-			iteration_type = MODTAP_ITERATION;
-			iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
-			// Change the keycode to desired action. Act as it was a single pressed event
-			keycode = modtap_actions[0];
-			key_event.event = KEY_PRESSED;
-		break;
-		case KEY_MT_LONG_TIMEOUT:
-			keycode = modtap_actions[1];
-			key_event.event = KEY_PRESSED;
-		break;
-		case KEY_MT_LONG:
-			keycode = modtap_actions[1];
-			key_event.event = KEY_RELEASED;
-		break;
-		
-		default:
-			ESP_LOGE(TAG,"Why am i here?");
-			break;
+			if (dd_modtap_lst.item[i].keycode == keycode)
+			{
+				found_f = 1;
+				break;
+			}
+		}
+		if (found_f)
+		{
+			switch (key_event.event)
+			{
+			case KEY_MT_SHORT:
+				iteration_type = MODTAP_ITERATION;
+				iteration_times = 2; // Just need 2 iterations. one for key set, other for key reset.
+				// Change the keycode to desired action. Act as it was a single pressed event
+				keycode = dd_modtap_lst.item[i].keycode_short;
+				key_event.event = KEY_PRESSED;
+				break;
+			case KEY_MT_LONG_TIMEOUT:
+				keycode = dd_modtap_lst.item[i].keycode_long;
+				;
+				key_event.event = KEY_PRESSED;
+				break;
+			case KEY_MT_LONG:
+				keycode = dd_modtap_lst.item[i].keycode_long;
+				;
+				key_event.event = KEY_RELEASED;
+				break;
+
+			default:
+				ESP_LOGE(TAG, "Why am i here?");
+				break;
+			}
+		}
+		else
+		{
+			keycode = KC_NO;
 		}
 	}
-	//Leader key is pressed. Will activate Leader key mode. 
-	else if (keycode == KC_LK) 
+	// Leader key is pressed. Will activate Leader key mode.
+	else if (keycode == KC_LK)
 	{
 		if (key_event.event == KEY_RELEASED)
 		{
 			keys_config_struct_t lk_key_config;
 			leaderkey_config_struct_init(&lk_key_config);
 
-			xQueueSend(keys_config_q,&lk_key_config,0);
-			ESP_LOGW(TAG,"LEADER KEY config sent in queue. it should start now");
+			xQueueSend(keys_config_q, &lk_key_config, 0);
+			ESP_LOGW(TAG, "LEADER KEY config sent in queue. it should start now");
 		}
 		// Nothing elese to do here
 		return;
-		
 	}
+	
 	else if (key_event.event == KEY_LEADER)
 	{
+		// TODO: Change
 		// Init dummy events to be reviewed. ToDo take this into other place and NVS.
-		uint8_t dummy_sequences[3][LK_MAX_KEYS] = {{0,1,2,3},
-												   {0,5,10,15,15},
-												   {12,12,13,13,14,14,15,15}};
-		uint8_t dummy_sequences_len[3] = {4,5,8};
-		uint8_t dummy_seq_keycodes[3] = {KC_1,KC_2,KC_3};
+		// uint8_t dummy_sequences[3][LK_MAX_KEYS] = {{0, 1, 2, 3},
+		// 										   {0, 5, 10, 15, 15},
+		// 										   {12, 12, 13, 13, 14, 14, 15, 15}};
+		// uint8_t dummy_sequences_len[3] = {4, 5, 8};
+		// uint8_t dummy_seq_keycodes[3] = {KC_1, KC_2, KC_3};
+
+		dd_leaderkey_lst_t dd_leaderkey_lst = nvs_get_leaderkey_lst();
+
+		ESP_LOGW(TAG, "KEY_LEADER! leaderkey sequences number: %u", dd_leaderkey_lst.size);
 
 		// Check if one sequence goes acording to the event done
-		if(key_event.counter < LK_MAX_KEYS)
+		if (key_event.counter < LK_MAX_KEYS)
 		{
 			uint8_t sequence_found = 0;
-			for(uint8_t i=0;i<3;i++)
+			for (uint8_t i = 0; i < dd_leaderkey_lst.size; i++)
 			{
-				if(memcmp(key_event.lk_seq_array,dummy_sequences[i],dummy_sequences_len[i]) == 0)
+				ESP_LOG_BUFFER_HEX_LEVEL(TAG, key_event.lk_seq_array, LK_MAX_KEYS, ESP_LOG_WARN);
+				ESP_LOG_BUFFER_HEX_LEVEL(TAG, dd_leaderkey_lst.item[i].sequence, dd_leaderkey_lst.item[i].sequence_len, ESP_LOG_WARN);
+				if (memcmp(key_event.lk_seq_array, dd_leaderkey_lst.item[i].sequence, dd_leaderkey_lst.item[i].sequence_len) == 0)
 				{
-					keycode = dummy_seq_keycodes[i];
-					ESP_LOGW(TAG,"Sequence found! i: %d, keycode = %d",i,keycode);
+					keycode = dd_leaderkey_lst.item[i].keycode;
+					ESP_LOGW(TAG, "Sequence found! i: %d, keycode = %d", i, keycode);
 					sequence_found = 1;
 					break;
 				}
 			}
-			if(sequence_found == 0)
+			if (sequence_found == 0)
 			{
 				keycode = KC_NO;
 			}
@@ -406,10 +522,10 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 
 		// If so, start iteration mode on the keycode corresponding.
 		iteration_type = LEADERKEY_ITERATION;
-		iteration_times = 2; //Just need 2 iterations. one for key set, other for key reset.
+		iteration_times = 2; // Just need 2 iterations. one for key set, other for key reset.
 		key_event.event = KEY_PRESSED;
 	}
-	
+
 	// else
 	// {
 	// 	//Todo Add assert and error here!
@@ -419,15 +535,15 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 
 	do
 	{
-		//First check the iterations and prepare if needed
-		iteration_times --;
-		if ((iteration_type == TAPDANCE_ITERATION || iteration_type == MODTAP_ITERATION || iteration_type == LEADERKEY_ITERATION )&& iteration_times==0)
+		// First check the iterations and prepare if needed
+		iteration_times--;
+		if ((iteration_type == TAPDANCE_ITERATION || iteration_type == MODTAP_ITERATION || iteration_type == LEADERKEY_ITERATION) && iteration_times == 0)
 		{
-			key_event.event = KEY_RELEASED; //On the second iteration act as a key release.
+			key_event.event = KEY_RELEASED; // On the second iteration act as a key release.
 		}
-		
+
 		// Check whether state is pressed or unpressed
-		//if pressed:
+		// if pressed:
 		if (key_event.event == KEY_PRESSED)
 		{
 			// Check if layer hold (ToDo)
@@ -440,20 +556,38 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 				return;
 			}
 
+			// Review mouse actions
+        	else if (keycode >= KC_MS_UP && keycode <= KC_MS_ACCEL2)
+			{
+				mouse_control_send(keycode);
+			}
+
 			// Check if is a macro
 			else if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
 			{
-				for (uint8_t i = 0; i < MACRO_LEN; i++)
-				{
-					uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
 
-					if (key == KC_NO)
+				dd_macros_lst_t dd_macros_lst = nvs_get_macros_lst();
+				if (!macro_keycode_exist(keycode))
+				{
+					ESP_LOGE(TAG, "keycode %u not found in macro", keycode);
+				}
+				else
+				{
+					ESP_LOGW(TAG, "keycode %u ", keycode);
+					ESP_LOGW(TAG, "key_len %u ", dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len);
+					for (uint8_t i = 0; i < dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len; i++)
 					{
-						break;
+
+						uint16_t key = dd_macros_lst.item[keycode - MACRO_BASE_VAL].key[i];
+
+						if (key == KC_NO)
+						{
+							break;
+						}
+
+						report_state[i + 2] = key; // 2 is an offset, as 0 and 1 are used for other reasons
+						modifier |= check_modifier(key);
 					}
-					
-					report_state[i + 2] = key; // 2 is an offset, as 0 and 1 are used for other reasons
-					modifier |= check_modifier(key);
 				}
 			}
 
@@ -473,52 +607,55 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		// If unpressed
 		if (key_event.event == KEY_RELEASED)
 		{
-			// Check if layer hold (ToDo)
 
 			// Check Macro
 			if ((keycode >= MACRO_BASE_VAL) && (keycode <= MACRO_HOLD_MAX_VAL))
 			{
-				for (uint8_t i = 0; i < MACRO_LEN; i++)
+				dd_macros_lst_t dd_macros_lst = nvs_get_macros_lst();
+				if (!macro_keycode_exist(keycode))
 				{
-					uint16_t key = user_macros[keycode - MACRO_BASE_VAL].key[i];
-					report_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
-					modifier &= ~check_modifier(key);
+					ESP_LOGE(TAG, "keycode %u not found in macro", keycode);
+				}
+				else
+				{
+					for (uint8_t i = 0; i < dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len; i++)
+					{
+						uint16_t key = dd_macros_lst.item[keycode - MACRO_BASE_VAL].key[i];
+						report_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
+						modifier &= ~check_modifier(key);
+					}
 				}
 			}
-			
+
 			// checking for media control keycodes
 			else if ((keycode >= KC_MEDIA_NEXT_TRACK) && (keycode <= KC_AUDIO_VOL_DOWN))
 			{
-				media_control_release(keycode);
+				media_control_release();
 			}
 
 			else if ((keycode > LAYER_ADJUST_MIN) && (keycode < LAYER_ADJUST_MAX))
 			{
 				return;
 			}
-			
+
 			// Check other keys
 			else if (report_state[report_index] != 0)
 			{
 				led_status = 0;
-				
 
 				modifier &= ~check_modifier(keycode);
 				report_state[KEY_STATE[row][col]] = 0;
 				report_state[report_index] = 0;
-
 			}
-		
 		}
-
 
 		report_state[0] = modifier;
 		report_state[1] = led_status;
-		
-		// void *pReport;	
+
+		// void *pReport;
 		// pReport = (void *)&report_state;
 
-	#ifndef NKRO
+#ifndef NKRO
 		uint8_t trunc_report[REPORT_LEN] = {0};
 		trunc_report[0] = report_state[0];
 		trunc_report[1] = report_state[1];
@@ -526,7 +663,7 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		uint16_t cur_index = 2;
 		// Phone's mtu size is usually limited to 20 bytes
 		for (uint16_t i = 2; i < REPORT_LEN && cur_index < TRUNC_SIZE;
-			++i)
+			 ++i)
 		{
 			if (report_state[i] != 0)
 			{
@@ -535,19 +672,19 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 			}
 		}
 
-	#endif
-	#ifdef NKRO
-				pReport = (void *)&report_state; //Todo fix this. it should not work.
-	#endif
+#endif
+#ifdef NKRO
+		pReport = (void *)&report_state; // Todo fix this. it should not work.
+#endif
 
-		#ifdef DEBUG_REPORT //print the report 
-			printf("Keyboard Report: ");
-			for(int i=0; i< TRUNC_SIZE; i++)
-			{
-				printf("%02x ",trunc_report[i]);
-			}
-			printf("\n");
-		#endif
+#ifdef DEBUG_REPORT // print the report
+		printf("Keyboard Report: ");
+		for (int i = 0; i < TRUNC_SIZE; i++)
+		{
+			printf("%02x ", trunc_report[i]);
+		}
+		printf("\n");
+#endif
 
 		xQueueSend(keyboard_q, trunc_report, (TickType_t)0);
 
@@ -556,31 +693,27 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 		{
 			vTaskDelay(pdMS_TO_TICKS(40));
 		}
-		
 
 	} while (iteration_times > 0);
 
 	// After doing the leaderkey, send the key configuration back to normal
-	if (iteration_type == LEADERKEY_ITERATION) 
+	if (iteration_type == LEADERKEY_ITERATION)
 	{
 		keys_config_struct_t keys_config = {
-        .mode_vector = {0},
-        .general_mode = KEY_CONFIG_NORMAL_MODE,
-        .interval_time = 150,
-        .long_time = 500
-    	};
+			.mode_vector = {0},
+			.general_mode = KEY_CONFIG_NORMAL_MODE,
+			.interval_time = 150,
+			.long_time = 500};
 
 		keys_config.mode_vector[12] = MODE_V_TAPDANCE_ENABLE;
 		keys_config.mode_vector[13] = MODE_V_MODTAP_ENABLE;
 		keys_config.mode_vector[14] = MODE_V_MODTAP_ENABLE | MODE_V_LONG_P_SIMPLE;
 
-		xQueueSend(keys_config_q,&keys_config,0);
-		ESP_LOGW(TAG,"LEADER KEY: Return to normal, dummy config");
+		xQueueSend(keys_config_q, &keys_config, 0);
+		ESP_LOGW(TAG, "LEADER KEY: Return to normal, dummy config");
 		// Nothing elese to do here
 		return;
 	}
-
 }
-	
 
 #endif

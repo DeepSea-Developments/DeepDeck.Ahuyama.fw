@@ -19,6 +19,7 @@
 #include "nvs_flash.h"
 #include "nvs_funcs.h"
 #include "keymap.h"
+#include "server_nvs.h"
 
 static const char *TAG = "RGB_LEDs";
 
@@ -210,13 +211,13 @@ void key_led_modes(void)
             if (modes == 5)
             {
                 dumy = 0;
-
+                dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
                 for (int index = 0; index < MATRIX_ROWS; ++index)
                 {
                     for (int index_col = 0; index_col < MATRIX_COLS; index_col++)
                     {
 
-                        if (key_layouts[current_layout].key_map[index][index_col] != 0)
+                        if (dd_layer_lst.item[current_layout].key_map[index][index_col] != 0)
                         {
                             // Write RGB values to strip driver
                             // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);

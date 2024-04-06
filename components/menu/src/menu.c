@@ -19,6 +19,7 @@
 #include "menu.h"
 #include "keyboard_config.h"
 #include "nvs_funcs.h"
+#include "server_nvs.h"
 
 #define true 1
 #define false 0

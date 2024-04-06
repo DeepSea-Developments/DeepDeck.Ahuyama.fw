@@ -27,6 +27,7 @@
 #include "hal_ble.h"
 #include "keypress_handles.h"
 #include "keyboard_config.h"
+#include "server_nvs.h"
 
 TaskHandle_t xGesture;
 
@@ -114,42 +115,43 @@ void read_gesture()
 {
 	uint8_t gesture = 0;
 
-		//			ESP_LOGI("Gesture", "Read Gesture start .......");
-		gesture = apds9960_read_gesture(apds9960);
-		if (gesture != APDS9960_NONE)
+	//			ESP_LOGI("Gesture", "Read Gesture start .......");
+	gesture = apds9960_read_gesture(apds9960);
+	if (gesture != APDS9960_NONE)
+	{
+		if (gesture == APDS9960_DOWN)
 		{
-			if (gesture == APDS9960_DOWN)
-			{
-				ESP_LOGE("Gesture", "_DOWN");
-			}
-			else if (gesture == APDS9960_UP)
-			{
-				ESP_LOGE("Gesture", "_UP");
-			}
-			else if (gesture == APDS9960_LEFT)
-			{
-				ESP_LOGE("Gesture", "_LEFT");
-			}
-			else if (gesture == APDS9960_RIGHT)
-			{
-				ESP_LOGE("Gesture", "_RIGHT");
-			}
-			else if (gesture == APDS9960_FAR)
-			{
-				ESP_LOGE("Gesture", "_FAR");
-			}
-			else if (gesture == APDS9960_NEAR)
-			{
-				ESP_LOGE("Gesture", "_NEAR");
-			}
-			gesture_command(gesture,
-							key_layouts[current_layout].gesture_map);
+			ESP_LOGE("Gesture", "_DOWN");
 		}
-		else
+		else if (gesture == APDS9960_UP)
 		{
-			// ESP_LOGE("Gesture", "_NONE");
+			ESP_LOGE("Gesture", "_UP");
+		}
+		else if (gesture == APDS9960_LEFT)
+		{
+			ESP_LOGE("Gesture", "_LEFT");
+		}
+		else if (gesture == APDS9960_RIGHT)
+		{
+			ESP_LOGE("Gesture", "_RIGHT");
+		}
+		else if (gesture == APDS9960_FAR)
+		{
+			ESP_LOGE("Gesture", "_FAR");
+		}
+		else if (gesture == APDS9960_NEAR)
+		{
+			ESP_LOGE("Gesture", "_NEAR");
 		}
 
+		dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+		gesture_command(gesture,
+						dd_layer_lst.item[current_layout].gesture_map);
+	}
+	else
+	{
+		// ESP_LOGE("Gesture", "_NONE");
+	}
 }
 
 // How to process gesture activity
@@ -175,9 +177,11 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 		if ((action >= MACRO_BASE_VAL) && (action <= MACRO_HOLD_MAX_VAL))
 		{
 			ESP_LOGI("gesture", "MACRO: %d", action);
-			for (uint8_t i = 0; i < MACRO_LEN; i++)
+
+			dd_macros_lst_t dd_macros_lst = nvs_get_macros_lst();
+			for (uint8_t i = 0; i < dd_macros_lst.size; i++)
 			{
-				uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
+				uint16_t key = dd_macros_lst.item[action - MACRO_BASE_VAL].key[i];
 
 				if (key == KC_NO)
 				{
@@ -191,10 +195,10 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 			xQueueSend(keyboard_q, (void *)&key_state, (TickType_t)0);
 
 			// release macro
-			for (uint8_t i = 0; i < MACRO_LEN; i++)
+			for (uint8_t i = 0; i < dd_macros_lst.size; i++)
 			{
 				// uint16_t key = macros[keycode - MACRO_BASE_VAL][i];
-				uint16_t key = user_macros[action - MACRO_BASE_VAL].key[i];
+				uint16_t key = dd_macros_lst.item[action - MACRO_BASE_VAL].key[i];
 
 				// ESP_LOGI("releaseMacro", "keycode: %d", keycode - MACRO_BASE_VAL);
 				key_state[i + 2] = 0; // 2 is an offset, as 0 and 1 are used for other reasons
@@ -227,7 +231,6 @@ void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
 
 	vTaskDelay(5 / portTICK_PERIOD_MS);
 }
-
 
 ////Config Interrup PIN
 void config_interrup_pin(void)
@@ -268,5 +271,4 @@ void disable_interrup_pin(void)
 	gpio_config(&io_conf);
 	gpio_isr_handler_remove(interrupt_pin);
 	gpio_uninstall_isr_service();
-	
 }

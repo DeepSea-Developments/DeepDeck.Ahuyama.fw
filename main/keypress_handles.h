@@ -12,6 +12,7 @@
 #include "nvs_keymaps.h"
 #include "keys.h"
 
+void keyboard_config(void);
 void layer_adjust(uint16_t keycode);
 void media_control_release(uint16_t keycode);
 void media_control_send(uint16_t keycode);
