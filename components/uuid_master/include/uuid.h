@@ -5,7 +5,7 @@
 typedef uint8_t uuid_t[16];
 
 #define UUID_STR_LEN 37
-#define SHORT_UUID_STR_LEN 11 // 10 + end character
+#define SHORT_UUID_STR_LEN 7 // 10 + end character
 
 void uuid_generate(uuid_t out);
 int uuid_parse(const char *in, uuid_t uu);

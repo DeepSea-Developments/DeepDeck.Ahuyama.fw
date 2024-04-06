@@ -81,8 +81,8 @@
  *****************************************************/
 #define MAX_LAYER 10 // Max number of layer
 
-#define MACRO_LEN 5 // keys for macros
-#define MACROS_DEFAULT_NUM 17
+#define MACRO_LEN 12 // keys for macros
+#define MACROS_DEFAULT_NUM 30
 #define USER_MACRO_NAME_LEN 10
 
 #define INTERVAL_TIMEOUT 150

@@ -2001,7 +2001,7 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layerName_url_handler(httpd_req_t *req)
 {
-	esp_log_level_set(TAG, ESP_LOG_DEBUG);
+	// esp_log_level_set(TAG, ESP_LOG_DEBUG);
 	ESP_LOGI(TAG, "HTTP GET  --> /api/layers/layer_names");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*")); //
@@ -2476,11 +2476,19 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 			strcpy(new_layer.name, "__");
 	}
 
-	// cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
-	// if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
-	// {
-	// 	strcpy(new_layer.uuid_str, layer_uuid->valuestring);
-	// }
+	cJSON *layer_uuid = cJSON_GetObjectItem(payload, "uuid");
+	if (cJSON_IsString(layer_uuid) && (layer_uuid->valuestring != NULL))
+	{
+		strcpy(new_layer.uuid_str, layer_uuid->valuestring);
+	}
+	else //In case you dont receive an ID, generate one
+	{
+		// Generate short id
+		uuid_t uu;
+		uuid_generate(uu);
+		short_uuid_unparse(uu, new_layer.uuid_str);
+		ESP_LOGI(TAG,"ID not found. Generated ID: %s",new_layer.uuid_str);
+	}
 
 	cJSON *is_active = cJSON_GetObjectItem(payload, "active");
 	bool active = cJSON_IsTrue(is_active);
@@ -2501,14 +2509,10 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	char names[ROWS][COLS][10];
 	int codes[ROWS][COLS];
 
-	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far?");
-
 	fill_row(row0, names[0], codes[0]);
 	fill_row(row1, names[1], codes[1]);
 	fill_row(row2, names[2], codes[2]);
 	fill_row(row3, names[3], codes[3]);
-
-	// ESP_LOGI(TAG, "HTTP POST  Create Layer --> /api/layers - Working so far2?");
 
 	int i, j;
 	for (i = 0; i < ROWS; i++)

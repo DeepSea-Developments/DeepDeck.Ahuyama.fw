@@ -166,6 +166,10 @@ void app_main()
 	// Set log level of the progam
 	esp_log_level_set("*", ESP_LOG_INFO);
 
+	ESP_LOGI("MAIN", "LOGI");
+	ESP_LOGW("MAIN", "LOGW");
+	ESP_LOGE("MAIN", "LOGE");
+
 	// Loading layouts from nvs (if found)
 	nvs_server_init();
 
@@ -250,7 +254,7 @@ void app_main()
 
 #ifdef WIFI_ENABLE
 	// spiffs_init();
-	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
+	// esp_log_level_set("Wifi", ESP_LOG_DEBUG);
 	// wifi_app_main();
 	Wifi_initSemaphore = xSemaphoreCreateBinary();
 	xTaskCreate(&wifiInit, "init comms", MEM_WIFI_TASK, NULL, PRIOR_WIFI_TASK, NULL);

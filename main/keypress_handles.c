@@ -187,12 +187,12 @@ void mouse_control_send(uint16_t keycode)
 		break;
 	}
 	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
-	// mouse_state[0] = 0;
-	// mouse_state[1] = 0;
-	// mouse_state[2] = 0;
-	// mouse_state[3] = 0;
-	// mouse_state[4] = 0;
-	// xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
+	mouse_state[0] = 0;
+	mouse_state[1] = 0;
+	mouse_state[2] = 0;
+	mouse_state[3] = 0;
+	mouse_state[4] = 0;
+	xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
 }
 
 // TODO: This does not work. ()

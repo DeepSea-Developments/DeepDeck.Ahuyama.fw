@@ -51,6 +51,19 @@ enum custom_macros
     KC_APP_CHROME_REOPEN_TABS,    // Chrome - Reopen all the tabs
     KC_APP_CHROME_BACKWARD,       // Chrome - Navigate Backward
     KC_APP_CHROME_FORWARD,        // Chrome - Navigate forward
+    M18,
+    M19,
+    M20,
+    M21,
+    M22,
+    M23,
+    M24,
+    M25,
+    M26,
+    M27,
+    M28,
+    M29,
+    M30,
 };
 
 const dd_macros_static default_macros[MACROS_DEFAULT_NUM] = {
@@ -71,6 +84,19 @@ const dd_macros_static default_macros[MACROS_DEFAULT_NUM] = {
     {.name = "ROpenT", .keycode = KC_APP_CHROME_REOPEN_TABS, .key = {KC_LCTRL, KC_LSHIFT, KC_T, KC_NO}},
     {.name = "BACKWARD", .keycode = KC_APP_CHROME_BACKWARD, .key = {KC_LALT, KC_LEFT, KC_NO}},
     {.name = "FORWARD", .keycode = KC_APP_CHROME_FORWARD, .key = {KC_LALT, KC_RIGHT, KC_NO}},
+    {.name = "M18", .keycode = M18, .key = {KC_NO}},
+    {.name = "M19", .keycode = M19, .key = {KC_NO}},
+    {.name = "M20", .keycode = M20, .key = {KC_NO}},
+    {.name = "M21", .keycode = M21, .key = {KC_NO}},
+    {.name = "M22", .keycode = M22, .key = {KC_NO}},
+    {.name = "M23", .keycode = M23, .key = {KC_NO}},
+    {.name = "M24", .keycode = M24, .key = {KC_NO}},
+    {.name = "M25", .keycode = M25, .key = {KC_NO}},
+    {.name = "M26", .keycode = M26, .key = {KC_NO}},
+    {.name = "M27", .keycode = M27, .key = {KC_NO}},
+    {.name = "M28", .keycode = M28, .key = {KC_NO}},
+    {.name = "M29", .keycode = M29, .key = {KC_NO}},
+    {.name = "M30", .keycode = M30, .key = {KC_NO}},
 };
 
 const dd_leaderkey_static default_leaderkey[LK_DEFAULT_NUM] = {
@@ -819,7 +845,9 @@ void nvs_load_layer(void)
 esp_err_t nvs_create_layer(dd_layer layer) // TODO: Check if keycode or name does not repeat.
 {
     esp_err_t ret;
-    // ESP_LOGI(TAG, "exec %s", __func__);
+    ESP_LOGI(TAG, "exec %s", __func__);
+
+    ESP_LOGI(TAG, "%s", layer.uuid_str);
 
     // Iteration to identify the layer based on the keycode
     uint8_t found = 0;
