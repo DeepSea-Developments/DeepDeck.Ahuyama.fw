@@ -15,7 +15,7 @@
 #include "freertos/event_groups.h"
 #include "oled_tasks.h"
 
-#define FIRMWARE_VERSION "0.6.0"
+#define FIRMWARE_VERSION "0.6.1"
 #define MODULE_ID "ESP32"
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
