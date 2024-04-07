@@ -144,7 +144,7 @@ const dd_layer default_layer[DEFAULT_LAYERS] = {
         .uuid_str = "62d8ba",
         /* MEDIA
          * ,-----------------------------------------------------------------------.
-         * |     Play/5Pause  |     Next song   |       Mute      |  LAYER CHANGE   |
+         * |    Prev song    |   Play/Pause    |    Next song    |  LAYER CHANGE   |   
          * |-----------------+-----------------+-----------------+-----------------|
          * |    next window  | Prev window     | full screen(f11)|  Print Screen   |
          * |-----------------+-----------------+-----------------+-----------------|
@@ -154,16 +154,16 @@ const dd_layer default_layer[DEFAULT_LAYERS] = {
          * `-----------------------------------------------------------------------'
          */
         .key_map = {
-            {KC_MPLY, KC_MNXT, KC_AUDIO_MUTE, RAISE},        // row0
+            {KC_MEDIA_PREV_TRACK, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK, RAISE},        // row0
             {KC_ALT_TAB, KC_ALT_SHIFT_TAB, KC_F11, KC_PSCR}, // row1
             {KC_APP_COPY, KC_APP_PASTE, KC_UP, KC_ENTER},
             {KC_LGUI, KC_LEFT, KC_DOWN, KC_RIGHT}},
-        .key_map_names = {{"Play", "next", "mute", "layer"}, {"nWind", "PWind", "F11", "PrtSC"}, {"Copy", "Paste", "up", "Enter"}, {"window", "left", "down", "right"}},
+        .key_map_names = {{"Prev", "Play", "next", "layer"}, {"nWind", "PWind", "F11", "PrtSC"}, {"Copy", "Paste", "up", "Enter"}, {"window", "left", "down", "right"}},
         // Knobs - {CW, CCW, Single Press, Long Press, Double press}
-        .left_encoder_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK},
-        .right_encoder_map = {KC_APP_CHROME_PTAB, KC_APP_CHROME_NTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW},
+        .left_encoder_map = {KC_AUDIO_VOL_UP, KC_AUDIO_VOL_DOWN, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK},
+        .right_encoder_map = {KC_APP_CHROME_NTAB, KC_APP_CHROME_PTAB, KC_APP_CHROME_NEW_TAB, KC_APP_CHROME_CLOSE_TAB, KC_APP_CHROME_N_INC_WINDOW},
         // APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
-        .gesture_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_NEXT_TRACK},
+        .gesture_map = {KC_MEDIA_NEXT_TRACK, KC_MEDIA_PREV_TRACK, KC_NO, KC_NO, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_PLAY_PAUSE},
         .active = true,
 
         // .layer_id
@@ -183,7 +183,7 @@ const dd_layer default_layer[DEFAULT_LAYERS] = {
          * |        .        |         0       |        -        |        +        |
          * `-----------------------------------------------------------------------'
          */
-        .key_map = {{KC_TD3, KC_TD2, KC_TD1, RAISE}, {KC_4, KC_5, KC_6, KC_KP_SLASH}, {KC_1, KC_2, KC_3, KC_KP_ASTERISK}, {KC_DOT, KC_0, KC_MINS, KC_KP_PLUS}},
+        .key_map = {{KC_7, KC_8, KC_9, RAISE}, {KC_4, KC_5, KC_6, KC_KP_SLASH}, {KC_1, KC_2, KC_3, KC_KP_ASTERISK}, {KC_DOT, KC_0, KC_MINS, KC_KP_PLUS}},
         .key_map_names = {{"7", "8", "9", "layer"}, {"4", "5", "6", "/"}, {"1", "2", "3", "*"}, {".", "0", "-", "+"}},
         // Knobs - {CW, CCW, Single Press, Long Press, Double press}
         .left_encoder_map = {KC_LEFT, KC_RIGHT, KC_APP_COPY, KC_APP_PASTE, KC_APP_PASTE},

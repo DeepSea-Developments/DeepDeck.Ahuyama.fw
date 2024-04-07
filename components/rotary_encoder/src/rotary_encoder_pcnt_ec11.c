@@ -220,21 +220,20 @@ uint8_t encoder_push_state(rotary_encoder_t *encoder)
 encoder_state_t encoder_state(rotary_encoder_t *encoder)
 {
     uint8_t EncoderState = 0x00;
-    int16_t EncoderCount = ENC_IDLE;
+    int16_t EncoderCount = encoder->get_counter_value(encoder);
     int16_t PastEncoderCount = encoder->last_encoder_count;
-
-    EncoderCount = encoder->get_counter_value(encoder);
-
+    
     if (EncoderCount > PastEncoderCount)
     {
-        EncoderState = ENC_UP;
-        // ESP_LOGI("Encoder","up");
+        EncoderState = ENC_CW;
+        ESP_LOGI(TAG,"CW");
     }
     if (EncoderCount < PastEncoderCount)
     {
-        EncoderState = ENC_DOWN;
-        // ESP_LOGI("Encoder","down");
+        EncoderState = ENC_CCW;
+        ESP_LOGI(TAG,"CCW");
     }
+
     if (encoder->encoder_s_pin != GPIO_NUM_NC)
     {
         // FSM for the button state
@@ -246,7 +245,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             {
                 encoder->fsm_state = S_BUTTON_PRESSED;
                 encoder->fsm_timer = 0;
-                // ESP_LOGI("Encoder FSM","IDLE->PRESSED");
+                ESP_LOGI(TAG,"IDLE->PRESSED");
             }
             break;
         case S_BUTTON_PRESSED:
@@ -255,7 +254,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             {
                 encoder->fsm_state = S_BUTTON_RELEASED;
                 encoder->fsm_timer = 0;
-                // ESP_LOGI("Encoder FSM", "PRESSED->RELEASED");
+                ESP_LOGI(TAG, "PRESSED->RELEASED");
             }
             else
             {
@@ -266,11 +265,10 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                     encoder->fsm_state = S_LONG_PRESSED;
                     encoder->fsm_timer = 0;
                     EncoderState = ENC_BUT_LONG_PRESS;
-                    // ESP_LOGI("Encoder","Long Pressed");
-                    // ESP_LOGI("Encoder FSM","PRESSED->LONG_PRESSED");
+                    // ESP_LOGI(TAG,"Long Pressed");
+                    ESP_LOGI(TAG,"PRESSED->LONG_PRESSED");
                 }
             }
-
             break;
         case S_BUTTON_RELEASED:
             // Button Pressed
@@ -279,8 +277,8 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                 encoder->fsm_state = S_DOUBLE_PRESSED;
                 encoder->fsm_timer = 0;
                 EncoderState = ENC_BUT_DOUBLE_PRESS;
-                // ESP_LOGI("Encoder","Double Pressed");
-                // ESP_LOGI("Encoder FSM","RELEASE->DOUBLE_PRESS");
+                ESP_LOGI(TAG,"RELEASE->DOUBLE_PRESS");
+                // ESP_LOGI(TAG,"Double Pressed");
             }
             else
             {
@@ -291,8 +289,8 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                     encoder->fsm_state = S_B_IDLE;
                     encoder->fsm_timer = 0;
                     EncoderState = ENC_BUT_SHORT_PRESS;
-                    // ESP_LOGI("Encoder","Pressed");
-                    // ESP_LOGI("Encoder FSM","RELEASED->IDLE");
+                    ESP_LOGI(TAG,"RELEASED->IDLE");
+                    ESP_LOGI(TAG,"Pressed");
                 }
             }
             break;
@@ -303,7 +301,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             {
                 encoder->fsm_state = S_B_IDLE;
                 encoder->fsm_timer = 0;
-                // ESP_LOGI("Encoder FSM","LONG_PRESSED->IDLE");
+                ESP_LOGI(TAG,"LONG_PRESSED->IDLE");
             }
             break;
 
@@ -313,7 +311,7 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
             {
                 encoder->fsm_state = S_B_IDLE;
                 encoder->fsm_timer = 0;
-                // ESP_LOGI("Encoder FSM","DOUBLE_PRESSED->IDLE");
+                ESP_LOGI(TAG,"DOUBLE_PRESSED->IDLE");
             }
             break;
         }
@@ -449,7 +447,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
         // Review Macro actions
         else if (action >= MACRO_BASE_VAL && action < MACRO_HOLD_MAX_VAL)
         {
-            ESP_LOGI("Encoder", "Macro detected %d", action);
+            ESP_LOGI(TAG, "Macro detected %d", action);
             dd_macros_lst_t dd_macros_lst = nvs_get_macros_lst();
             for (uint8_t i = 0; i < dd_macros_lst.size; i++)
             {
@@ -482,13 +480,13 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
         // Review Layer actions
         else if (action >= LAYER_ADJUST_MIN && action <= LAYER_ADJUST_MAX)
         {
-            ESP_LOGI("Encoder", "Layer action detected");
+            ESP_LOGI(TAG, "Layer action detected");
             layer_adjust(action);
         }
         // Review Key actions
         else
         {
-            ESP_LOGI("Encoder", "Regular key detected: %d", action);
+            ESP_LOGI(TAG, "Regular key detected: %d", action);
             key_state[2] = action;
             xQueueSend(keyboard_q, (void *)&key_state, (TickType_t)0);
             key_state[2] = 0;

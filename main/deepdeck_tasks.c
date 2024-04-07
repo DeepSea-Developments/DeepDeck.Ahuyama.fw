@@ -249,7 +249,6 @@ void encoder_report(void *pvParameters)
 
 			if (deepdeck_status == S_SETTINGS)
 			{
-
 				menu_command((encoder_state_t)encoder1_status);
 			}
 			else if (encoder1_status == ENC_BUT_LONG_PRESS && encoder_push_state(encoder_b))

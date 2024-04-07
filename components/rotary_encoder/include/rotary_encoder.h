@@ -32,8 +32,8 @@ typedef void *rotary_encoder_dev_t;
 typedef enum {
     /** Press event issued */
     ENC_IDLE = 0,
-    ENC_UP,
-    ENC_DOWN,
+    ENC_CW,
+    ENC_CCW,
     ENC_BUT_SHORT_PRESS,
     ENC_BUT_LONG_PRESS,
     ENC_BUT_DOUBLE_PRESS, 

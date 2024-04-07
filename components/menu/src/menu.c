@@ -424,11 +424,11 @@ void menu_command(encoder_state_t encoder_action)
 {
   switch (encoder_action)
   {
-  case ENC_DOWN:
+  case ENC_CCW:
     menu_event = MENU_UP;
     ESP_LOGI("MENU_COMMAND", "UP");
     break;
-  case ENC_UP:
+  case ENC_CW:
     menu_event = MENU_DOWN;
     ESP_LOGI("MENU_COMMAND", "DOWN");
     break;
