@@ -159,7 +159,7 @@ plugins:
 
   # INSIDERS=1 mkdocs build
   - group:
-      enabled: !ENV INSIDERS
+      enabled: !ENV INSIDERS 
       plugins:
         - meta
 
