@@ -143,9 +143,9 @@ plugins:
   - render_swagger
 
   # CI=1 mkdocs build
-  - group:
-      enabled: !ENV CI
-      plugins:
+  # - group:
+  #     enabled: !ENV CI
+  #     plugins:
         # - social
         # - git-revision-date-localized:
         #     enable_creation_date: true
