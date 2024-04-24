@@ -140,7 +140,6 @@ plugins:
       post_excerpt_separator: <!-- more -->
       pagination_per_page: 5
       pagination_keep_content: true
-      authors_profiles: true 
   - render_swagger
 
     # CI=1 mkdocs build
