@@ -146,7 +146,7 @@ plugins:
   - group:
       enabled: !ENV CI
       plugins:
-        # - social
+        # - social # When included things crashed, not sure why.
         - git-revision-date-localized:
             enable_creation_date: true
             type: timeago
