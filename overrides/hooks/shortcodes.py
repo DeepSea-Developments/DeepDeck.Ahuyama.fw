@@ -121,7 +121,7 @@ def _badge_for_version(text: str, page: Page, files: Files):
 
     # Return badge
     icon = "material-tag-outline"
-    href = "/en/opensource/conventions/#version"
+    href = "../opensource/conventions.md/#version"
     return _badge(
         icon = f"[:{icon}:]({href} 'Minimum version')",
         # text = text
@@ -215,7 +215,7 @@ def _badge_for_default(text: str, page: Page, files: Files):
 # Create badge for empty default value
 def _badge_for_default_none(page: Page, files: Files):
     icon = "material-water-outline"
-    href = "/en/opensource/conventions.md#default"
+    href = "../en/opensource/conventions.md#default"
     return _badge(
         icon = f"[:{icon}:]({href} 'Default value is empty')"
     )
@@ -223,7 +223,7 @@ def _badge_for_default_none(page: Page, files: Files):
 # Create badge for computed default value
 def _badge_for_default_computed(page: Page, files: Files):
     icon = "material-water-check"
-    href = "/en/opensource/conventions.md#default" 
+    href = "../opensource/conventions.md#default" 
     return _badge(
         icon = f"[:{icon}:]({href} 'Default value is computed')"
     )
@@ -263,7 +263,7 @@ def _badge_for_multiple(page: Page, files: Files):
 # Create badge for experimental flag
 def _badge_for_experimental(page: Page, files: Files):
     icon = "material-flask-outline"
-    href = "/en/opensource/conventions/#experimental"
+    href = "../opensource/conventions.md#experimental"
     return _badge(
         icon = f"[:{icon}:]({href} 'Experimental')"
     )

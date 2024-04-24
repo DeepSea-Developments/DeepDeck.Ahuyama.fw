@@ -48,7 +48,7 @@ In this section you can find the FAQs. If you think we should add more, feel fre
 ??? note "Does the DeepDeck has an enclosure?"
 
     DeepDeck design allows a relatively safe use with the PCB (printed circuit board) base that protect the main electronic board. Different enclosures
-    have been done by the comunity, that can be seen in the [download section](/en/Resources/3d-prints/).
+    have been done by the comunity, that can be seen in the [download section](../Resources/3d-prints.md).
 
 
 ## Troubleshoooting
