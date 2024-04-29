@@ -25,38 +25,41 @@
  */
 typedef void *rotary_encoder_dev_t;
 
-/** 
- * @brief State of the rotary encoder 
- * 
+/**
+ * @brief State of the rotary encoder
+ *
  */
-typedef enum {
+typedef enum
+{
     /** Press event issued */
     ENC_IDLE = 0,
     ENC_CW,
     ENC_CCW,
     ENC_BUT_SHORT_PRESS,
     ENC_BUT_LONG_PRESS,
-    ENC_BUT_DOUBLE_PRESS, 
+    ENC_BUT_DOUBLE_PRESS,
 } encoder_state_t;
 
-/** 
- * @brief Finit state machine states for beign able to do 
- * 
+/**
+ * @brief Finit state machine states for beign able to do
+ *
  */
-typedef enum {
+typedef enum
+{
     S_B_IDLE = 0,
     S_BUTTON_PRESSED,
     S_BUTTON_RELEASED,
     S_LONG_PRESSED,
     S_DOUBLE_PRESSED
- 
+
 } encoder_fsm_t;
 
 /**
  * @brief Type of rotary encoder configuration
  *
  */
-typedef struct {
+typedef struct
+{
     rotary_encoder_dev_t dev; /*!< Underlying device handle */
     int phase_a_gpio_num;     /*!< Phase A GPIO number */
     int phase_b_gpio_num;     /*!< Phase B GPIO number */
@@ -89,7 +92,8 @@ typedef struct rotary_encoder_t rotary_encoder_t;
  * @brief Rotary encoder interface
  *
  */
-struct rotary_encoder_t {
+struct rotary_encoder_t
+{
     /**
      * @brief Filter out glitch from input signals
      *
@@ -145,7 +149,8 @@ struct rotary_encoder_t {
     uint32_t fsm_timer;
     uint32_t long_pressed_time;
     uint32_t short_pressed_time;
-
+    uint8_t prev_button_state;
+    uint32_t debouncing_tick;
 };
 
 /**
@@ -161,8 +166,6 @@ struct rotary_encoder_t {
  */
 esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_encoder_t **ret_encoder);
 
-
-
 /**
  * @brief Return encoder state (up, down, button pressed)
  *
@@ -173,19 +176,18 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
 encoder_state_t encoder_state(rotary_encoder_t *encoder);
 
 /**
- * @brief 
+ * @brief
  *
- * @param 
+ * @param
  * @return
  *      - encoder_state_t: TODO
  */
 void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE]);
 
-
 /**
  * @brief Return the state of the encoder push button.
  *
- * @param 
+ * @param
  * @return
  *      State of te button, 0 or 1.
  */

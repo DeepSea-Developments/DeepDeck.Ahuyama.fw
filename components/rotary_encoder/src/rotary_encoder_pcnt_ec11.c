@@ -25,8 +25,15 @@
 #include "hal_ble.h"
 #include "keypress_handles.h"
 #include "server_nvs.h"
+#include "esp_timer.h"
 
 static const char *TAG = "rotary_encoder";
+
+// used for debouncing
+static uint32_t millis()
+{
+    return esp_timer_get_time() / 1000;
+}
 
 #define ROTARY_CHECK(a, msg, tag, ret, ...)                                       \
     do                                                                            \
@@ -188,8 +195,10 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     ec11->parent.last_encoder_count = 0;
     ec11->parent.fsm_state = S_B_IDLE;
     ec11->parent.fsm_timer = 0;
-    ec11->parent.long_pressed_time = 100000;
-    ec11->parent.short_pressed_time = 60000;
+    ec11->parent.long_pressed_time = 1000; // 100000;
+    ec11->parent.short_pressed_time = 50;  // 60000;
+    ec11->parent.prev_button_state = 3;
+    ec11->parent.debouncing_tick = 0;
 
     // Configure Encoder button
     if (config->button_gpio_num != GPIO_NUM_NC)
@@ -219,101 +228,145 @@ uint8_t encoder_push_state(rotary_encoder_t *encoder)
 // Check encoder state, currently defined for Vol +/= and mute
 encoder_state_t encoder_state(rotary_encoder_t *encoder)
 {
+
+    static uint32_t last_tick = 0;
+    static uint32_t max_lapse = 0;
+    static uint32_t printing_tick = 0;
+
+    uint32_t now = millis();
+    uint32_t lapse = now - last_tick;
+
+    if (last_tick)
+    {
+        if (lapse > max_lapse)
+            max_lapse = lapse;
+        if ((now - printing_tick) > 1000)
+        {
+            printing_tick = now;
+            ESP_LOGI(TAG, "%s  max lapse %u", __func__, max_lapse);
+        }
+    }
+    last_tick = now;
+
     uint8_t EncoderState = 0x00;
     int16_t EncoderCount = encoder->get_counter_value(encoder);
     int16_t PastEncoderCount = encoder->last_encoder_count;
-    
+
     if (EncoderCount > PastEncoderCount)
     {
         EncoderState = ENC_CW;
-        ESP_LOGI(TAG,"CW");
+        ESP_LOGI(TAG, "CW");
     }
     if (EncoderCount < PastEncoderCount)
     {
         EncoderState = ENC_CCW;
-        ESP_LOGI(TAG,"CCW");
+        ESP_LOGI(TAG, "CCW");
     }
 
-    if (encoder->encoder_s_pin != GPIO_NUM_NC)
+    uint8_t current_button_state = encoder_push_state(encoder);
+
+    if (encoder->prev_button_state != current_button_state)
     {
-        // FSM for the button state
-        switch (encoder->fsm_state)
+        encoder->prev_button_state = current_button_state;
+        encoder->debouncing_tick = now;
+    }
+    else if ((now - encoder->debouncing_tick) > 10)
+    {
+        if (encoder->encoder_s_pin != GPIO_NUM_NC)
         {
-        case S_B_IDLE:
-            // Button Pressed
-            if (encoder_push_state(encoder) == 1)
+            // FSM for the button state
+            switch (encoder->fsm_state)
             {
-                encoder->fsm_state = S_BUTTON_PRESSED;
-                encoder->fsm_timer = 0;
-                ESP_LOGI(TAG,"IDLE->PRESSED");
-            }
-            break;
-        case S_BUTTON_PRESSED:
-            // Button Released
-            if (encoder_push_state(encoder) == 0)
-            {
-                encoder->fsm_state = S_BUTTON_RELEASED;
-                encoder->fsm_timer = 0;
-                ESP_LOGI(TAG, "PRESSED->RELEASED");
-            }
-            else
-            {
-                encoder->fsm_timer = encoder->fsm_timer + 1;
-                // Long Pressed
-                if (encoder->fsm_timer > encoder->long_pressed_time)
+            case S_B_IDLE:
+                // Button Pressed
+                if (current_button_state == 1)
                 {
-                    encoder->fsm_state = S_LONG_PRESSED;
-                    encoder->fsm_timer = 0;
-                    EncoderState = ENC_BUT_LONG_PRESS;
-                    // ESP_LOGI(TAG,"Long Pressed");
-                    ESP_LOGI(TAG,"PRESSED->LONG_PRESSED");
+                    encoder->fsm_state = S_BUTTON_PRESSED;
+                    encoder->fsm_timer = now;
+                    ESP_LOGI(TAG, "IDLE->PRESSED");
                 }
-            }
-            break;
-        case S_BUTTON_RELEASED:
-            // Button Pressed
-            if (encoder_push_state(encoder) == 1)
-            {
-                encoder->fsm_state = S_DOUBLE_PRESSED;
-                encoder->fsm_timer = 0;
-                EncoderState = ENC_BUT_DOUBLE_PRESS;
-                ESP_LOGI(TAG,"RELEASE->DOUBLE_PRESS");
-                // ESP_LOGI(TAG,"Double Pressed");
-            }
-            else
-            {
-                encoder->fsm_timer = encoder->fsm_timer + 1;
-                // Short Pressed
-                if (encoder->fsm_timer > encoder->short_pressed_time)
+                break;
+            case S_BUTTON_PRESSED:
+                // Button Released
+                if (current_button_state == 0)
+                {
+                    if ((now - encoder->fsm_timer) > encoder->short_pressed_time)
+                    {
+                        encoder->fsm_state = S_BUTTON_RELEASED;
+                        encoder->fsm_timer = now;
+                        ESP_LOGI(TAG, "PRESSED->RELEASED");
+                        EncoderState = ENC_BUT_SHORT_PRESS;
+                        ESP_LOGI(TAG, "Pressed");
+                    }
+                    else
+                    {
+                        encoder->fsm_state = S_B_IDLE;
+                        encoder->fsm_timer = now;
+                        ESP_LOGI(TAG, "IDLE %u", (now - encoder->fsm_timer));
+                    }
+                }
+                else
+                {
+                    // encoder->fsm_timer = encoder->fsm_timer + 1;
+                    //  Long Pressed
+                    // if (encoder->fsm_timer > encoder->long_pressed_time)
+                    if ((now - encoder->fsm_timer) > encoder->long_pressed_time)
+                    {
+                        encoder->fsm_state = S_LONG_PRESSED;
+                        encoder->fsm_timer = now;
+                        EncoderState = ENC_BUT_LONG_PRESS;
+                        // ESP_LOGI(TAG,"Long Pressed");
+                        ESP_LOGI(TAG, "PRESSED->LONG_PRESSED");
+                    }
+                }
+                break;
+            case S_BUTTON_RELEASED:
+                // Button Pressed
+                if (current_button_state == 1)
+                {
+                    encoder->fsm_state = S_DOUBLE_PRESSED;
+                    encoder->fsm_timer = now;
+                    ESP_LOGI(TAG, "RELEASE->DOUBLE_PRESS");
+                }
+                else
+                {
+                    // encoder->fsm_timer = encoder->fsm_timer + 1;
+                    //  Short Pressed
+                    // if (encoder->fsm_timer > encoder->short_pressed_time)
+                    if ((now - encoder->fsm_timer) > (200))
+                    {
+                        encoder->fsm_state = S_B_IDLE;
+                        encoder->fsm_timer = now;
+                        ESP_LOGI(TAG, "RELEASED->IDLE");
+                    }
+                }
+                break;
+
+            case S_LONG_PRESSED:
+                // Button Released
+                if (current_button_state == 0)
                 {
                     encoder->fsm_state = S_B_IDLE;
-                    encoder->fsm_timer = 0;
-                    EncoderState = ENC_BUT_SHORT_PRESS;
-                    ESP_LOGI(TAG,"RELEASED->IDLE");
-                    ESP_LOGI(TAG,"Pressed");
+                    encoder->fsm_timer = now;
+                    ESP_LOGI(TAG, "LONG_PRESSED->IDLE");
                 }
-            }
-            break;
+                break;
 
-        case S_LONG_PRESSED:
-            // Button Released
-            if (encoder_push_state(encoder) == 0)
-            {
-                encoder->fsm_state = S_B_IDLE;
-                encoder->fsm_timer = 0;
-                ESP_LOGI(TAG,"LONG_PRESSED->IDLE");
+            case S_DOUBLE_PRESSED:
+                // Button Released
+                if (current_button_state == 0)
+                {
+                    if ((now - encoder->fsm_timer) > encoder->short_pressed_time)
+                    {
+                        EncoderState = ENC_BUT_DOUBLE_PRESS;
+                        ESP_LOGI(TAG, "Double Pressed");
+                    }
+                    encoder->fsm_state = S_B_IDLE;
+                    encoder->fsm_timer = now;
+                    ESP_LOGI(TAG, "DOUBLE_PRESSED->IDLE");
+                }
+                break;
             }
-            break;
-
-        case S_DOUBLE_PRESSED:
-            // Button Released
-            if (encoder_push_state(encoder) == 0)
-            {
-                encoder->fsm_state = S_B_IDLE;
-                encoder->fsm_timer = 0;
-                ESP_LOGI(TAG,"DOUBLE_PRESSED->IDLE");
-            }
-            break;
         }
     }
 
@@ -424,7 +477,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
             case KC_MS_BTN4:
                 mouse_state[0] = 4;
                 break;
-            
+
             case KC_MS_BTN5:
                 mouse_state[0] = 5;
                 break;
@@ -443,7 +496,7 @@ void encoder_command(uint8_t command, uint16_t encoder_commands[ENCODER_SIZE])
             mouse_state[3] = 0;
             xQueueSend(mouse_q, (void *)&mouse_state, (TickType_t)0);
         }
-        
+
         // Review Macro actions
         else if (action >= MACRO_BASE_VAL && action < MACRO_HOLD_MAX_VAL)
         {
