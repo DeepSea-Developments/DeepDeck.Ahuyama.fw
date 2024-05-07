@@ -295,8 +295,6 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                         encoder->fsm_state = S_BUTTON_RELEASED;
                         encoder->fsm_timer = now;
                         ESP_LOGI(TAG, "PRESSED->RELEASED");
-                        EncoderState = ENC_BUT_SHORT_PRESS;
-                        ESP_LOGI(TAG, "Pressed");
                     }
                     else
                     {
@@ -338,6 +336,8 @@ encoder_state_t encoder_state(rotary_encoder_t *encoder)
                         encoder->fsm_state = S_B_IDLE;
                         encoder->fsm_timer = now;
                         ESP_LOGI(TAG, "RELEASED->IDLE");
+                        EncoderState = ENC_BUT_SHORT_PRESS;
+                        ESP_LOGI(TAG, "Pressed");
                     }
                 }
                 break;

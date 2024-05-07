@@ -164,7 +164,7 @@ void app_main()
 		ESP_LOGI("MAIN", "bt device name is: %s", config.bt_device_name);
 
 	// Set log level of the progam
-	esp_log_level_set("*", ESP_LOG_INFO);
+	esp_log_level_set("*", ESP_LOG_ERROR);
 
 	ESP_LOGI("MAIN", "LOGI");
 	ESP_LOGW("MAIN", "LOGW");
