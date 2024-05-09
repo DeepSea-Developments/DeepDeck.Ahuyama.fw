@@ -8,7 +8,7 @@ categories:
 slug: how-to-keep-focused-at-work
 ---
 
-# How to stay focused at work: 9 Tips for peak performance
+# How to keep focused at work: 9 Tips for peak performance
 
 Maintaining focus is essential for productivity and success. Whether you're working in the office or from home, distractions abound, making it challenging to stay on task. However, with the right strategies, you can sharpen your focus and achieve peak performance. That’s why we want to share with you 9 tips on how to stay focused at work and maximize your performance.
 
