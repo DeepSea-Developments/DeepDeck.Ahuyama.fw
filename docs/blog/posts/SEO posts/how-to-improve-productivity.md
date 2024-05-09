@@ -48,7 +48,7 @@ This may involve turning off notifications on your phone, setting specific work 
 As a recommendation, try to schedule meetings only on specific times and days, this way, you won’t be worried about having meetings at any moment that will constantly interrupt your [workflow](https://deepdeck.co/blog/workflow-optimization-and-automation/){:target="_blank"}.
 
 !!! Tip 
-    Turning off notifications on your phone during specific work hours will improve your productivity at work.
+    Turning off notifications on your phone during specific work hours will improve your productivity and help you [stay focused at work](https://www.deepdeck.co/blog/how-to-keep-focused-at-work/){:target="_blank"}.
 
 ## 4. Implement time management techniques
 
