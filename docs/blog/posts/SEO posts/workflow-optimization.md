@@ -81,14 +81,14 @@ By optimizing collaboration, you can ensure that everyone is on the same page an
 Once you have understood the importance of workflow optimization and the need for automation implementation, we want to talk to you about **DeepDeck**. Which is a versatile [programmable macropad](https://deepdeck.co/){:target="_blank"} designed to streamline your workflow and boost productivity. With customizable macro keys and open-source software, DeepDeck empowers users to automate repetitive tasks and optimize their workflow with ease; see [what is a macropad](https://deepdeck.co/blog/macropad-definition/){:target="_blank"}.
 
 !!! quote 
-    DeepDeck is designed to streamline your workflow and boost productivity.
+    [DeepDeck](https://deepdeck.co/){:target="_blank"} is designed to streamline your workflow and boost productivity.
 
 
 Let’s see some workflow automation examples so you can understand how to take advantage of this automation tool for your workflows:
 
 ### **Automated text formatting:**
 
-With DeepDeck, you can assign custom shortcuts to common text formatting commands, such as bold, italic, or underline in Google Docs. Instead of manually formatting text, or copying and pasting text, simply press a macro key to apply formatting instantly, saving time and reducing manual effort.
+With DeepDeck, you can configure [useful keyboard macros](https://deepdeck.co/blog/useful-keyboard-macros/){:target="_blank"} assign custom shortcuts to common text formatting commands, such as bold, italic, or underline in Google Docs. Instead of manually formatting text, or copying and pasting text, simply press a macro key to apply formatting instantly, saving time and reducing manual effort.
 
 When you are on Google Docs, just hit the following keys to open the shortcuts list and program your macropad the way you want:
 
