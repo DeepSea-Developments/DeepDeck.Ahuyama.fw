@@ -289,60 +289,6 @@
       <!-- Hero teaser -->
       {% block hero %}{% endblock %}
 
-      <!-- Main area -->
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-
-          <!-- Sidebars -->
-          {% block site_nav %}
-
-            <!-- Navigation -->
-            {% if nav %}
-              {% if page.meta and page.meta.hide %}
-                {% set hidden = "hidden" if "navigation" in page.meta.hide %}
-              {% endif %}
-              <div
-                class="md-sidebar md-sidebar--primary"
-                data-md-component="sidebar"
-                data-md-type="navigation"
-                {{ hidden }}
-              >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    {% include "partials/landing_page/nav_landing.html" %}
-                  </div>
-                </div>
-              </div>
-            {% endif %}
-
-            
-          {% endblock %}
-
-          <!-- Page content container -->
-          {% block container %}
-            <div class="md-content" data-md-component="content">
-
-              <!-- Navigation path (breadcrumbs) -->
-              {% if "navigation.path" in features %}
-                {% include "partials/path.html" %}
-              {% endif %}
-
-              <!-- Page content -->
-              <article class="md-content__inner md-typeset">
-                {% block content %}
-                  {% include "partials/content.html" %}
-                {% endblock %}
-              </article>
-            </div>
-          {% endblock %}
-
-          <!-- User preference: content -->
-          {% include "partials/javascripts/content.html" %}
-        </div>
-
-        
-      </main>
-
       <!-- Footer -->
       {% block footer %}
         {% include "partials/footer.html" %}
