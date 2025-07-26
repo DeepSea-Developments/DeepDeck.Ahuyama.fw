@@ -46,6 +46,7 @@ TaskHandle_t xOledTask;
 #endif
 
 TaskHandle_t xKeyreportTask;
+deepdeck_status_t deepdeck_status = S_NORMAL; // Set the status of the screen.
 
 // extern SemaphoreHandle_t xSemaphore;
 

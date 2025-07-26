@@ -27,7 +27,7 @@
 #include "freertos/timers.h"
 #include "nvs_flash.h"
 #include "esp_event_loop.h"
-#include "tcpip_adapter.h"
+#include "esp_netif.h"
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
 #include "esp_log.h"
@@ -59,7 +59,7 @@ void wifi_initialize_send(void){
 
 	// Setting up the Wifi.
 	uint8_t slave_mac_adr[6];
-	tcpip_adapter_init();
+	esp_netif_init();
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -80,18 +80,21 @@ void wifi_initialize_send(void){
 }
 
 // Callback function after sending data
-void espnow_send_cb(const uint8_t *mac_addr, esp_now_send_status_t status){
+void espnow_send_cb(const wifi_tx_info_t *info, esp_now_send_status_t status){
 
 
 	switch(status){
-	case(ESP_NOW_SEND_SUCCESS):
-		ESP_LOGI(ESP_NOW_TAG,"Data Sent successfully!");
+	case ESP_NOW_SEND_SUCCESS:
+		ESP_LOGI(ESP_NOW_TAG, "Data Sent successfully!");
 	break;
 
-	case(ESP_NOW_SEND_FAIL):
-		ESP_LOGI(ESP_NOW_TAG,"Data not Sent, trying a different channel");
+	case ESP_NOW_SEND_FAIL:
+		ESP_LOGI(ESP_NOW_TAG, "Data not Sent, trying a different channel");
 	break;
+        // Optionally handle other status codes here
 
+	default:
+		ESP_LOGI(ESP_NOW_TAG, "Unknown send status: %d", status);
 	break;
 	}
 }

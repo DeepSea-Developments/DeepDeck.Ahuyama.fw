@@ -24,6 +24,7 @@ static const char *TAG = "RGB_LEDs";
 
 led_strip_t *rgb_key;
 led_strip_t *rgb_notif;
+rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 /// @brief Input queue for sending mouse reports
 QueueHandle_t keyled_q;

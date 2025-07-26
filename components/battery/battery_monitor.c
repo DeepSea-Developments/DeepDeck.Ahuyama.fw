@@ -27,10 +27,9 @@
 #include <assert.h>
 
 #include "esp_system.h"
+#include "esp_adc/adc_oneshot.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
-#include "esp_adc_cal.h"
-
 #include "keyboard_config.h"
 
 #include "battery_monitor.h"
@@ -38,42 +37,48 @@
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
 #define NO_OF_SAMPLES   500          //Multisampling
 
+static adc_oneshot_unit_handle_t adc_handle;
 static const adc_channel_t channel = BATT_PIN;
 static const adc_atten_t atten = ADC_ATTEN_DB_2_5;
-static const adc_unit_t unit = ADC_UNIT_1;
 
 uint32_t voltage = 0;
 
-static esp_adc_cal_characteristics_t *adc_chars;
+//static esp_adc_cal_characteristics_t *adc_chars;
 //check battery level
-
 uint32_t get_battery_level(void) {
-
-	uint32_t adc_reading = 0;
+    int adc_reading = 0;
+    int raw = 0;
 	//Multisampling
 
 	for (int i = 0; i < NO_OF_SAMPLES; i++) {
-		adc_reading += adc1_get_raw((adc1_channel_t) channel);
+        adc_oneshot_read(adc_handle, channel, &raw);
+        adc_reading += raw;
 	}
 	adc_reading /= NO_OF_SAMPLES;
 
 	//Convert adc_reading to voltage in mV
-	voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-	uint32_t battery_percent = ((voltage - Vout_min) * 100
-			/ (Vout_max - Vout_min));
-//    printf("Raw: %d\tVoltage: %dmV\tPercent: %d\n", adc_reading, voltage, battery_percent);
-	return battery_percent;
+	// For ESP-IDF v5.x, use adc_cali_raw_to_voltage or calculate manually
+    // Here, we use the formula: voltage = (adc_reading * reference_voltage) / max_adc
+    // For 12-bit ADC, max_adc = 4095, reference_voltage = 1100mV (default)
+    voltage = (adc_reading * 1100) / 4095;
+
+    uint32_t battery_percent = ((voltage - Vout_min) * 100 / (Vout_max - Vout_min));
+    // printf("Raw: %d\tVoltage: %dmV\tPercent: %d\n", adc_reading, voltage, battery_percent);
+    return battery_percent;
 
 }
 
 //initialize battery monitor pin
 void init_batt_monitor(void) {
+    adc_oneshot_unit_init_cfg_t init_config = {
+        .unit_id = ADC_UNIT_1,
+        .ulp_mode = ADC_ULP_MODE_DISABLE,
+    };
+    adc_oneshot_new_unit(&init_config, &adc_handle);
 
-	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(BATT_PIN, atten);
-	adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
-	esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF,
-			adc_chars);
-
+    adc_oneshot_chan_cfg_t config = {
+        .atten = atten,
+        .bitwidth = ADC_BITWIDTH_12,
+    };
+    adc_oneshot_config_channel(adc_handle, channel, &config);
 }
-

@@ -32,7 +32,7 @@ TaskHandle_t xGesture;
 
 i2c_bus_handle_t i2c_bus = NULL;
 apds9960_handle_t apds9960 = NULL;
-xTimerHandle xTimer;
+TimerHandle_t xTimer;
 int timerID = 1;
 bool flag = false;
 
@@ -153,7 +153,7 @@ void read_gesture()
 }
 
 // How to process gesture activity
-void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE])
+void gesture_command(uint8_t command, uint16_t gesture_commands[5])
 {
 	uint8_t modifier = 0;
 	uint16_t action;

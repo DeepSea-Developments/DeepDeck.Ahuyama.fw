@@ -8,7 +8,7 @@
 #ifndef WIFI_MANAGER_WIFI_MANAGER_H_
 #define WIFI_MANAGER_WIFI_MANAGER_H_
 
-#include "keyboard_config.h"
+//#include "keyboard_config.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
@@ -39,6 +39,7 @@
 #define NO_SSID_FOUND 0
 #define SSID_FOUND 1
 
+extern esp_err_t err;
 /**
  * @brief check if a previous wifi ap is available, if so connect to it.
  * otherwise prompt to enter connection manager
