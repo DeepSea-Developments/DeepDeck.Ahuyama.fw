@@ -26,6 +26,7 @@
 #include "esp_http_server.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "lwip/sockets.h"
 
 #include "wifi_handles.h"
 #include "cJSON.h"
@@ -42,14 +43,14 @@
 #include "mdns.h"
 #include "spiffs.h"
 
-#define MDNS_INSTANCE "DeepG Web Server"
+#define MDNS_INSTANCE "Deepdeck Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
 
 extern SemaphoreHandle_t Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
-static int s_retry_num = 0;
+static int s_retry_num = 1;
 bool myflag = false;
 bool wifi_reset = false;
 bool wifi_connected = false;
@@ -140,7 +141,7 @@ void wifi_init_softap(void)
 			 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS,
 			 EXAMPLE_ESP_WIFI_CHANNEL);
 	wifi_ap_mode = true;
-	wifi_connected_oled("AP_MODE");
+	wifi_connected_oled("Config mode");
 }
 //////////////////////////////////////////////////////////////////////////
 
@@ -155,6 +156,7 @@ void event_handler(void *arg, esp_event_base_t event_base,
 	}
 	else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
 	{
+		oled_draw_status_bar(1, false);
 		if (s_retry_num < ESP_STA_MAXIMUM_RETRY)
 		{
 			esp_wifi_connect();
@@ -176,7 +178,7 @@ void event_handler(void *arg, esp_event_base_t event_base,
 		char ip_char[16] = {0}; // 16 es el tamaño máximo de una dirección IP
 		sprintf(ip_char, "%d.%d.%d.%d", esp_ip4_addr1_16(&event->ip_info.ip), esp_ip4_addr2_16(&event->ip_info.ip), esp_ip4_addr3_16(&event->ip_info.ip), esp_ip4_addr4_16(&event->ip_info.ip));
 
-		wifi_connected_oled(ip_char);
+		wifi_connected_oled(MDNS_HOST_NAME);
 		s_retry_num = 0;
 		xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 	}
@@ -315,6 +317,52 @@ void wifi_scan_sta(void)
 }
 ///////////////////////////////////////////////////////////////////////////////////
 
+#define ESP_SOFTAP_IP 0xC0A80401
+
+
+void captive_portal_dns_task(void *pvParameters) {
+    struct sockaddr_in serv_addr;
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_port = htons(53);
+    
+    bind(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+    
+    char rx_buffer[128];
+    char tx_buffer[150]; // Buffer unificado más grande
+    
+    while (1) {
+        struct sockaddr_in source_addr;
+        socklen_t socklen = sizeof(source_addr);
+        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer), 0, (struct sockaddr *)&source_addr, &socklen);
+        
+        if (len > 0) {
+            rx_buffer[2] |= 0x80; // QR = 1
+            rx_buffer[3] |= 0x80; // RA = 1
+            rx_buffer[6] = 0;     // Contadores de respuesta
+            rx_buffer[7] = 1;     // 1 respuesta
+            
+            // 1. Copiamos la cabecera original al buffer de transmisión
+            memcpy(tx_buffer, rx_buffer, len);
+            
+            // 2. Preparamos nuestra respuesta de IP
+            char answer[] = {
+                0xC0, 0x0C, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x3C, 0x00, 0x04,
+                (ESP_SOFTAP_IP >> 24) & 0xFF, (ESP_SOFTAP_IP >> 16) & 0xFF, 
+                (ESP_SOFTAP_IP >> 8) & 0xFF, ESP_SOFTAP_IP & 0xFF
+            };
+            
+            // 3. Pegamos la respuesta justo después de la cabecera original
+            memcpy(tx_buffer + len, answer, sizeof(answer));
+            
+            // 4. ¡Enviamos TODO en un solo paquete UDP!
+            sendto(sock, tx_buffer, len + sizeof(answer), 0, (struct sockaddr *)&source_addr, sizeof(source_addr));
+        }
+    }
+}
+
 #ifdef USE_MDNS
 static void initialise_mdns(void)
 {
@@ -323,23 +371,22 @@ static void initialise_mdns(void)
 	ESP_ERROR_CHECK(mdns_init());
 	// set mDNS hostname (required if you want to advertise services)
 	ESP_ERROR_CHECK(mdns_hostname_set(MDNS_HOST_NAME));
-	ESP_LOGI(TAG, "mdns hostname set to: [%s]", MDNS_HOST_NAME);
+	ESP_LOGE(TAG, "mdns hostname set to: [%s]", MDNS_HOST_NAME);
 	// set default mDNS instance name
 	ESP_ERROR_CHECK(mdns_instance_name_set(MDNS_INSTANCE));
 
 	// structure with TXT records
-	mdns_txt_item_t serviceTxtData[3] = {
-		{"board", "esp32"},
-		{"u", "user"},
-		{"p", "password"}};
+	mdns_txt_item_t serviceTxtData[1] = {
+		{"board", "esp32"}
+		};
 
 	// initialize service
-	ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, 3));
+	ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, 1));
 
-	// add another TXT item
-	ESP_ERROR_CHECK(mdns_service_txt_item_set("_http", "_tcp", "path", "/foobar"));
-	// change TXT item value
-	ESP_ERROR_CHECK(mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")));
+	// // add another TXT item
+	// ESP_ERROR_CHECK(mdns_service_txt_item_set("_http", "_tcp", "path", "/foobar"));
+	// // change TXT item value
+	// ESP_ERROR_CHECK(mdns_service_txt_item_set_with_explicit_value_len("_http", "_tcp", "u", "admin", strlen("admin")));
 }
 #endif
 
@@ -358,7 +405,6 @@ void wifiInit(void *params)
 {
 	init_fs();
 	nvs_handle_t nvs;
-
 	static httpd_handle_t server = NULL;
 	wifi_ap_mode = false;
 
@@ -369,75 +415,77 @@ void wifiInit(void *params)
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
 
-	while (true)
+	if (xSemaphoreTake(Wifi_initSemaphore, portMAX_DELAY))
 	{
-
-		if (xSemaphoreTake(Wifi_initSemaphore, portMAX_DELAY))
+		if (wifi_reset)
 		{
-#ifdef USE_MDNS
-			initialise_mdns();
-#endif
-			if (wifi_reset)
-			{
-				// server = NULL;
-				wifi_reset = false;
-				printf("Restarting now.\n");
-				fflush(stdout);
-				esp_restart();
-			}
-
-			ESP_LOGI(":", "Searching for wifi credentials");
-
-			ESP_ERROR_CHECK(nvs_open("wifiCreds", NVS_READWRITE, &nvs));
-
-			size_t ssidLen, passLen;
-			char *ssid = NULL, *pass = NULL;
-
-			if (nvs_get_str(nvs, "ssid", NULL, &ssidLen) == ESP_OK)
-			{
-				if (ssidLen > 0)
-				{
-					ssid = malloc(ssidLen);
-					nvs_get_str(nvs, "ssid", ssid, &ssidLen);
-					ESP_LOGI(":", "save ssid: %s", ssid);
-				}
-			}
-			else
-			{
-				ESP_LOGI(":", "SSID NOT FOUND");
-			}
-
-			if (nvs_get_str(nvs, "pass", NULL, &passLen) == ESP_OK)
-			{
-				if (passLen > 0)
-				{
-					pass = malloc(passLen);
-					nvs_get_str(nvs, "pass", pass, &passLen);
-					ESP_LOGI(":", "save pass: %s", pass);
-					// myflag = false;
-				}
-			}
-			else
-			{
-				ESP_LOGI(":", "PASSWORD NOT FOUND");
-			}
-
-			if (ssid != NULL && pass != NULL)
-			{
-				// connectSTA(ssid, pass);
-				wifi_init_sta(wifi_ap_mode, ssid, pass);
-			}
-			else
-			{
-				myflag = true;
-			}
-			if (myflag)
-			{
-				wifi_init_softap();
-			}
-
-			ESP_ERROR_CHECK(esp_wifi_start());
+			// server = NULL;
+			wifi_reset = false;
+			printf("Restarting now.\n");
+			fflush(stdout);
+			esp_restart();
 		}
-		vTaskDelay(pdMS_TO_TICKS(10));
+
+		ESP_LOGI(":", "Searching for wifi credentials");
+
+		ESP_ERROR_CHECK(nvs_open("wifiCreds", NVS_READWRITE, &nvs));
+
+		size_t ssidLen = 0, passLen = 0;
+		char *ssid = NULL, *pass = NULL;
+
+		if (nvs_get_str(nvs, "ssid", NULL, &ssidLen) == ESP_OK)
+		{
+			if (ssidLen > 0)
+			{
+				ssid = malloc(ssidLen);
+				nvs_get_str(nvs, "ssid", ssid, &ssidLen);
+				ESP_LOGI(":", "save ssid: %s", ssid);
+			}
+		}
+		else
+		{
+			ESP_LOGE(":", "SSID NOT FOUND");
+		}
+
+		if (nvs_get_str(nvs, "pass", NULL, &passLen) == ESP_OK)
+		{
+			if (passLen > 0)
+			{
+				pass = malloc(passLen);
+				nvs_get_str(nvs, "pass", pass, &passLen);
+				ESP_LOGI(":", "save pass: %s", pass);
+				// myflag = false;
+			}
+		}
+		else
+		{
+			ESP_LOGE(":", "PASSWORD NOT FOUND");
+		}
+
+		nvs_close(nvs);
+
+		if (ssid != NULL && pass != NULL)
+		{
+			// connectSTA(ssid, pass);
+			wifi_init_sta(wifi_ap_mode, ssid, pass);
+			#ifdef USE_MDNS
+				initialise_mdns();
+			#endif
+		}
+		else
+		{
+			myflag = true;
+		}
+		if (myflag)
+		{
+			wifi_init_softap();
+			xTaskCreate(captive_portal_dns_task, "dns_task", 4096, NULL, 5, NULL);
+		}
+
+		if (ssid != NULL) free(ssid);
+		if (pass != NULL) free(pass);
+
+		ESP_ERROR_CHECK(esp_wifi_start());
 	}
+	vTaskDelete(NULL);
 }

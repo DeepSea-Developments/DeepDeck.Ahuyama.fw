@@ -17,7 +17,7 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define ESP_STA_MAXIMUM_RETRY  5
+#define ESP_STA_MAXIMUM_RETRY  2
 
 // #if CONFIG_ESP_WIFI_AUTH_OPEN
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN

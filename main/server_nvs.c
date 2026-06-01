@@ -263,6 +263,9 @@ typedef struct
     char key_name[NVS_NS_NAME_MAX_SIZE];
     char name[USER_MACRO_NAME_LEN]; //  200 macros ---> Name of each macro up to 32 characters
     uint16_t keycode;
+    uint8_t macro_type; // 0 = Normal, 1 = App Launcher
+    uint8_t os_type;    // 0 = Windows, 1 = Mac, 2 = Linux
+    char app_alias[16]; // Example: "app1"
 } nvs_dd_macros;
 
 uint8_t get_static_key_num(uint16_t *key)
@@ -350,6 +353,9 @@ esp_err_t nvs_macros_list_load(dd_macros **list, size_t *list_len)
 
         strcpy((*list)[i].name, nvs_item[0].name);
         (*list)[i].keycode = nvs_item[0].keycode;
+        (*list)[i].macro_type = nvs_item[0].macro_type;
+        (*list)[i].os_type = nvs_item[0].os_type;
+        strcpy((*list)[i].app_alias, nvs_item[0].app_alias);
         (*list)[i].key = NULL;
 
         size_t nvs_key_size = 0;
@@ -380,6 +386,9 @@ esp_err_t nvs_macros_list_add(dd_macros *macros)
     uuid_generate(uu);
     short_uuid_unparse(uu, item->key_name);
     strcat(item->key_name, "key");
+    item->macro_type = macros->macro_type;
+    item->os_type = macros->os_type;
+    strcpy(item->app_alias, macros->app_alias);
 
     nvs_list_add_item(list_name, (void *)item, sizeof(item[0]));
     nvs_item_store(list_name, item->key_name, macros->key, macros->key_len * sizeof(macros->key[0]));
@@ -398,6 +407,9 @@ esp_err_t nvs_macros_list_update(size_t index, dd_macros *macros)
 
     strcpy(item->name, macros->name);
     item->keycode = macros->keycode;
+    item->macro_type = macros->macro_type;
+    item->os_type = macros->os_type;
+    strcpy(item->app_alias, macros->app_alias);
 
     nvs_list_update(list_name, index, (void *)item, sizeof(item[0]));
     nvs_item_store(list_name, item->key_name, macros->key, macros->key_len * sizeof(macros->key[0]));

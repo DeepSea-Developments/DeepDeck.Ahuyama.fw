@@ -37,13 +37,26 @@
 #include "u8g2.h"
 
 /*============================================*/
-void u8g2_ClearBuffer(u8g2_t *u8g2)
+void u8g2_ClearBufferFull(u8g2_t *u8g2)
 {
   size_t cnt;
   cnt = u8g2_GetU8x8(u8g2)->display_info->tile_width;
   cnt *= u8g2->tile_buf_height;
   cnt *= 8;
   memset(u8g2->tile_buf_ptr, 0, cnt);
+}
+
+
+void u8g2_ClearBuffer(u8g2_t *u8g2)
+{
+    size_t tile_width = u8g2_GetU8x8(u8g2)->display_info->tile_width;
+    size_t tile_height = u8g2->tile_buf_height; 
+    size_t yellow_pages = 2; 
+    if (tile_height <= yellow_pages) return;
+    size_t bytes_per_page = tile_width * 8;
+    uint8_t *blue_start_ptr = u8g2->tile_buf_ptr + (bytes_per_page * yellow_pages);
+    size_t blue_bytes_cnt = bytes_per_page * (tile_height - yellow_pages);
+    memset(blue_start_ptr, 0, blue_bytes_cnt);
 }
 
 /*============================================*/
@@ -107,7 +120,7 @@ void u8g2_FirstPage(u8g2_t *u8g2)
 {
   if ( u8g2->is_auto_page_clear )
   {
-    u8g2_ClearBuffer(u8g2);
+    u8g2_ClearBufferFull(u8g2);
   }
   u8g2_SetBufferCurrTileRow(u8g2, 0);
 }

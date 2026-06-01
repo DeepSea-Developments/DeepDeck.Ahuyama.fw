@@ -50,6 +50,8 @@ void ble_connected_oled(void);
  */
 void wifi_connected_oled(char *ip_char);
 
+void oled_draw_status_bar( uint8_t wifi_bt, bool status_ok);
+
 /** @brief running oled task
  * */
 void update_oled(void);

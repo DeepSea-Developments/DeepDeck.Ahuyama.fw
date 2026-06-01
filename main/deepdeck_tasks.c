@@ -85,6 +85,7 @@ void oled_task(void *pvParameters)
 				update_oled();
 				CON_LOG_FLAG = false;
 			}
+
 			break;
 		case S_SETTINGS: // Settings mode, showing the internal menu
 			disable_interrup_pin();
@@ -178,6 +179,7 @@ void main_task(void *pvParameters)
 		{
 			if (xQueueReceive(keys_q, &key_event, 0))
 			{
+				DEEP_SLEEP = false;
 				ESP_LOGI("MAIN_TASK", "Key event received");
 				dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
 				keys_get_report_from_event(&dd_layer_lst.item[current_layout], key_event, report_state);
@@ -244,7 +246,7 @@ void encoder_report(void *pvParameters)
 
 		if (encoder1_status != past_encoder1_state)
 		{
-			// EEP_SLEEP = false;
+			DEEP_SLEEP = false;
 			//  Check if both encoder are pushed, to enter settings mode.
 
 			if (deepdeck_status == S_SETTINGS)
@@ -319,23 +321,30 @@ void deep_sleep(void *pvParameters)
 			initial_time = esp_timer_get_time();
 			DEEP_SLEEP = true;
 		}
+		
 		if (menu_get_goto_sleep())
 		{
 			force_sleep = true;
 			DEEP_SLEEP = true;
 		}
+		// ESP_LOGE("SYSTEM_SLEEP", "Time passed: %llu seconds\n Time to sleep %llu\n", (current_time_passed / USEC_TO_SEC),(double)(SEC_TO_MIN * SLEEP_MINS));
 
 		if ((((double)current_time_passed / USEC_TO_SEC) >= (double)(SEC_TO_MIN * SLEEP_MINS)) || force_sleep)
 		{
+			ESP_LOGE("SYSTEM_SLEEP", "Timer done!");
 			if (DEEP_SLEEP == true)
 			{
 				force_sleep = false;
-				ESP_LOGE(SYSTEM_REPORT_TAG, "going to sleep!");
+				ESP_LOGE("SYSTEM_SLEEP", "going to sleep!");
 #ifdef OLED_ENABLE
 				vTaskDelay(20 / portTICK_PERIOD_MS);
 				vTaskSuspend(xOledTask);
 				deinit_oled();
 #endif
+				rgb_mode_t led_mode;
+				led_mode.mode = 0;
+				xQueueSend(keyled_q, &led_mode, 0);
+				vTaskDelay(100 / portTICK_PERIOD_MS);
 				// wake up esp32 using rtc gpio
 				rtc_matrix_setup();
 				esp_sleep_enable_touchpad_wakeup();

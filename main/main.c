@@ -81,6 +81,7 @@
 #include "keys.h"
 #include "server_nvs.h"
 
+
 // plugin functions
 static config_data_t config;
 
@@ -199,6 +200,13 @@ void app_main()
 		while (1)
 			vTaskDelay(pdMS_TO_TICKS(200));
 	}
+
+#ifdef BATT_STAT
+	init_batt_monitor();
+	xTaskCreate(battery_reports, "battery reporst", MEM_BATTERY_TASK, NULL, PRIOR_BATTERY_TASK, NULL);
+	ESP_LOGI("Battery monitor", "initialized");
+#endif
+
 	// activate gesture
 #ifdef GESTURE_ENABLE
 	apds9960_init(&i2c_bus);
@@ -240,12 +248,6 @@ void app_main()
 	// 	xTaskCreate(main_task, "key report task", MEM_KEYBOARD_TASK, xKeyreportTask, PRIOR_KEYBOARD_TASK, NULL); //ToDo, organize and reform
 	// 	ESP_LOGI("Keyboard task", "initialized");
 	// #endif
-
-#ifdef BATT_STAT
-	init_batt_monitor();
-	xTaskCreate(battery_reports, "battery reporst", MEM_BATTERY_TASK, NULL, PRIOR_BATTERY_TASK, NULL);
-	ESP_LOGI("Battery monitor", "initialized");
-#endif
 
 #ifdef SLEEP_MINS
 	xTaskCreate(deep_sleep, "deep sleep task", MEM_SLEEP_TASK, NULL, PRIOR_SLEEP_TASK, NULL);

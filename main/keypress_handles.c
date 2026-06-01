@@ -39,7 +39,7 @@
 static const char *TAG = "KEY_PRESS";
 
 #define TRUNC_SIZE 20
-#define DEBUG_REPORT
+// #define DEBUG_REPORT
 
 /*
  * Current state of the keymap,each cell will hold the location of the key in the key report,
@@ -60,6 +60,133 @@ uint8_t macro_release[3] = {0};
 // Flag in order to know when to ignore layer change on layer hold
 uint8_t layer_hold_flag = 0;
 uint8_t prev_layout = 0;
+
+void enviar_tecla_segura(uint8_t mod, uint16_t key) {
+    uint8_t report[REPORT_LEN] = {0};
+    
+    report[0] = mod;
+    report[2] = key;
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20)); 
+    
+    report[0] = 0;
+    report[2] = 0;
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+}
+
+// Códigos Alt seguros para evitar problemas de idioma en Windows
+void escribir_alt_code(uint16_t num1, uint16_t num2) {
+    uint8_t report[REPORT_LEN] = {0};
+    
+    report[0] = 0x04; 
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+    
+    report[2] = num1;
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+    
+    report[2] = 0; 
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+
+    report[2] = num2;
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+    
+    report[0] = 0;
+    report[2] = 0;
+    xQueueSend(keyboard_q, report, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+}
+
+// Traductor a HID
+void escribir_cadena_hid(const char* str) {
+    for(int i = 0; i < strlen(str); i++) {
+        char c = str[i];
+        
+        if (c == ':') { escribir_alt_code(KC_KP_5, KC_KP_8); continue; } 
+        if (c == '/') { escribir_alt_code(KC_KP_4, KC_KP_7); continue; } 
+        if (c == '\\'){ escribir_alt_code(KC_KP_9, KC_KP_2); continue; } 
+        
+        uint16_t kc = 0;
+        uint8_t mod = 0; 
+
+        if (c >= 'a' && c <= 'z') kc = KC_A + (c - 'a');
+        else if (c >= 'A' && c <= 'Z') { kc = KC_A + (c - 'A'); mod = 0x02; }
+        else if (c >= '1' && c <= '9') kc = KC_1 + (c - '1');
+        else if (c == '0') kc = KC_0;
+        else if (c == '.') kc = KC_DOT;   
+        else if (c == ' ') kc = KC_SPACE; 
+
+        if (kc != 0) {
+            enviar_tecla_segura(mod, kc);
+        }
+    }
+}
+
+void ejecutar_macro_launcher(uint8_t macro_type, uint8_t os_type, const char* app_alias) {
+    uint8_t report[REPORT_LEN] = {0};
+	char ruta_final[64] = "";
+
+	switch (macro_type)
+	{
+	case 1:
+		if (os_type == 0) { 
+			report[0] = 0x08; 
+			xQueueSend(keyboard_q, report, 0);
+			vTaskDelay(pdMS_TO_TICKS(30)); 
+			
+			report[2] = KC_R; 
+			xQueueSend(keyboard_q, report, 0);
+		} else if (os_type == 1) { 
+			report[0] = 0x08; 
+			xQueueSend(keyboard_q, report, 0);
+			vTaskDelay(pdMS_TO_TICKS(30));
+			
+			report[2] = KC_SPACE; 
+			xQueueSend(keyboard_q, report, 0);
+		} else if (os_type == 2) {
+			report[0] = 0x08; 
+			xQueueSend(keyboard_q, report, 0);
+		}
+		
+		vTaskDelay(pdMS_TO_TICKS(100)); 
+		
+	
+		report[0] = 0; 
+		report[2] = 0;
+		xQueueSend(keyboard_q, report, 0);
+		
+
+		vTaskDelay(pdMS_TO_TICKS(350)); 
+
+
+		if (os_type == 0) {
+			strcat(ruta_final, "c:\\macros\\"); 
+			strcat(ruta_final, app_alias);
+			strcat(ruta_final, ".lnk");
+		} else {
+			strcat(ruta_final, app_alias);
+		}
+		
+		escribir_cadena_hid(ruta_final);
+
+		vTaskDelay(pdMS_TO_TICKS(50));
+		enviar_tecla_segura(0, KC_ENTER);
+		break;
+
+	case 2:
+
+		strcat(ruta_final, app_alias);
+		escribir_cadena_hid(ruta_final);
+	
+	default:
+		break;
+	}
+    
+}
 
 // checking if a modifier key was pressed
 uint16_t check_modifier(uint16_t key)
@@ -336,7 +463,7 @@ typedef enum
 	S_TAPDANCE
 } keys_lk_fsm_t;
 
-void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event, uint8_t *report_state)
+	void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event, uint8_t *report_state)
 {
 	// Send RGB notification on key changed.
 	uint8_t row = key_event.key_pos / MATRIX_ROWS;
@@ -573,6 +700,12 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 				}
 				else
 				{
+					uint8_t m_idx = keycode - MACRO_BASE_VAL;
+                    if (dd_macros_lst.item[m_idx].macro_type >= 1) { //if is app launcher macro
+                        ejecutar_macro_launcher(dd_macros_lst.item[m_idx].macro_type, dd_macros_lst.item[m_idx].os_type, dd_macros_lst.item[m_idx].app_alias);
+                        return; 
+                    }
+
 					ESP_LOGW(TAG, "keycode %u ", keycode);
 					ESP_LOGW(TAG, "key_len %u ", dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len);
 					for (uint8_t i = 0; i < dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len; i++)
@@ -618,6 +751,8 @@ void keys_get_report_from_event(dd_layer *keymap, keys_event_struct_t key_event,
 				}
 				else
 				{
+					if (dd_macros_lst.item[keycode - MACRO_BASE_VAL].macro_type == 1) return;
+
 					for (uint8_t i = 0; i < dd_macros_lst.item[keycode - MACRO_BASE_VAL].key_len; i++)
 					{
 						uint16_t key = dd_macros_lst.item[keycode - MACRO_BASE_VAL].key[i];

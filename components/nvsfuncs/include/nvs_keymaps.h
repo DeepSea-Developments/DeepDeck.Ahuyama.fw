@@ -54,20 +54,28 @@
 #define MACRO_SHORT_NAME_LENGTH 7
 #define MACRO_LONG_NAME_LENGTH 13
 
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} dd_key_color_t;
+
 /**
  * @brief Structure to hold DeepDeck layers
  *
  */
 typedef struct dd_layer_str
 {
-	char name[MAX_LAYOUT_NAME_LENGTH];				 // Name up to 14 characters
-	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];		 // Key maps
-	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7]; // Name of each key up to 6 characters
-	uint16_t left_encoder_map[ENCODER_SIZE];		 // Map ofr left encoder
-	uint16_t right_encoder_map[ENCODER_SIZE];		 // Map for right encoder
-	uint16_t gesture_map[GESTURE_SIZE];				 // Map for gesture sensor
+	char name[MAX_LAYOUT_NAME_LENGTH];				 			// Name up to 14 characters
+	uint16_t key_map[MATRIX_ROWS][MATRIX_COLS];		 			// Key maps
+	char key_map_names[MATRIX_ROWS][MATRIX_COLS][7]; 			// Name of each key up to 6 characters
+	uint16_t left_encoder_map[ENCODER_SIZE];		 			// Map ofr left encoder
+	uint16_t right_encoder_map[ENCODER_SIZE];		 			// Map for right encoder
+	uint16_t gesture_map[GESTURE_SIZE];				 			// Map for gesture sensor
 	bool active;
 	char uuid_str[SHORT_UUID_STR_LEN];
+	dd_key_color_t key_map_colors[MATRIX_ROWS][MATRIX_COLS];	// Key colors
+
 } dd_layer;
 
 /**
@@ -142,6 +150,9 @@ typedef struct dd_macros_str
 	uint8_t key_len;
 	char name[USER_MACRO_NAME_LEN]; //  200 macros ---> Name of each macro up to 32 characters
 	uint16_t keycode;
+	uint8_t macro_type; // 0 = Normal, 1 = App Launcher, 2 = String Output
+    uint8_t os_type;    // 0 = Windows, 1 = Mac, 2 = Linux
+    char app_alias[16];
 } dd_macros;
 
 typedef struct

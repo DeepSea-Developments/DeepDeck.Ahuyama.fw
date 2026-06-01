@@ -39,6 +39,8 @@ QueueHandle_t mouse_q;
 /// @brief Input queue for sending media reports
 QueueHandle_t media_q;
 
+/** @brief Connection device address. */
+static esp_bd_addr_t bd_addr;
 /** @brief Connection ID for an opened HID connection */
 static uint16_t hid_conn_id = 0;
 /** @brief Do we have a secure connection? */
@@ -89,6 +91,7 @@ uint8_t joystick_report[HID_JOYSTICK_IN_RPT_LEN] = { 0 };
 /** @brief Callback for HID events. */
 static void hidd_event_callback(esp_hidd_cb_event_t event,
 		esp_hidd_cb_param_t *param) {
+		
 	switch (event) {
 	case ESP_HIDD_EVENT_REG_FINISH:
 		if (param->init_finish.state == ESP_HIDD_INIT_OK) {
@@ -122,7 +125,9 @@ static void hidd_event_callback(esp_hidd_cb_event_t event,
 		break;
 	}
 	return;
+
 }
+
 
 /** @brief Callback for GAP events */
 static void gap_event_handler(esp_gap_ble_cb_event_t event,
@@ -139,7 +144,6 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 		break;
 	case ESP_GAP_BLE_AUTH_CMPL_EVT:
 		sec_conn = true;
-		esp_bd_addr_t bd_addr;
 		memcpy(bd_addr, param->ble_security.auth_cmpl.bd_addr,
 				sizeof(esp_bd_addr_t));
 		ESP_LOGI(LOG_TAG, "remote BD_ADDR: %08x%04x",
@@ -158,6 +162,9 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 		break;
 	}
 }
+
+
+
 
 void halBLETask_battery(void * params) {
 
@@ -327,6 +334,25 @@ uint8_t halBLEIsConnected(void) {
 	else
 		return 1;
 }
+
+/**
+ * @brief Disconnects active ble connection
+ * 
+ */
+void disconnect_ble(void){
+	ESP_LOGI(LOG_TAG, "Disconnect request received");
+
+	esp_bd_addr_t zero_addr = {0};  // Create a zeroed address for comparison
+
+	if (memcmp(bd_addr, zero_addr, sizeof(esp_bd_addr_t)) != 0) {
+		ESP_LOGI(LOG_TAG, "Disconnecting BLE client");
+		esp_ble_gap_disconnect(bd_addr);
+		memset(bd_addr, 0, sizeof(bd_addr));
+	} else {
+		ESP_LOGI(LOG_TAG, "No active BLE connection");
+	}
+}
+
 
 /** @brief En- or Disable BLE interface.
  * 

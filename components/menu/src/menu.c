@@ -51,6 +51,7 @@ enum
   MAIN_MENU = 0,
   // BLUETOOTH_MENU,
   LED_MODE_MENU,
+  LED_BRIGHT_MENU,
   menu_num
 
 } menu_list;
@@ -60,7 +61,8 @@ char menu_titles[menu_num][MENU_CHAR_NUM] =
     {
         MAIN_MENU_TITLE,
         // "Bluetooth",
-        "LED modes"};
+        "LED modes",
+        "Brightness"};
 
 char menu_subtitles[menu_num][MENU_CHAR_NUM] =
     {
@@ -69,26 +71,46 @@ char menu_subtitles[menu_num][MENU_CHAR_NUM] =
         "DeepDeck"};
 
 // --------------------Main Menu!-------------------------------
-char menu_main_description[5][MENU_CHAR_NUM] =
+char menu_main_description[7][MENU_CHAR_NUM] =
     {
-        //"Bluetooth",
+        "Disconnect Bluetooth",
         "LED configuration",
+        "Bright config",
         "DancingBerlin",
         //"Go to Sleep",
         "Exit"};
 menu_item_t m_main_array[] =
     {
         // Descripción                 //Acción             //Siguiente menu      ó     //Función
-        //  {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
-        {menu_main_description[0], MA_MENU, LED_MODE_MENU, 0},
-        {menu_main_description[1], MA_FUNCTION, NONE, &berlinDance},
-        {menu_main_description[2], MA_FUNCTION, NONE, &menu_exit},
+        {menu_main_description[0],    MA_FUNCTION,                NONE,             &disconectBLE},
+        {menu_main_description[1],    MA_MENU,                    LED_MODE_MENU,                0},
+        {menu_main_description[2],    MA_MENU,                    LED_BRIGHT_MENU,              0},
+        {menu_main_description[3],    MA_FUNCTION,                NONE,              &berlinDance},
+        {menu_main_description[4],    MA_FUNCTION,                NONE,                &menu_exit},
         {0, MA_END, 0, 0}};
-// ------------------Bluetooth Menu-------------------------------
+
+// ------------------Brightness Menu-------------------------------
+char menu_bright_description[4][MENU_CHAR_NUM] =
+{
+    "25 %",
+    "50 %",
+    "75 %",
+    "100 %"
+};
+menu_item_t m_brightness_array[] =
+{
+    //Descripción                 //Acción             //Siguiente menu      ó     //Función
+    {menu_bright_description[0],      MA_FUNCTION,            NONE,                       &menu_send_brightness_level_25},
+    {menu_bright_description[1],      MA_FUNCTION,            NONE,                       &menu_send_brightness_level_50},
+    {menu_bright_description[2],      MA_FUNCTION,            NONE,                       &menu_send_brightness_level_75},
+    {menu_bright_description[3],      MA_FUNCTION,            NONE,                       &menu_send_brightness_level_100},
+    {0,                           MA_END,                 0,                          0}
+};
+// // ------------------Bluetooth Menu-------------------------------
 // char menu_bt_description[2][MENU_CHAR_NUM] =
 // {
-//     "Bluetooth 1",
-//     "Bluetooth 2"
+//     "Enable",
+//     "Disable"
 // };
 // menu_item_t m_bluetooth_array[] =
 // {
@@ -99,13 +121,16 @@ menu_item_t m_main_array[] =
 // };
 
 // ------------------LED modes -------------------------------
-char menu_led_mode[5][MENU_CHAR_NUM] =
+char menu_led_mode[8][MENU_CHAR_NUM] =
     {
         "Off",
         "Pulsating",
         "Progressive",
+        "Sparks",
+        "Solid",
+        "Fireball",
         "Rainbow",
-        "Solid"};
+        "Custom colors"};
 menu_item_t m_led_array[] =
     {
         // Descripción                 //Acción             //Siguiente menu      ó     //Función
@@ -114,6 +139,9 @@ menu_item_t m_led_array[] =
         {menu_led_mode[2], MA_FUNCTION, NONE, &menu_rgb_mode_2},
         {menu_led_mode[3], MA_FUNCTION, NONE, &menu_rgb_mode_3},
         {menu_led_mode[4], MA_FUNCTION, NONE, &menu_rgb_mode_4},
+        {menu_led_mode[5], MA_FUNCTION, NONE, &menu_rgb_mode_6},
+        {menu_led_mode[6], MA_FUNCTION, NONE, &menu_rgb_mode_7},
+        {menu_led_mode[7], MA_FUNCTION, NONE, &menu_rgb_mode_8},
         {0, MA_END, 0, 0}};
 
 // ----------------------------------- Menu Array ------------------------------------------
@@ -122,8 +150,9 @@ menu_t menu_array[menu_num] =
     {
         // Title                      //Subtitle                      //Item array
         {menu_titles[MAIN_MENU], menu_subtitles[MAIN_MENU], &m_main_array},
-        //{menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
+        // {menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
         {menu_titles[LED_MODE_MENU], menu_subtitles[LED_MODE_MENU], &m_led_array},
+        {menu_titles[LED_BRIGHT_MENU], menu_subtitles[LED_BRIGHT_MENU], &m_brightness_array}, 
 };
 
 /*
@@ -496,7 +525,41 @@ uint8_t menu_send_rgb_mode(uint8_t mode)
   return mret_none;
 }
 
+uint8_t menu_send_brightness_level(uint8_t value)
+{
+  rgb_mode_t led_mode;
+  nvs_load_led_mode(&led_mode);
+  led_mode.V = value;
+
+  nvs_save_led_mode(led_mode);
+  xQueueSend(keyled_q, &led_mode, 0);
+
+  return mret_none;
+}
+
 // ToDo: Optimize this
+uint8_t disconectBLE(void){
+  disconnect_ble();
+  splashScreen();
+ return mret_exit;
+}
+
+uint8_t menu_send_brightness_level_25(void){
+  return menu_send_brightness_level(25);
+}
+
+uint8_t menu_send_brightness_level_50(void){
+  return menu_send_brightness_level(50);
+}
+
+uint8_t menu_send_brightness_level_75(void){
+  return menu_send_brightness_level(75);
+}
+
+uint8_t menu_send_brightness_level_100(void){
+  return menu_send_brightness_level(100);
+}
+
 uint8_t menu_rgb_mode_0(void)
 {
   return menu_send_rgb_mode(0);
@@ -521,3 +584,20 @@ uint8_t menu_rgb_mode_4(void)
 {
   return menu_send_rgb_mode(4);
 }
+
+uint8_t menu_rgb_mode_6(void)
+{
+  return menu_send_rgb_mode(6);
+}
+
+uint8_t menu_rgb_mode_7(void)
+{
+  return menu_send_rgb_mode(7);
+}
+
+uint8_t menu_rgb_mode_8(void)
+{
+  return menu_send_rgb_mode(8);
+}
+
+

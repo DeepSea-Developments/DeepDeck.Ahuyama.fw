@@ -182,7 +182,7 @@ void key_led_modes(void)
         if (xQueueReceive(keyled_q, &(led_mode), 0))
         {
             ESP_LOGI(TAG, "Received message from Q");
-            ESP_LOGW(TAG, "mode = %d saturation = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.S, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
+            ESP_LOGW(TAG, "mode = %d saturation = %d brightness = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.S, led_mode.V, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
             // new_mode = led_mode.mode;
             if (led_mode.mode != modes)
             {
@@ -220,8 +220,37 @@ void key_led_modes(void)
                         if (dd_layer_lst.item[current_layout].key_map[index][index_col] != 0)
                         {
                             // Write RGB values to strip driver
-                            // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
+                            // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]); 
                             ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]));
+                        }
+
+                        else
+                        {
+                            // ESP_LOGE(TAG, "led  = %d off", dumy);
+                            ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, dumy, 0, 0, 0));
+                        }
+                        dumy++;
+                    }
+                }
+                // Flush RGB values to LEDs
+                ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+            }
+
+            if (modes == 8) // Layer based RGB, each layer has its own RGB values, when the layer is active, the RGB values will be applied to the keyboard, otherwise, the keyboard will be off
+            {
+                dumy = 0;
+                dd_layer_lst_t dd_layer_lst = nvs_get_layer_lst();
+                for (int index = 0; index < MATRIX_ROWS; ++index)
+                {
+                    for (int index_col = 0; index_col < MATRIX_COLS; index_col++)
+                    {
+
+                        if (dd_layer_lst.item[current_layout].key_map[index][index_col] != 0)
+                        {
+                            // Write RGB values to strip driver
+                            // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
+                            ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, dumy, dd_layer_lst.item[current_layout].key_map_colors[index][index_col].r, 
+                                    dd_layer_lst.item[current_layout].key_map_colors[index][index_col].g, dd_layer_lst.item[current_layout].key_map_colors[index][index_col].b));
                         }
 
                         else
@@ -280,9 +309,9 @@ void key_led_modes(void)
                 // TO DO
                 // Change led_mode.brightness by led_mode.value
                 // add led_mode.hue
-
-                hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
-                hsv2rgb(hue2, led_mode.V, led_mode.S, &red2, &green2, &blue2);
+            
+                hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
+                hsv2rgb(hue2, led_mode.S, led_mode.V, &red2, &green2, &blue2);
                 // Write RGB values to strip driver
                 ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
             }
@@ -295,7 +324,7 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
 
-        if (modes == 3) // Rainbow
+        if (modes == 3) // Spark
         {
             for (int i = 0; i < 3; i++)
             {
@@ -303,7 +332,7 @@ void key_led_modes(void)
                 {
                     // Build RGB values
                     hue = j * 360 / RGB_LED_KEYBOARD_NUMBER + start_rgb;
-                    hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
+                    hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
                     // Write RGB values to strip driver
                     ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, j, red, green, blue));
                 }
@@ -316,120 +345,107 @@ void key_led_modes(void)
             start_rgb += 60;
         }
 
-        /*
+        if (modes == 6) // fireball
+        {
+            #define FIREBALL_SIZE 1  // Size of the fireball
+            #define FIREBALL_BRIGHTNESS 255  // Maximum brightness of the fireball
+            // Increment fireball position
+            static int fireballPosition = 0;
+            fireballPosition += 1; // Adjust this increment for the speed of the fireball
+            if (fireballPosition >= RGB_LED_KEYBOARD_NUMBER + FIREBALL_SIZE) fireballPosition = 0;
 
+            // Loop through each LED
+            for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+            {
+                // Calculate the distance from the center of the fireball
+                int distance = abs(i - fireballPosition);
+                
+                // Determine the brightness based on distance
+                uint8_t brightness = FIREBALL_BRIGHTNESS;
+                if (distance < FIREBALL_SIZE) {
+                    brightness = (uint8_t)(FIREBALL_BRIGHTNESS * (1.0 - (float)distance / FIREBALL_SIZE));
+                } else {
+                    brightness = 0;
+                }
 
-                switch (modes)
-               {
-               case 0: // OFF
-                       // Clear LED strip (turn off all LEDs)
-                   ESP_ERROR_CHECK(rgb_notif->clear(rgb_notif, 100));
-                   break;
-               case 1: // Pulsating LEDs
-                   hue += 1;
-                   // Check matrix to pulsate the leds
-                   for (uint8_t i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-                   {
-                       rbg_key *rgb = &rgb_key_status[i];
-                       if (rgb->v > 0)
-                       {
-                           rgb->v -= pulse_speed;
-                           if (rgb->v < 0)
-                           {
-                               rgb->v = 0;
-                           }
+                // Set color and brightness for the fireball effect
+                uint8_t red, green, blue;
+                if (brightness > 0) {
+                    // A bright color for the fireball
+                    red = brightness;
+                    green = 0;
+                    blue = 0;
+                } else {
+                    red = green = blue = 0;
+                }
 
-                           hsv2rgb(hue, rgb->s, rgb->v, &red, &green, &blue);
-                           ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
-                       }
-                   }
-                   ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                   vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
-                   break;
+                // Write RGB values to the strip driver
+                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+            }
 
-               case 2: // CHANGING COLORS
-                   // Changing colors
-                   hue += 1;
-                   hue2 += 12;
-                   for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-                   {
+            // Set the notification LEDs to the same progressive color
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
 
-                       // Build RGB values
+            // Flush RGB values to LEDs
+            ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+            // ESP_ERROR_CHECK(rgb_notif->refresh(rgb_notif, 100));
 
-                       hsv2rgb(hue, 100, 5, &red, &green, &blue);
-                       hsv2rgb(hue2, 100, 5, &red2, &green2, &blue2);
-                       // Write RGB values to strip driver
-                       ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
-                   }
-                   ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
-                   ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
+            // Delay to control the speed of the effect
+            vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+        }
 
-                   // Flush RGB values to LEDs
-                   ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                   ESP_ERROR_CHECK(rgb_notif->refresh(rgb_notif, 100));
-                   vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
-                   // strip->clear(strip, 50);
-                   // vTaskDelay(pdMS_TO_TICKS(EXAMPLE_CHASE_SPEED_MS));
-                   break;
+        if (modes == 7) // Rainbow
+        {
+            #define RAINBOW_SIZE 8  // Size of the fireball
+            #define RAINBOW_BRIGHTNESS 255  // Maximum brightness of the fireball
+            static int fireballPosition = 0;
+            static uint16_t hue = 0; // Initialize hue for progressive color change
 
-                   // Changing colors
-                   hue += 1;
-                   hue2 += 12;
-                   for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-                   {
+            fireballPosition += 1; // Adjust this increment for the speed of the fireball
+            if (fireballPosition >= RGB_LED_KEYBOARD_NUMBER + RAINBOW_SIZE) {
+                fireballPosition = 0;
+                hue += 10; // Change color for each new cycle
+                if (hue >= 360) hue = 0; // Wrap hue around at 360 degrees
+            }
 
-                       // Build RGB values
+            // Loop through each LED
+            for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+            {
+                // Calculate the distance from the center of the fireball
+                int distance = abs(i - fireballPosition);
 
-                       hsv2rgb(hue, 100, 100, &red, &green, &blue);
-                       hsv2rgb(hue2, 100, 100, &red2, &green2, &blue2);
-                       // Write RGB values to strip driver
-                       ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
-                   }
-                   ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
-                   // ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
+                // Determine the brightness based on distance
+                uint8_t brightness = RAINBOW_BRIGHTNESS;
+                if (distance < RAINBOW_SIZE) {
+                    brightness = (uint8_t)(RAINBOW_BRIGHTNESS * (1.0 - (float)distance / RAINBOW_SIZE));
+                } else {
+                    brightness = 0;
+                }
 
-                   // Flush RGB values to LEDs
-                   ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                   // ESP_ERROR_CHECK(rgb_notif->refresh(rgb_notif, 100));
-                   vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
-                   // strip->clear(strip, 50);
-                   // vTaskDelay(pdMS_TO_TICKS(EXAMPLE_CHASE_SPEED_MS));
-                   break;
+                // Calculate color based on hue
+                uint8_t red, green, blue;
+                hsv2rgb(hue, 255, 255, &red, &green, &blue);
 
-               case 3: // Rainbow
-                   for (int i = 0; i < 3; i++)
-                   {
-                       for (int j = i; j < RGB_LED_KEYBOARD_NUMBER; j += 3)
-                       {
-                           // Build RGB values
-                           hue = j * 360 / RGB_LED_KEYBOARD_NUMBER + start_rgb;
-                           hsv2rgb(hue, 100, 100, &red, &green, &blue);
-                           // Write RGB values to strip driver
-                           ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, j, red, green, blue));
-                       }
-                       // Flush RGB values to LEDs
-                       ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                       vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
-                       rgb_key->clear(rgb_key, 50);
-                       vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
-                   }
-                   start_rgb += 60;
-                   break;
+                // Scale color by brightness for fireball effect
+                red = (red * brightness) / 255;
+                green = (green * brightness) / 255;
+                blue = (blue * brightness) / 255;
 
-               case 4: // Solid color
+                // Write RGB values to the strip driver
+                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+            }
 
-                   for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-                   {
-                       // Write RGB values to strip driver
-                       ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]));
-                       // ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, 255, 2, 60));
-                   }
-                   // Flush RGB values to LEDs
-                   ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-                   vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+            // Set the notification LEDs to the same progressive color
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
+            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
 
-                   break;
-               }
-        */
+            // Flush RGB values to LEDs
+            ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+            ESP_ERROR_CHECK(rgb_notif->refresh(rgb_notif, 100));
+
+            // Delay to control the speed of the effect
+            vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
+        }
     }
 }

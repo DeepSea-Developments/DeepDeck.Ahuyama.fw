@@ -12,8 +12,8 @@
  *Please make sure you understand what is a voltage divider before modifying
  * */
 
-#define R_1 47  //Pull-up resistor [kOhm]
-#define R_2 22 //Pull-down resistor [kOhm]
+#define R_1 10000  //Pull-up resistor [kOhm]
+#define R_2 10000 //Pull-down resistor [kOhm]
 
 /*These are approximate values,
  * battery voltage isn't completely linear, it would be better to use a table for specific battery

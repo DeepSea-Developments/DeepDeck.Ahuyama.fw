@@ -105,4 +105,11 @@ void halBLEReset(uint8_t exceptDevice);
 esp_err_t halBLEInit(uint8_t enableKeyboard, uint8_t enableMedia,
 		uint8_t enableMouse, uint8_t enableJoystick);
 
+
+/**
+ * @brief Disconnects active ble connection
+ * 
+ */
+void disconnect_ble(void);
+
 #endif /* _HAL_BLE_H_ */

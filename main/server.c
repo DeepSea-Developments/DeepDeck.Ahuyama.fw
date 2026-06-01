@@ -26,6 +26,7 @@
 // #include "mdns.h"
 #include "esp_vfs.h"
 #include "server_nvs.h"
+#include "esp_wifi.h"
 
 #include "keypress_handles.h"
 
@@ -229,6 +230,9 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 	cJSON *macro_name = NULL;
 	cJSON *macro_keycode = NULL;
 	cJSON *macro_key = NULL;
+	cJSON *macro_type = NULL;
+	cJSON *os_type = NULL;
+	cJSON *app_alias = NULL;
 
 	cJSON *macro_object = cJSON_CreateObject();
 	if (macro_object == NULL)
@@ -280,6 +284,21 @@ esp_err_t get_macros_url_handler(httpd_req_t *req)
 		if (macro_keycode == NULL)
 			abort();
 		cJSON_AddItemToObject(macro_data, "keycode", macro_keycode);
+
+		macro_type =  cJSON_CreateNumber(dd_macros_lst.item[index].macro_type);
+		if (macro_type == NULL)
+			abort();
+		cJSON_AddItemToObject(macro_data, "macro_type", macro_type);
+
+		os_type =  cJSON_CreateNumber(dd_macros_lst.item[index].os_type);
+		if (os_type == NULL)
+			abort();
+		cJSON_AddItemToObject(macro_data, "os_type", os_type);
+
+		app_alias = cJSON_CreateString(dd_macros_lst.item[index].app_alias);
+		if (app_alias == NULL)
+			abort();
+		cJSON_AddItemToObject(macro_data, "app_alias", app_alias);
 
 		macro_key = cJSON_CreateArray();
 		if (macro_key == NULL)
@@ -370,6 +389,17 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 	{
 		new_macro.keycode = keycode->valueint;
 	}
+
+	cJSON *m_type = cJSON_GetObjectItem(payload, "macro_type");
+    if (cJSON_IsNumber(m_type)) new_macro.macro_type = m_type->valueint;
+
+    cJSON *o_type = cJSON_GetObjectItem(payload, "os_type");
+    if (cJSON_IsNumber(o_type)) new_macro.os_type = o_type->valueint;
+
+    cJSON *a_alias = cJSON_GetObjectItem(payload, "app_alias");
+    if (cJSON_IsString(a_alias) && (a_alias->valuestring != NULL)) {
+        strncpy(new_macro.app_alias, a_alias->valuestring, sizeof(new_macro.app_alias) - 1);
+    }
 
 	cJSON *key = cJSON_GetObjectItem(payload, "key");
 
@@ -548,6 +578,21 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		new_macro.keycode = keycode->valueint;
 	}
 
+	cJSON *m_type = cJSON_GetObjectItem(payload, "macro_type");
+    if (cJSON_IsNumber(m_type)){
+		new_macro.macro_type = m_type->valueint;
+	} else new_macro.macro_type = 0;
+
+    cJSON *o_type = cJSON_GetObjectItem(payload, "os_type");
+    if (cJSON_IsNumber(o_type)){
+		new_macro.os_type = o_type->valueint;
+	} else new_macro.os_type = 0;
+
+    cJSON *a_alias = cJSON_GetObjectItem(payload, "app_alias");
+    if (cJSON_IsString(a_alias) && (a_alias->valuestring != NULL)) {
+        strncpy(new_macro.app_alias, a_alias->valuestring, sizeof(new_macro.app_alias) - 1);
+    }else strncpy(new_macro.app_alias, "NoApp", sizeof(new_macro.app_alias) - 1);
+
 	cJSON *key = cJSON_GetObjectItem(payload, "key");
 
 	size_t array_size = cJSON_GetArraySize(key);
@@ -577,7 +622,9 @@ esp_err_t update_macro_url_handler(httpd_req_t *req)
 		}
 	}
 
-	ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d", new_macro.name, new_macro.keycode);
+	// ESP_LOGI(TAG, "new_macro.name: %s, new_macro.keycode: %d", new_macro.name, new_macro.keycode);
+	ESP_LOGE(TAG,"new_macro.name: %s, new_macro.keycode: %d new_macro.type: %u, new_macro.os_type: %u, new_macro.app_alias: %s\n",new_macro.name, new_macro.keycode, new_macro.macro_type, new_macro.os_type, new_macro.app_alias);
+
 	esp_err_t error;
 	error = nvs_update_macros(new_macro);
 	if (error != ESP_OK)
@@ -1938,6 +1985,13 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 			cJSON *key = cJSON_CreateObject();
 			cJSON_AddStringToObject(key, "name", dd_layer_lst.item[pos].key_map_names[index][index_col]);
 			cJSON_AddNumberToObject(key, "key_code", dd_layer_lst.item[pos].key_map[index][index_col]);
+
+			cJSON *rgb_array = cJSON_CreateArray();
+			cJSON_AddItemToArray(rgb_array, cJSON_CreateNumber(dd_layer_lst.item[pos].key_map_colors[index][index_col].r));
+			cJSON_AddItemToArray(rgb_array, cJSON_CreateNumber(dd_layer_lst.item[pos].key_map_colors[index][index_col].g));
+			cJSON_AddItemToArray(rgb_array, cJSON_CreateNumber(dd_layer_lst.item[pos].key_map_colors[index][index_col].b));
+			cJSON_AddItemToObject(key, "rgb", rgb_array);
+			
 			cJSON_AddItemToArray(row, key);
 		}
 	}
@@ -2243,7 +2297,7 @@ esp_err_t options_restore_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-void fill_row(cJSON *row, char names[][10], int codes[])
+void fill_row(cJSON *row, char names[][10], int codes[], dd_key_color_t colors[])
 {
 	int i;
 	cJSON *item;
@@ -2256,6 +2310,21 @@ void fill_row(cJSON *row, char names[][10], int codes[])
 			strcpy(names[i], "__");
 
 		codes[i] = cJSON_GetObjectItem(item, "key_code")->valueint;
+
+		cJSON *rgb_array = cJSON_GetObjectItem(item, "rgb");
+        
+        // Verificamos que el campo "rgb" exista y tenga exactamente 3 elementos
+        if (cJSON_IsArray(rgb_array) && cJSON_GetArraySize(rgb_array) == 3) {
+            colors[i].r = cJSON_GetArrayItem(rgb_array, 0)->valueint;
+            colors[i].g = cJSON_GetArrayItem(rgb_array, 1)->valueint;
+            colors[i].b = cJSON_GetArrayItem(rgb_array, 2)->valueint;
+        } else {
+            // Valor por defecto (apagado) si el JSON no trae el color
+            colors[i].r = 0;
+            colors[i].g = 0;
+            colors[i].b = 0;
+        }
+
 	}
 }
 
@@ -2288,6 +2357,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	httpd_req_recv(req, buf, req->content_len);
 
 	cJSON *payload = cJSON_Parse(buf);
+	ESP_LOGE(TAG, "Json payload %s", payload ? cJSON_Print(payload) : "Failed to parse");
 	dd_layer temp_layout;
 
 	if (NULL == payload)
@@ -2327,11 +2397,12 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 	char names[ROWS][COLS][10];
 	int codes[ROWS][COLS];
+	dd_key_color_t colors[ROWS][COLS];
 
-	fill_row(row0, names[0], codes[0]);
-	fill_row(row1, names[1], codes[1]);
-	fill_row(row2, names[2], codes[2]);
-	fill_row(row3, names[3], codes[3]);
+	fill_row(row0, names[0], codes[0], colors[0]);
+	fill_row(row1, names[1], codes[1], colors[1]);
+	fill_row(row2, names[2], codes[2], colors[2]);
+	fill_row(row3, names[3], codes[3], colors[3]);
 
 	int i, j;
 	for (i = 0; i < ROWS; i++)
@@ -2346,6 +2417,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 		for (j = 0; j < COLS; j++)
 		{
 			temp_layout.key_map[i][j] = codes[i][j];
+			temp_layout.key_map_colors[i][j] = colors[i][j];
 		}
 	}
 
@@ -2508,11 +2580,12 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 
 	char names[ROWS][COLS][10];
 	int codes[ROWS][COLS];
+	dd_key_color_t colors[ROWS][COLS];
 
-	fill_row(row0, names[0], codes[0]);
-	fill_row(row1, names[1], codes[1]);
-	fill_row(row2, names[2], codes[2]);
-	fill_row(row3, names[3], codes[3]);
+	fill_row(row0, names[0], codes[0], colors[0]);
+	fill_row(row1, names[1], codes[1], colors[1]);
+	fill_row(row2, names[2], codes[2], colors[2]);
+	fill_row(row3, names[3], codes[3], colors[3]);
 
 	int i, j;
 	for (i = 0; i < ROWS; i++)
@@ -2528,6 +2601,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		for (j = 0; j < COLS; j++)
 		{
 			new_layer.key_map[i][j] = codes[i][j];
+			new_layer.key_map_colors[i][j] = colors[i][j];
 		}
 	}
 
@@ -2831,6 +2905,37 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
 
 	char filepath[FILE_PATH_MAX];
 
+	wifi_mode_t wifi_mode;
+    if (esp_wifi_get_mode(&wifi_mode) == ESP_OK) {
+
+		if (wifi_mode == WIFI_MODE_AP || wifi_mode == WIFI_MODE_APSTA)
+		{
+			char host[64];
+			if (httpd_req_get_hdr_value_str(req, "Host", host, sizeof(host)) == ESP_OK) {
+				if (strstr(host, "192.168.4.1") == NULL) {
+					ESP_LOGI(REST_TAG, "Redirigiendo Captive Portal. Host solicitado: %s", host);
+					httpd_resp_set_status(req, "302 Found");
+					httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
+					httpd_resp_set_hdr(req, "Connection", "close");
+					return httpd_resp_send(req, NULL, 0);
+				}
+			}
+
+			// 2. Detectar si el cliente busca rutas clásicas de testeo de internet
+			if (strstr(req->uri, "/generate_204") != NULL || 
+				strstr(req->uri, "/hotspot-detect.html") != NULL || 
+				strstr(req->uri, "/ncsi.txt") != NULL ||
+				strstr(req->uri, "/canonical.html") != NULL) {
+				
+				ESP_LOGI(REST_TAG, "Interceptada ruta de portal cautivo: %s", req->uri);
+				httpd_resp_set_status(req, "302 Found");
+				httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
+				httpd_resp_set_hdr(req, "Connection", "close");
+				return httpd_resp_send(req, NULL, 0);
+			}
+		}
+	}
+
 	rest_server_context_t *rest_context = (rest_server_context_t *)req->user_ctx;
 	strlcpy(filepath, rest_context->base_path, sizeof(filepath));
 
@@ -2912,6 +3017,8 @@ httpd_handle_t start_webserver(const char *base_path)
 	config.max_uri_handlers = 50;
 	config.stack_size = 1024 * 14; // TODO: verify if its the correct size.
 	config.uri_match_fn = httpd_uri_match_wildcard;
+	config.max_open_sockets = 12;
+	config.lru_purge_enable = true;
 
 	// Start the httpd server
 	// ESP_ERROR_CHECK(httpd_start(&server, &config));
