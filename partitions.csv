@@ -3,11 +3,20 @@
 nvs,      data, nvs,     0x9000,  48K,
 otadata,  data, ota,     ,        8K,
 phy_init, data, phy,     ,        4K,
-app0,     app,  ota_0,   ,        1500k,
-app1,     app,  ota_1,   ,        1500k,
-www_0,    data, spiffs,  ,        600K,
+app0,     app,  ota_0,   0x20000, 1664K,
+app1,     app,  ota_1,   ,        1664K,
+www_0,    data, spiffs,  ,        640K,
+
+# The three partitions above fill the 4MB flash exactly. The previous layout
+# (1500K/1500K/600K) ended at 0x3AD000 and left 332K past www_0 unallocated,
+# which is why the app partition was reported as nearly full while a third of
+# a megabyte sat unused.
+#
+# Offsets moved: www_0 is now at 0x360000, previously 0x317000. Anything that
+# flashes the SPIFFS image by absolute offset needs updating to match -
+# deepdeck_merge_bin.sh in this repo is updated, but the DeepDeck.programmer
+# tool carries its own copy of these offsets.
 
 # Old config
 # factory,    0,      0,        ,    2M,
 # www_0,      data, spiffs,  ,        1M,
-
