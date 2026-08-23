@@ -20,6 +20,23 @@
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
 
+/* Device identification, published over BLE in the Device Information Service
+ * as the PnP ID characteristic (0x2A50). This is what a host reads to identify
+ * the device: macOS surfaces it as Vendor ID / Product ID, and tools that bind
+ * input to a particular device - Keyboard Maestro's device triggers, for one -
+ * cannot save a binding when these read as zero.
+ *
+ * 0x1209 is the pid.codes vendor ID for open source hardware. 0x0001 under it
+ * is the RESERVED TEST PID: intended for development, and explicitly not for
+ * shipping firmware. Claim a product ID at https://pid.codes before release
+ * and change DEEPDECK_PID here.
+ */
+#define DEEPDECK_VID_SOURCE 0x02   // 0x01 = Bluetooth SIG, 0x02 = USB-IF
+#define DEEPDECK_VID 0x1209        // pid.codes
+#define DEEPDECK_PID 0x0001        // TEST PID - claim a real one before release
+#define DEEPDECK_PRODUCT_VERSION 0x0100
+#define DEEPDECK_MANUFACTURER "DeepSea Developments"
+
 #define MASTER  // undefine if you are not flashing the main controller
 // #define SPLIT_MASTER	 // undefine if keyboard is not split and master
 //#define SLAVE	 // undefine if keyboard is master
