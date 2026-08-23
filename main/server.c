@@ -341,7 +341,6 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
 			free(buf);
-			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
 		}
