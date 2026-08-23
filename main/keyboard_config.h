@@ -88,6 +88,11 @@
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
 //#define SLEEP_MINS 50 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
+// Screensaver. Blanks the OLED after this many SECONDS without a key press,
+// knob movement or gesture. This is only the default: the timeout is adjustable
+// from the OLED menu (Screensaver) and stored in NVS, where 0 means "never
+// blank". Comment out to leave the screensaver task out of the build entirely.
+#define SCREENSAVER_SECS 60
 
 
 /*
@@ -155,6 +160,7 @@ extern TaskHandle_t xKeyreportTask;
 
 #define MEM_WIFI_TASK				1024*4
 #define MEM_SLEEP_TASK				1024*4
+#define MEM_SCREENSAVER_TASK		1024*4
 #define	MEM_BATTERY_TASK			1024*4
 #define MEM_KEYBOARD_TASK			1024*8
 #define	MEM_LEDS_TASK				1024*4
@@ -171,6 +177,7 @@ extern TaskHandle_t xKeyreportTask;
 #define PRIOR_ENCODER_TASK			4
 #define PRIOR_OLED_TASK				3
 #define PRIOR_GESTURE_TASK			4
+#define PRIOR_SCREENSAVER_TASK		2
 
 
 #endif

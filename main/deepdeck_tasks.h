@@ -12,6 +12,9 @@
 #ifndef INC_DEEPDECK_TASK_H
 #define INC_DEEPDECK_TASK_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -70,10 +73,44 @@ void encoder_report(void *pvParameters);
 
 
 /**
- * @brief Tasks that hanlde deep sleep mode
+ * @brief Tasks that handles deep sleep mode
  * 
  * @param pvParameters 
  */
 void deep_sleep(void *pvParameters);
+
+/**
+ * @brief Task that blanks the OLED after a period without input
+ *
+ * @param pvParameters
+ */
+void screensaver(void *pvParameters);
+
+/**
+ * @brief Reset the screensaver idle timer without changing the screen state
+ *
+ * Call this from anything that counts as user activity but must not disturb
+ * the current display state.
+ */
+void screensaver_notify_activity(void);
+
+/**
+ * @brief Reset the idle timer and, if the screen is blanked, turn it back on
+ *
+ * @return true if the screensaver was active and has been dismissed
+ */
+bool screensaver_wake(void);
+
+/**
+ * @brief Set the idle timeout in seconds. 0 disables the screensaver.
+ *
+ * Only changes the running value - persist it with nvs_save_screensaver_secs().
+ */
+void screensaver_set_timeout_sec(uint16_t seconds);
+
+/**
+ * @brief Current idle timeout in seconds (0 when the screensaver is off)
+ */
+uint16_t screensaver_get_timeout_sec(void);
 
 #endif

@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -213,6 +214,11 @@ void app_main()
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
+#if defined(SCREENSAVER_SECS) && defined(OLED_ENABLE)
+	xTaskCreate(screensaver, "screensaver task", MEM_SCREENSAVER_TASK, NULL, PRIOR_SCREENSAVER_TASK, NULL);
+	ESP_LOGI("Screensaver", "initialized");
+#endif
+
 #ifdef WIFI_ENABLE
 	// spiffs_init();
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
@@ -223,7 +229,7 @@ void app_main()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
-	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
-	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
-	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGI("Main", "Size of the dd_layer: %zu bytes", sizeof(dd_layer));
+	ESP_LOGI("Main", "Size of the dd_macros: %zu bytes", sizeof(dd_macros));
+	ESP_LOGW("Main", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 }
