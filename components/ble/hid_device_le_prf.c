@@ -107,10 +107,10 @@ static const uint8_t hidReportMap[] = { 0x05, 0x01, // Usage Page (Generic Deskt
 		0x95, REPORT_COUNT_BYTES,  //   Report Count (6)
 		0x75, 0x08,  //   Report Size (8)
 		0x15, 0x00,  //   Log Min (0)
-		0x25, 0x65,  //   Log Max (101)
+		0x25, 0x73,  //   Log Max (115, KC_F24)
 		0x05, 0x07,  //   Usage Pg (Key Codes)
 		0x19, 0x00,  //   Usage Min (0)
-		0x29, 0x65,  //   Usage Max (101)
+		0x29, 0x73,  //   Usage Max (115, KC_F24)
 		0x81, 0x00,  //   Input: (Data, Array)
 		//
 		0xC0,// End Collection
