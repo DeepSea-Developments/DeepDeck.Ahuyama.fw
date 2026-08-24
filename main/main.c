@@ -78,6 +78,7 @@
 #include "wifi_handles.h"
 #include "server.h"
 #include "spiffs.h"
+#include "u8g2_esp32_hal.h"
 
 
 // plugin functions
@@ -144,6 +145,14 @@ void app_main()
 	// activate keyboard BT stack
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
+
+	// Serialise the OLED and the gesture sensor on the shared I2C bus. Must be
+	// created before either is brought up, because gesture_task starts running
+	// before init_oled() below.
+	if (i2c_user_lock_init() != ESP_OK)
+	{
+		ESP_LOGE("MAIN", "could not create the i2c lock");
+	}
 
 	// init i2c
 	int i2c_master_port = I2C_MASTER_NUM;
