@@ -70,7 +70,7 @@
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
 // every time you make a modification, or uncomment this line.
-// #define LAYER_MODIFICATION_MODE5
+// #define LAYER_MODIFICATION_MODE
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used.

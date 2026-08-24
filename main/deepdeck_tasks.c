@@ -78,7 +78,11 @@ void oled_task(void *pvParameters)
 			}
 			else
 			{
-				if (CON_LOG_FLAG == true)
+				/* The wifi address usually arrives seconds after the BLE
+				 * connection, long after the banner was last drawn, so a
+				 * redraw has to be triggered when it changes or the screen
+				 * keeps showing the placeholder. */
+				if (CON_LOG_FLAG == true || oled_wifi_status_changed())
 				{
 					ble_connected_oled();
 				}

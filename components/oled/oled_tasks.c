@@ -60,6 +60,7 @@ int offset_x_batt = 0;
 int offset_y_batt = 0;
 
 char current_ip[16] = "...";
+static volatile bool wifi_status_dirty = false;
 
 #define BT_ICON 0x5e
 #define BATT_ICON 0x5b
@@ -220,14 +221,26 @@ void ble_connected_oled(void)
 	u8g2_SendBuffer(&u8g2);
 }
 
+/* Called from the wifi event task, not from oled_task. u8g2 keeps shared
+ * drawing state (font, position, buffer) and is not thread safe, so this only
+ * records the address and flags it - which is why the SendBuffer that used to
+ * be here had to be commented out to stop the system crashing. oled_task
+ * notices the flag and redraws from its own context. */
 void wifi_connected_oled(char *ip_char)
 {
-	//u8g2_ClearBuffer(&u8g2);
-	strcpy(current_ip,ip_char);
+	strncpy(current_ip, ip_char, sizeof(current_ip) - 1);
+	current_ip[sizeof(current_ip) - 1] = '\0';
+	wifi_status_dirty = true;
+}
 
-	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-	u8g2_DrawStr(&u8g2, 40 + offset_x_batt, 8 + offset_y_batt, ip_char);
-	//u8g2_SendBuffer(&u8g2); ------> This makes system crash if bluetooth is not connected at the beginning of the system
+bool oled_wifi_status_changed(void)
+{
+	if (wifi_status_dirty == false)
+	{
+		return false;
+	}
+	wifi_status_dirty = false;
+	return true;
 }
 
 // Waiting for connecting animation
