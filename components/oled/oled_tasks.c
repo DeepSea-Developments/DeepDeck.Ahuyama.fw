@@ -130,16 +130,28 @@ void update_oled(void)
 	if (battery_percent != prev_battery_percent)
 	{
 		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-		char buf[sizeof(uint32_t)];
-		snprintf(buf, sizeof(uint32_t), "%d", battery_percent);
+		char buf[5]; // "100" plus a NUL, with room to spare
+		snprintf(buf, sizeof(buf), "%lu", (unsigned long)battery_percent);
 		u8g2_DrawStr(&u8g2, 103 + offset_x_batt, 7 + offset_y_batt, "%");
-		if ((battery_percent < 100) && (abs(battery_percent - prev_battery_percent) >= 2))
+
+		/* Both values are unsigned, so the difference has to be taken
+		 * larger-minus-smaller. abs() on an unsigned expression does nothing,
+		 * and a falling percentage used to wrap to about four billion - which
+		 * always passed the test, while a one point rise never did. */
+		uint32_t battery_delta = (battery_percent > prev_battery_percent)
+									 ? (battery_percent - prev_battery_percent)
+									 : (prev_battery_percent - battery_percent);
+
+		if ((battery_percent < 100) && (battery_delta >= 2))
 		{
 			erase_area(85 + offset_x_batt, 0 + offset_y_batt, 15, 7);
 			u8g2_DrawStr(&u8g2, 90 + offset_x_batt, 7 + offset_y_batt, buf);
 			u8g2_SendBuffer(&u8g2);
 		}
-		if ((battery_percent > 100) && (BATT_FLAG = 0))
+		/* A reading above 100 means charging. BATT_FLAG stops the redraw
+		 * repeating; it was an assignment rather than a comparison, so this
+		 * whole branch was unreachable and the flag below was dead code. */
+		if ((battery_percent > 100) && (BATT_FLAG == 0))
 		{
 			erase_area(85 + offset_x_batt, 0 + offset_y_batt, 15, 7);
 			u8g2_DrawStr(&u8g2, 85 + offset_x_batt, 7 + offset_y_batt, "100");
@@ -152,6 +164,12 @@ void update_oled(void)
 			u8g2_DrawStr(&u8g2, 85 + offset_x_batt, 7 + offset_y_batt, "100");
 			u8g2_SendBuffer(&u8g2);
 		}
+		if (battery_percent <= 100)
+		{
+			// Left charging: allow the indicator to be drawn again next time.
+			BATT_FLAG = 0;
+		}
+
 		prev_battery_percent = battery_percent;
 	}
 }
