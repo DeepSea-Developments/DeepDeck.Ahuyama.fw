@@ -27,10 +27,11 @@
 #include <assert.h>
 
 #include "esp_system.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include "esp_log.h"
 #include "driver/gpio.h"
-#include "driver/adc.h"
-#include "esp_adc_cal.h"
-
 #include "keyboard_config.h"
 
 #include "battery_monitor.h"
@@ -38,42 +39,96 @@
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
 #define NO_OF_SAMPLES   500          //Multisampling
 
+static const char *TAG = "BATT";
+
+static adc_oneshot_unit_handle_t adc_handle = NULL;
+static adc_cali_handle_t adc_cali_handle = NULL;
 static const adc_channel_t channel = BATT_PIN;
 static const adc_atten_t atten = ADC_ATTEN_DB_2_5;
-static const adc_unit_t unit = ADC_UNIT_1;
 
 uint32_t voltage = 0;
 
-static esp_adc_cal_characteristics_t *adc_chars;
+//static esp_adc_cal_characteristics_t *adc_chars;
 //check battery level
-
 uint32_t get_battery_level(void) {
+	int64_t adc_sum = 0;
+	int adc_reading = 0;
+	int raw = 0;
+	int voltage_mv = 0;
 
-	uint32_t adc_reading = 0;
-	//Multisampling
-
-	for (int i = 0; i < NO_OF_SAMPLES; i++) {
-		adc_reading += adc1_get_raw((adc1_channel_t) channel);
+	if (adc_handle == NULL) {
+		ESP_LOGE(TAG, "ADC not initialised");
+		return 0;
 	}
-	adc_reading /= NO_OF_SAMPLES;
 
-	//Convert adc_reading to voltage in mV
-	voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-	uint32_t battery_percent = ((voltage - Vout_min) * 100
-			/ (Vout_max - Vout_min));
-//    printf("Raw: %d\tVoltage: %dmV\tPercent: %d\n", adc_reading, voltage, battery_percent);
-	return battery_percent;
+	// Multisampling
+	for (int i = 0; i < NO_OF_SAMPLES; i++) {
+		if (adc_oneshot_read(adc_handle, channel, &raw) != ESP_OK) {
+			ESP_LOGE(TAG, "ADC read failed");
+			return 0;
+		}
+		adc_sum += raw;
+	}
+	adc_reading = (int)(adc_sum / NO_OF_SAMPLES);
 
+	// Prefer the per-chip eFuse calibration. The fallback is only a rough
+	// approximation: ADC_ATTEN_DB_2_5 puts full scale near 1250mV, not the
+	// 1100mV internal reference.
+	if (adc_cali_handle == NULL ||
+	    adc_cali_raw_to_voltage(adc_cali_handle, adc_reading, &voltage_mv) != ESP_OK) {
+		voltage_mv = (adc_reading * 1250) / 4095;
+	}
+
+	voltage = (uint32_t)voltage_mv;
+
+	// Clamp before subtracting: these are unsigned, and a battery at or below
+	// Vout_min would otherwise wrap the percentage to ~4.29 billion.
+	if (voltage_mv <= (int)Vout_min) {
+		return 0;
+	}
+	if (voltage_mv >= (int)Vout_max) {
+		return 100;
+	}
+
+	return (uint32_t)((voltage_mv - Vout_min) * 100 / (Vout_max - Vout_min));
 }
 
 //initialize battery monitor pin
 void init_batt_monitor(void) {
+	adc_oneshot_unit_init_cfg_t init_config = {
+		.unit_id = ADC_UNIT_1,
+		.ulp_mode = ADC_ULP_MODE_DISABLE,
+	};
+	esp_err_t err = adc_oneshot_new_unit(&init_config, &adc_handle);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "adc_oneshot_new_unit failed: %s", esp_err_to_name(err));
+		adc_handle = NULL;
+		return;
+	}
 
-	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(BATT_PIN, atten);
-	adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
-	esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF,
-			adc_chars);
+	adc_oneshot_chan_cfg_t config = {
+		.atten = atten,
+		.bitwidth = ADC_BITWIDTH_12,
+	};
+	err = adc_oneshot_config_channel(adc_handle, channel, &config);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "adc_oneshot_config_channel failed: %s", esp_err_to_name(err));
+		adc_oneshot_del_unit(adc_handle);
+		adc_handle = NULL;
+		return;
+	}
 
+	// Calibration is optional - without eFuse data the fallback above is used.
+	adc_cali_line_fitting_config_t cali_config = {
+		.unit_id = ADC_UNIT_1,
+		.atten = atten,
+		.bitwidth = ADC_BITWIDTH_12,
+		/* Only consulted on chips with neither Two Point nor Vref burnt into
+		 * eFuse; the scheme refuses to be created if it is left at zero. */
+		.default_vref = DEFAULT_VREF,
+	};
+	if (adc_cali_create_scheme_line_fitting(&cali_config, &adc_cali_handle) != ESP_OK) {
+		ESP_LOGW(TAG, "no ADC calibration available, using approximation");
+		adc_cali_handle = NULL;
+	}
 }
-

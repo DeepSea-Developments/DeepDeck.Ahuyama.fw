@@ -73,7 +73,7 @@ typedef struct rgb_mode_t {
     }rgb_mode_t;
 
 //pulsating keys
-rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
+extern rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 
 #endif /* RGB_LED_H_ */

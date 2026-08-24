@@ -1,8 +1,7 @@
 #include "uuid.h"
-
 #include <string.h>
-
-#include "esp_system.h"
+#include "esp_random.h"
+#include <stdio.h>
 
 void uuid_generate(uuid_t out)
 {

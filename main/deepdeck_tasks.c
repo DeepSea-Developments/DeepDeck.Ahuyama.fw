@@ -10,6 +10,7 @@
  */
 
 #include "deepdeck_tasks.h"
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -46,6 +47,7 @@ TaskHandle_t xOledTask;
 #endif
 
 TaskHandle_t xKeyreportTask;
+deepdeck_status_t deepdeck_status = S_NORMAL; // Set the status of the screen.
 
 // extern SemaphoreHandle_t xSemaphore;
 
@@ -153,7 +155,7 @@ void battery_reports(void *pvParameters)
 		}
 		void *pReport = (void *)&bat_level;
 
-		ESP_LOGI("Battery Monitor", "battery level %d", bat_level);
+		ESP_LOGI("Battery Monitor", "battery level %" PRIu32, bat_level);
 		if (BLE_EN == 1)
 		{
 			xQueueSend(battery_q, pReport, (TickType_t)0);

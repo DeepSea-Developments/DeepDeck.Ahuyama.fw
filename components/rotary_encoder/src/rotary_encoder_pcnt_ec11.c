@@ -184,7 +184,7 @@ esp_err_t rotary_encoder_new_ec11(const rotary_encoder_config_t *config, rotary_
     //Configure Encoder button
     if(config->button_gpio_num != GPIO_NUM_NC)
     {
-        gpio_pad_select_gpio(config->button_gpio_num);
+        esp_rom_gpio_pad_select_gpio(config->button_gpio_num);
         gpio_set_direction(config->button_gpio_num, GPIO_MODE_INPUT);
         gpio_set_pull_mode(config->button_gpio_num,GPIO_PULLDOWN_ONLY);
     }
