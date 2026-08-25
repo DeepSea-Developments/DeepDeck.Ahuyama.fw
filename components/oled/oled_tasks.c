@@ -60,6 +60,7 @@ int offset_x_batt = 0;
 int offset_y_batt = 0;
 
 char current_ip[16] = "...";
+static volatile bool wifi_status_dirty = false;
 
 #define BT_ICON 0x5e
 #define BATT_ICON 0x5b
@@ -130,16 +131,28 @@ void update_oled(void)
 	if (battery_percent != prev_battery_percent)
 	{
 		u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-		char buf[sizeof(uint32_t)];
-		snprintf(buf, sizeof(uint32_t), "%d", battery_percent);
+		char buf[5]; // "100" plus a NUL, with room to spare
+		snprintf(buf, sizeof(buf), "%lu", (unsigned long)battery_percent);
 		u8g2_DrawStr(&u8g2, 103 + offset_x_batt, 7 + offset_y_batt, "%");
-		if ((battery_percent < 100) && (abs(battery_percent - prev_battery_percent) >= 2))
+
+		/* Both values are unsigned, so the difference has to be taken
+		 * larger-minus-smaller. abs() on an unsigned expression does nothing,
+		 * and a falling percentage used to wrap to about four billion - which
+		 * always passed the test, while a one point rise never did. */
+		uint32_t battery_delta = (battery_percent > prev_battery_percent)
+									 ? (battery_percent - prev_battery_percent)
+									 : (prev_battery_percent - battery_percent);
+
+		if ((battery_percent < 100) && (battery_delta >= 2))
 		{
 			erase_area(85 + offset_x_batt, 0 + offset_y_batt, 15, 7);
 			u8g2_DrawStr(&u8g2, 90 + offset_x_batt, 7 + offset_y_batt, buf);
 			u8g2_SendBuffer(&u8g2);
 		}
-		if ((battery_percent > 100) && (BATT_FLAG = 0))
+		/* A reading above 100 means charging. BATT_FLAG stops the redraw
+		 * repeating; it was an assignment rather than a comparison, so this
+		 * whole branch was unreachable and the flag below was dead code. */
+		if ((battery_percent > 100) && (BATT_FLAG == 0))
 		{
 			erase_area(85 + offset_x_batt, 0 + offset_y_batt, 15, 7);
 			u8g2_DrawStr(&u8g2, 85 + offset_x_batt, 7 + offset_y_batt, "100");
@@ -152,6 +165,12 @@ void update_oled(void)
 			u8g2_DrawStr(&u8g2, 85 + offset_x_batt, 7 + offset_y_batt, "100");
 			u8g2_SendBuffer(&u8g2);
 		}
+		if (battery_percent <= 100)
+		{
+			// Left charging: allow the indicator to be drawn again next time.
+			BATT_FLAG = 0;
+		}
+
 		prev_battery_percent = battery_percent;
 	}
 }
@@ -204,10 +223,9 @@ void ble_connected_oled(void)
 	//		u8g2_SetFont(&u8g2, u8g2_font_open_iconic_all_1x_t );
 	//		u8g2_DrawGlyph(&u8g2,88,32,LOCK_ICON);
 	//	}
-
 	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
 	char buf[sizeof(uint32_t)];
-	snprintf(buf, sizeof(uint32_t), "%d", battery_percent);
+	snprintf(buf, sizeof(uint32_t), "%lu", (unsigned long)battery_percent);
 	u8g2_DrawStr(&u8g2, +offset_x_batt, +offset_y_batt, "%");
 	if (battery_percent < 100)
 	{
@@ -220,14 +238,26 @@ void ble_connected_oled(void)
 	u8g2_SendBuffer(&u8g2);
 }
 
+/* Called from the wifi event task, not from oled_task. u8g2 keeps shared
+ * drawing state (font, position, buffer) and is not thread safe, so this only
+ * records the address and flags it - which is why the SendBuffer that used to
+ * be here had to be commented out to stop the system crashing. oled_task
+ * notices the flag and redraws from its own context. */
 void wifi_connected_oled(char *ip_char)
 {
-	//u8g2_ClearBuffer(&u8g2);
-	strcpy(current_ip,ip_char);
+	strncpy(current_ip, ip_char, sizeof(current_ip) - 1);
+	current_ip[sizeof(current_ip) - 1] = '\0';
+	wifi_status_dirty = true;
+}
 
-	u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-	u8g2_DrawStr(&u8g2, 40 + offset_x_batt, 8 + offset_y_batt, ip_char);
-	//u8g2_SendBuffer(&u8g2); ------> This makes system crash if bluetooth is not connected at the beginning of the system
+bool oled_wifi_status_changed(void)
+{
+	if (wifi_status_dirty == false)
+	{
+		return false;
+	}
+	wifi_status_dirty = false;
+	return true;
 }
 
 // Waiting for connecting animation

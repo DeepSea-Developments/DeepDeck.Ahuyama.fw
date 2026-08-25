@@ -31,6 +31,10 @@
 #include "plugin_manager.h"
 #include "rgb_led.h"
 #include "gesture_handles.h"
+#include "esp_timer.h"
+// For screensaver_wake(). This file is both #included by deepdeck_tasks.c and
+// listed in main/CMakeLists.txt, so it has to compile standalone as well.
+#include "deepdeck_tasks.h"
 
 #define KEY_PRESS_TAG "KEY_PRESS"
 
@@ -231,6 +235,14 @@ uint8_t *check_key_state(dd_layer *keymap)
 				// if there are no changes on this matrix position, skip to next position
 				if (matrix_state[row][col] == matrix_prev_state[row][col])
 					continue;
+
+				/* Wake on the physical key, not on the HID report changing.
+				 * key_reports() also wakes the screen, but only when the report
+				 * it is about to send differs from the last one - so a key that
+				 * produces no HID output never woke it. The layer keys are the
+				 * obvious case: layer_adjust() handles them internally and the
+				 * report comes out identical. */
+				screensaver_wake();
 
 #ifdef RGB_LEDS
 				rgb_key_led_press(row, col); // report the pressed key

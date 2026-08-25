@@ -1,4 +1,5 @@
 #!/usr/bin/bash
 
-# Build
-docker build -t mk32:latest .
+# Build the firmware in a container, using the ESP-IDF version this project
+# targets. See the Dockerfile for why this does not need a local toolchain.
+docker build -t deepdeck:latest .

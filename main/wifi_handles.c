@@ -15,6 +15,7 @@
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
+#include "esp_mac.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "keymap.h"
@@ -44,7 +45,7 @@
 #define MDNS_INSTANCE "DeepG Web Server"
 #define MDNS_HOST_NAME "Ahuyama"
 
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -135,11 +136,10 @@ void wifi_init_softap(void)
 	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
 
-	ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
-			 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS,
-			 EXAMPLE_ESP_WIFI_CHANNEL);
+	ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s channel:%d",
+			 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_CHANNEL);
 	wifi_ap_mode = true;
-#ifdef OLED_DISPLAY
+#ifdef OLED_ENABLE
 	wifi_connected_oled("AP_MODE");
 #endif
 }
@@ -177,7 +177,7 @@ void event_handler(void *arg, esp_event_base_t event_base,
 		char ip_char[16] = {0}; // 16 es el tamaño máximo de una dirección IP
 		sprintf(ip_char, "%d.%d.%d.%d", esp_ip4_addr1_16(&event->ip_info.ip), esp_ip4_addr2_16(&event->ip_info.ip), esp_ip4_addr3_16(&event->ip_info.ip), esp_ip4_addr4_16(&event->ip_info.ip));
 
-#ifdef OLED_DISPLAY
+#ifdef OLED_ENABLE
 		wifi_connected_oled(ip_char);
 #endif
 		s_retry_num = 0;
@@ -260,16 +260,14 @@ void wifi_init_sta(bool mode, char *ssid, char *pass)
 	 * happened. */
 	if (bits & WIFI_CONNECTED_BIT)
 	{
-		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-				 ssid, pass);
+		ESP_LOGI(TAG, "connected to ap SSID:%s", ssid);
 		myflag = false;
 		wifi_ap_mode = false;
 		wifi_connected = true;
 	}
 	else if (bits & WIFI_FAIL_BIT)
 	{
-		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-				 ssid, pass);
+		ESP_LOGI(TAG, "Failed to connect to SSID:%s", ssid);
 		myflag = true;
 		wifi_connected = false;
 		wifi_ap_mode = true;

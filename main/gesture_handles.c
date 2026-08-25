@@ -27,12 +27,13 @@
 #include "hal_ble.h"
 #include "keypress_handles.h"
 #include "keyboard_config.h"
+#include "deepdeck_tasks.h"
 
 TaskHandle_t xGesture;
 
 i2c_bus_handle_t i2c_bus = NULL;
 apds9960_handle_t apds9960 = NULL;
-xTimerHandle xTimer;
+TimerHandle_t xTimer;
 int timerID = 1;
 bool flag = false;
 
@@ -110,6 +111,11 @@ void apds9960_free()
 	apds9960_gesture_init(apds9960);
 }
 
+/* The per-read gesture traces below are ESP_LOGD, so they are off at the
+ * default log level but still compiled in. Turn them on at runtime with:
+ *     esp_log_level_set("Gesture", ESP_LOG_DEBUG);
+ * They fire on every poll, including when nothing was detected, so at INFO or
+ * above they swamp the console. */
 void read_gesture()
 {
 	uint8_t gesture = 0;
@@ -118,36 +124,41 @@ void read_gesture()
 		gesture = apds9960_read_gesture(apds9960);
 		if (gesture != APDS9960_NONE)
 		{
+			// A recognised gesture is deliberate input - it is about to fire a
+			// keystroke - so it counts as activity and wakes the screen, the
+			// same way a key press or knob movement does.
+			screensaver_wake();
+
 			if (gesture == APDS9960_DOWN)
 			{
-				ESP_LOGE("Gesture", "_DOWN");
+				ESP_LOGD("Gesture", "_DOWN");
 			}
 			else if (gesture == APDS9960_UP)
 			{
-				ESP_LOGE("Gesture", "_UP");
+				ESP_LOGD("Gesture", "_UP");
 			}
 			else if (gesture == APDS9960_LEFT)
 			{
-				ESP_LOGE("Gesture", "_LEFT");
+				ESP_LOGD("Gesture", "_LEFT");
 			}
 			else if (gesture == APDS9960_RIGHT)
 			{
-				ESP_LOGE("Gesture", "_RIGHT");
+				ESP_LOGD("Gesture", "_RIGHT");
 			}
 			else if (gesture == APDS9960_FAR)
 			{
-				ESP_LOGE("Gesture", "_FAR");
+				ESP_LOGD("Gesture", "_FAR");
 			}
 			else if (gesture == APDS9960_NEAR)
 			{
-				ESP_LOGE("Gesture", "_NEAR");
+				ESP_LOGD("Gesture", "_NEAR");
 			}
 			gesture_command(gesture,
 							key_layouts[current_layout].gesture_map);
 		}
 		else
 		{
-			ESP_LOGE("Gesture", "_NONE");
+			ESP_LOGD("Gesture", "_NONE");
 		}
 
 }

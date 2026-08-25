@@ -65,6 +65,7 @@
 #define MACROS_NAMESPACE "user_macros"
 
 #define LEDMODE_NAMESPACE "led_mode"
+#define SCREENSAVER_NAMESPACE "screensaver"
 
 // Keys
 #define LAYER_NUM_KEY "layer_num"
@@ -821,4 +822,56 @@ esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode)
 	}
 
 	return ESP_OK;
+}
+
+esp_err_t nvs_save_screensaver_secs(uint16_t seconds)
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	error = nvs_open(SCREENSAVER_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		return error;
+	}
+
+	error = nvs_set_u16(nvs_handle, "secs", seconds);
+	if (error == ESP_OK)
+	{
+		error = nvs_commit(nvs_handle);
+	}
+	nvs_close(nvs_handle);
+
+	return error;
+}
+
+esp_err_t nvs_load_screensaver_secs(uint16_t *seconds)
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	uint8_t legacy_minutes = 0;
+
+	error = nvs_open(SCREENSAVER_NAMESPACE, NVS_READONLY, &nvs_handle);
+	if (error != ESP_OK)
+	{
+		// Nothing saved yet - the caller keeps its compiled-in default.
+		return error;
+	}
+
+	error = nvs_get_u16(nvs_handle, "secs", seconds);
+
+	// The timeout used to be stored in whole minutes. Carry an older value
+	// across rather than silently resetting to the compiled-in default.
+	if (error == ESP_ERR_NVS_NOT_FOUND)
+	{
+		error = nvs_get_u8(nvs_handle, "mins", &legacy_minutes);
+		if (error == ESP_OK)
+		{
+			*seconds = (uint16_t)legacy_minutes * 60;
+		}
+	}
+
+	nvs_close(nvs_handle);
+
+	return error;
 }

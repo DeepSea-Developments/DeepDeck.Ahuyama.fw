@@ -1,4 +1,5 @@
 #include <string.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include "nvs.h"
 #include "server.h"
@@ -33,7 +34,7 @@
 
 static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
 	do                                                                                 \
@@ -219,7 +220,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
  */
 esp_err_t get_macros_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 
 	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -340,7 +341,6 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
-			free(buf);
 			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
@@ -553,7 +553,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
