@@ -28,8 +28,57 @@ static u8g2_esp32_hal_t u8g2_esp32_hal; 	// HAL state data.
 		}                                          \
 	} while (0);
 
-extern esp_err_t i2s_user_lock(void);
-extern esp_err_t i2s_user_unlock(void);
+/* The OLED and the APDS-9960 gesture sensor share I2C_NUM_0. The OLED goes
+ * through the u8g2 byte callback below; the gesture sensor goes through
+ * components/bus/i2c_bus.c, which declares these two hooks extern and wraps
+ * every transfer in them. i2c_bus's own mutex only covers i2c_bus callers, so
+ * these are the only thing serialising the two paths against each other - and
+ * they were no-op stubs, which is to say there was no serialisation at all.
+ *
+ * Statically allocated and created from i2c_user_lock_init(), which app_main
+ * calls before bringing up either user. Creating it on first use would race:
+ * gesture_task is started before init_oled() runs.
+ *
+ * Arguably this belongs in the bus component rather than here, but the hook
+ * points are already declared in this component's header. */
+static StaticSemaphore_t i2c_user_mutex_storage;
+static SemaphoreHandle_t i2c_user_mutex = NULL;
+
+#define I2C_USER_LOCK_TIMEOUT_MS 1000
+
+esp_err_t i2c_user_lock_init(void)
+{
+	if (i2c_user_mutex != NULL)
+	{
+		return ESP_OK;
+	}
+	i2c_user_mutex = xSemaphoreCreateMutexStatic(&i2c_user_mutex_storage);
+	return (i2c_user_mutex != NULL) ? ESP_OK : ESP_FAIL;
+}
+
+esp_err_t i2s_user_lock(void)
+{
+	if (i2c_user_mutex == NULL)
+	{
+		// Not initialised: proceed unserialised rather than deadlock.
+		return ESP_ERR_INVALID_STATE;
+	}
+	if (xSemaphoreTake(i2c_user_mutex, pdMS_TO_TICKS(I2C_USER_LOCK_TIMEOUT_MS)) != pdTRUE)
+	{
+		ESP_LOGW(TAG, "i2c lock timeout, proceeding unserialised");
+		return ESP_ERR_TIMEOUT;
+	}
+	return ESP_OK;
+}
+
+esp_err_t i2s_user_unlock(void)
+{
+	if (i2c_user_mutex == NULL)
+	{
+		return ESP_ERR_INVALID_STATE;
+	}
+	return (xSemaphoreGive(i2c_user_mutex) == pdTRUE) ? ESP_OK : ESP_FAIL;
+}
 
 /*
  * Initialze the ESP32 HAL.
@@ -174,7 +223,7 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
 		i2s_user_unlock();
 		ESP_LOGD(TAG, "End I2C transfer.");
 		ESP_ERROR_CHECK(i2c_master_stop(handle_i2c));
-		ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, I2C_TIMEOUT_MS / portTICK_RATE_MS));
+		ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, I2C_TIMEOUT_MS / portTICK_PERIOD_MS));
 		i2c_cmd_link_delete(handle_i2c);
 		break;
 	}

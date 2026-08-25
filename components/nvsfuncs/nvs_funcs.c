@@ -65,6 +65,7 @@
 #define MACROS_NAMESPACE "user_macros"
 
 #define LEDMODE_NAMESPACE "led_mode"
+#define SCREENSAVER_NAMESPACE "screensaver"
 
 // Keys
 #define LAYER_NUM_KEY "layer_num"
@@ -169,6 +170,14 @@ void nvs_read_layers(dd_layer *layers_array)
 	for (int i = 0; i < layer_num; i++)
 	{
 		sprintf(layer_key, "layer_%d", i);
+
+		/* Zero the destination and say how big it is. dd_layer_size used to be
+		 * passed uninitialised, so nvs_get_blob was told the buffer was
+		 * whatever happened to be on the stack - it only worked by luck, and
+		 * anything the stored blob is shorter than stayed undefined. */
+		memset(&layers_array[i], 0, sizeof(dd_layer));
+		dd_layer_size = sizeof(dd_layer);
+
 		res = nvs_get_blob(nvs_layer_handle, layer_key, (void *)&layers_array[i], &dd_layer_size);
 		if (res != ESP_OK)
 		{
@@ -789,6 +798,18 @@ esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode)
 		nvs_get_u8(nvs_handle, "green", &led_mode->rgb[1]);
 		nvs_get_u8(nvs_handle, "blue", &led_mode->rgb[2]);
 		nvs_close(nvs_handle);
+
+		/* A stored value of 0 renders the animated modes pure black, which is
+		 * indistinguishable from broken. It is also exactly what older firmware
+		 * wrote: the web UI posted only a mode, and the handler filled the rest
+		 * of the struct with zeroes. Treat it as never really set. */
+		if (led_mode->V == 0)
+		{
+			rgb_mode_t defaults;
+
+			rgb_mode_defaults(&defaults);
+			led_mode->V = defaults.V;
+		}
 	}
 	else
 	{
@@ -821,4 +842,56 @@ esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode)
 	}
 
 	return ESP_OK;
+}
+
+esp_err_t nvs_save_screensaver_secs(uint16_t seconds)
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	error = nvs_open(SCREENSAVER_NAMESPACE, NVS_READWRITE, &nvs_handle);
+	if (error != ESP_OK)
+	{
+		ESP_LOGE(TAG, "Error (%s) opening NVS Namespace!: \n", esp_err_to_name(error));
+		return error;
+	}
+
+	error = nvs_set_u16(nvs_handle, "secs", seconds);
+	if (error == ESP_OK)
+	{
+		error = nvs_commit(nvs_handle);
+	}
+	nvs_close(nvs_handle);
+
+	return error;
+}
+
+esp_err_t nvs_load_screensaver_secs(uint16_t *seconds)
+{
+	nvs_handle_t nvs_handle;
+	esp_err_t error;
+	uint8_t legacy_minutes = 0;
+
+	error = nvs_open(SCREENSAVER_NAMESPACE, NVS_READONLY, &nvs_handle);
+	if (error != ESP_OK)
+	{
+		// Nothing saved yet - the caller keeps its compiled-in default.
+		return error;
+	}
+
+	error = nvs_get_u16(nvs_handle, "secs", seconds);
+
+	// The timeout used to be stored in whole minutes. Carry an older value
+	// across rather than silently resetting to the compiled-in default.
+	if (error == ESP_ERR_NVS_NOT_FOUND)
+	{
+		error = nvs_get_u8(nvs_handle, "mins", &legacy_minutes);
+		if (error == ESP_OK)
+		{
+			*seconds = (uint16_t)legacy_minutes * 60;
+		}
+	}
+
+	nvs_close(nvs_handle);
+
+	return error;
 }

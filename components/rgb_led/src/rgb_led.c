@@ -24,9 +24,22 @@ static const char *TAG = "RGB_LEDs";
 
 led_strip_t *rgb_key;
 led_strip_t *rgb_notif;
+rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 /// @brief Input queue for sending mouse reports
 QueueHandle_t keyled_q;
+
+void rgb_mode_defaults(rgb_mode_t *led_mode)
+{
+    led_mode->mode = 0;
+    led_mode->H = 180;
+    led_mode->S = 50;
+    led_mode->V = 100;
+    led_mode->speed = 20;
+    led_mode->rgb[0] = 0;
+    led_mode->rgb[1] = 40;
+    led_mode->rgb[2] = 120;
+}
 /**
  * @brief HSV to RGB conversion
  *
@@ -39,6 +52,14 @@ QueueHandle_t keyled_q;
  */
 void hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b)
 {
+    /* Both are percentages. Values above 100 overflow rgb_max and wrap into
+     * nonsense, and NVS can hold a stale out of range value written before
+     * these were validated, so clamp rather than trust the caller. */
+    if (s > 100)
+        s = 100;
+    if (v > 100)
+        v = 100;
+
     h %= 360; // h -> [0,360]
     uint32_t rgb_max = v * 2.55f;
     uint32_t rgb_min = rgb_max * (100 - s) / 100.0f;
@@ -167,10 +188,17 @@ void key_led_modes(void)
     // uint16_t counter_top = 5;
     // uint8_t current_pulsating_key = 0;
 
-    uint8_t modes = 0;
     // uint8_t new_mode;
     rgb_mode_t led_mode;
     int dumy = 0;
+
+    /* Come up in whatever was last saved. main() used to post the stored
+     * settings here instead, from an uninitialised struct, and to a queue this
+     * task had not necessarily created yet. */
+    rgb_mode_defaults(&led_mode);
+    nvs_load_led_mode(&led_mode);
+
+    uint8_t modes = led_mode.mode;
 
     while (true)
     {
@@ -280,8 +308,11 @@ void key_led_modes(void)
                 // Change led_mode.brightness by led_mode.value
                 // add led_mode.hue
 
-                hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
-                hsv2rgb(hue2, led_mode.V, led_mode.S, &red2, &green2, &blue2);
+                /* hsv2rgb() takes (hue, saturation, value). These two calls
+                 * used to pass V where S belongs and vice versa, which is why
+                 * the stored saturation appeared to control brightness. */
+                hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
+                hsv2rgb(hue2, led_mode.S, led_mode.V, &red2, &green2, &blue2);
                 // Write RGB values to strip driver
                 ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
             }
@@ -302,7 +333,7 @@ void key_led_modes(void)
                 {
                     // Build RGB values
                     hue = j * 360 / RGB_LED_KEYBOARD_NUMBER + start_rgb;
-                    hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
+                    hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
                     // Write RGB values to strip driver
                     ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, j, red, green, blue));
                 }

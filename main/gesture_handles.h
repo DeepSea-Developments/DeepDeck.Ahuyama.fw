@@ -49,7 +49,7 @@ esp_err_t set_timer(void);
  * @return
  *      - gesture_state_t: TODO
  */
-void gesture_command(uint8_t command, uint16_t gesture_commands[5]);
+void gesture_command(uint8_t command, uint16_t gesture_commands[GESTURE_SIZE]);
 
 
 

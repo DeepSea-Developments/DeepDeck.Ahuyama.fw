@@ -1,4 +1,5 @@
 #include <string.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include "nvs.h"
 #include "server.h"
@@ -33,7 +34,7 @@
 
 static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
 	do                                                                                 \
@@ -219,7 +220,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
  */
 esp_err_t get_macros_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 
 	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -340,7 +341,6 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
-			free(buf);
 			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
@@ -553,7 +553,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -1070,6 +1070,13 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	// 	httpd_resp_send(req, NULL, 0);
 	// 	return ESP_OK;
 	// }
+	/* Start from the layer as it is stored. nvs_write_layer() below persists the
+	 * whole struct, so every field the payload does not carry has to already
+	 * hold the right value - this used to be an uninitialised stack struct,
+	 * which meant anything the web UI did not send was written back as
+	 * whatever happened to be on the stack. */
+	temp_layout = key_layouts[pos];
+
 	strcpy(temp_layout.uuid_str, layer_uuid->valuestring);
 
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "name");
@@ -1174,6 +1181,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
 #endif
@@ -1211,7 +1219,11 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	buf = malloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
+	/* Zeroed rather than left on the stack, so any field the payload does not
+	 * carry is written to NVS as 0 instead of as stack garbage. */
 	dd_layer new_layer;
+	memset(&new_layer, 0, sizeof(new_layer));
+
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
 
@@ -1347,6 +1359,7 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	res = nvs_create_new_layer(new_layer);
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 #endif
 
@@ -1430,6 +1443,7 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
 #endif
@@ -1449,7 +1463,13 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-	rgb_mode_t led_mode = {0};
+	/* Start from what is already stored rather than from zero. The web UI's LED
+	 * control posts only {"mode": n}, so a zeroed struct meant that changing
+	 * mode also wrote saturation, value and speed back as 0 - which left the
+	 * animated modes black and stopped the pulsating mode decaying. */
+	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
+	nvs_load_led_mode(&led_mode);
 
 	// Read the URI line and get the host
 	char *buf;
@@ -1481,7 +1501,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 		led_mode.H = hue->valueint;
 	}
 	cJSON *saturation = cJSON_GetObjectItem(payload, "S");
-	if (cJSON_IsNumber(hue))
+	if (cJSON_IsNumber(saturation))
 	{
 		led_mode.S = saturation->valueint;
 	}
@@ -1497,30 +1517,22 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 		led_mode.speed = speed->valueint;
 	}
 
-	if ((led_mode.mode == 4) || (led_mode.mode == 5))
+	/* Read the colour whenever it is offered, rather than only for the two modes
+	 * that use it, so setting a colour and the mode that shows it can be done in
+	 * either order. Anything not sent keeps its stored value, which is why the
+	 * nvs_load_rgb_color() fallback that used to be here is gone. */
+	cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
+	if (cJSON_IsArray(rgb_color))
 	{
-		cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
-		if (cJSON_IsArray(rgb_color))
+		for (int i = 0; i < 3; i++)
 		{
-			for (int i = 0; i < 3; i++)
+			cJSON *item = cJSON_GetArrayItem(rgb_color, i);
+
+			if (cJSON_IsNumber(item))
 			{
-				cJSON *item = cJSON_GetArrayItem(rgb_color, i);
-				if (cJSON_IsNumber(item))
-				{
-					led_mode.rgb[i] = item->valueint;
-					// ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
-				}
-				else
-				{
-					httpd_resp_set_status(req, HTTPD_400);
-					httpd_resp_send(req, NULL, 0);
-				}
+				led_mode.rgb[i] = item->valueint;
 			}
 		}
-	}
-	else
-	{
-		nvs_load_rgb_color(&led_mode);
 	}
 
 	json_response(string);

@@ -106,4 +106,24 @@ esp_err_t nvs_restore_default_macros(void);
 esp_err_t nvs_save_led_mode(rgb_mode_t led_mode);
 esp_err_t nvs_load_led_mode(rgb_mode_t *led_mode);
 esp_err_t nvs_load_rgb_color(rgb_mode_t *led_mode);
+
+/**
+ * @brief Store the screensaver timeout, in seconds (0 = screensaver off)
+ *
+ * @param seconds idle time before the OLED is blanked
+ * @return esp_err_t
+ */
+esp_err_t nvs_save_screensaver_secs(uint16_t seconds);
+
+/**
+ * @brief Read the screensaver timeout, in seconds
+ *
+ * Falls back to the older whole-minutes key if that is all that is stored.
+ *
+ * @param seconds left untouched if nothing has been stored yet, so the caller
+ *                keeps its compiled-in default
+ * @return esp_err_t ESP_ERR_NVS_NOT_FOUND when never saved
+ */
+esp_err_t nvs_load_screensaver_secs(uint16_t *seconds);
+
 #endif /* NVS_FUNCS_H_ */

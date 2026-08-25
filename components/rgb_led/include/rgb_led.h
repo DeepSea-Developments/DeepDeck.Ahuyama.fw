@@ -72,8 +72,20 @@ typedef struct rgb_mode_t {
 
     }rgb_mode_t;
 
+/**
+ * @brief Fill led_mode with the compiled in defaults
+ *
+ * nvs_load_led_mode() only overwrites the fields that are actually present in
+ * NVS, so on a device that has never had them saved it leaves the rest of the
+ * struct untouched. Call this first and every field has a sane value whether
+ * or not NVS has anything to say about it.
+ *
+ * @param led_mode
+ */
+void rgb_mode_defaults(rgb_mode_t *led_mode);
+
 //pulsating keys
-rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
+extern rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 
 #endif /* RGB_LED_H_ */
