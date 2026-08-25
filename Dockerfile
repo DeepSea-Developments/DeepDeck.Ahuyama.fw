@@ -1,28 +1,25 @@
-FROM espressif/idf:release-v4.4
-RUN mkdir /home/workspace
-RUN mkdir /home/workspace/cmakebuild
-COPY components /home/workspace/components
-COPY main /home/workspace/main
-COPY CMakeLists.txt /home/workspace/
-COPY partitions.csv /home/workspace/
-COPY README.md /home/workspace/
-COPY sdkconfig.defaults /home/workspace/
-WORKDIR /home/workspace/cmakebuild
-RUN /bin/bash -c "source /opt/esp/idf/export.sh"
-ENV PATH="/opt/esp/tools/cmake/3.20.3/bin:${PATH}"
-ENV PATH="/opt/esp/idf/components/esptool_py/esptool:${PATH}"
-ENV PATH="/opt/esp/idf/components/espcoredump:${PATH}"
-ENV PATH="/opt/esp/idf/components/partition_table:${PATH}"
-ENV PATH="/opt/esp/idf/components/app_update:${PATH}"
-ENV PATH="/opt/esp/tools/xtensa-esp32-elf/esp-2021r2-8.4.0/xtensa-esp32-elf/bin:${PATH}"
-ENV PATH="/opt/esp/tools/xtensa-esp32s2-elf/esp-2021r2-8.4.0/xtensa-esp32s2-elf/bin:${PATH}"
-ENV PATH="/opt/esp/tools/xtensa-esp32s3-elf/esp-2021r2-8.4.0/xtensa-esp32s3-elf/bin:${PATH}"
-ENV PATH="/opt/esp/tools/riscv32-esp-elf/esp-2021r2-8.4.0/riscv32-esp-elf/bin:${PATH}"
-ENV PATH="/opt/esp/tools/esp32ulp-elf/2.28.51-esp-20191205/esp32ulp-elf-binutils/bin:${PATH}"
-ENV PATH="/opt/esp/tools/esp32s2ulp-elf/2.28.51-esp-20191205/esp32s2ulp-elf-binutils/bin:${PATH}"
-ENV PATH="/opt/esp/tools/cmake/3.20.3/bin:${PATH}"
-ENV PATH="/opt/esp/tools/openocd-esp32/v0.10.0-esp32-20211111/openocd-esp32/bin:${PATH}"
-ENV PATH="/opt/esp/python_env/idf4.4_py3.8_env/bin:${PATH}"
-ENV PATH="/opt/esp/idf/tools:${PATH}"
-RUN cmake /home/workspace/
-RUN make
+# Toolchain the firmware is verified against.
+#
+# The espressif/idf images set IDF_PATH and ship an entrypoint that sources
+# export.sh, so the long list of hardcoded tool paths the previous version
+# carried is unnecessary - and those paths only ever existed in the v4.4 image,
+# so they silently stopped resolving the moment the base image moved.
+FROM espressif/idf:release-v5.1
+
+WORKDIR /project
+
+# spiffs_image is not optional: main/CMakeLists.txt feeds it to
+# spiffs_create_partition_image() to build the www_0 partition, so a tree
+# without it fails to configure. The previous Dockerfile did not copy it.
+#
+# build/ and sdkconfig are deliberately not copied - a stale sdkconfig from the
+# host would override sdkconfig.defaults and silently change the build.
+COPY components components
+COPY main main
+COPY spiffs_image spiffs_image
+COPY CMakeLists.txt partitions.csv sdkconfig.defaults ./
+
+# Each RUN is its own shell, so export.sh has to be sourced in the same one
+# that invokes the build. The previous version sourced it in a separate layer,
+# where it had no effect.
+RUN . "$IDF_PATH/export.sh" && idf.py build

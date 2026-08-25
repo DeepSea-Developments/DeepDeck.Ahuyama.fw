@@ -19,9 +19,16 @@
 #include "menu.h"
 #include "keyboard_config.h"
 #include "nvs_funcs.h"
+#include "deepdeck_tasks.h"
 
 #define true 1
 #define false 0
+
+// The screensaver task only exists when both are set (see deepdeck_tasks.c),
+// so the menu that drives it must follow the same condition.
+#if defined(SCREENSAVER_SECS) && defined(OLED_ENABLE)
+#define SCREENSAVER_MENU_ENABLED 1
+#endif
 
 #define MAIN_MENU_TITLE "Main Menu " FIRMWARE_VERSION
 #define MY_BORDER_SIZE 1
@@ -50,6 +57,10 @@ enum
   MAIN_MENU = 0,
   // BLUETOOTH_MENU,
   LED_MODE_MENU,
+  LED_BRIGHTNESS_MENU,
+#ifdef SCREENSAVER_MENU_ENABLED
+  SCREENSAVER_MENU,
+#endif
   menu_num
 
 } menu_list;
@@ -59,19 +70,31 @@ char menu_titles[menu_num][MENU_CHAR_NUM] =
     {
         MAIN_MENU_TITLE,
         // "Bluetooth",
-        "LED modes"};
+        "LED modes",
+        "LED brightness",
+#ifdef SCREENSAVER_MENU_ENABLED
+        "Screensaver",
+#endif
+};
 
 char menu_subtitles[menu_num][MENU_CHAR_NUM] =
     {
         "DeepSea",
         // "DeepDeck",
-        "DeepDeck"};
+        "DeepDeck",
+        "Dim the keys",
+#ifdef SCREENSAVER_MENU_ENABLED
+        "Blank screen after",
+#endif
+};
 
 // --------------------Main Menu!-------------------------------
-char menu_main_description[5][MENU_CHAR_NUM] =
+char menu_main_description[6][MENU_CHAR_NUM] =
     {
         //"Bluetooth",
         "LED configuration",
+        "LED brightness",
+        "Screensaver",
         "DancingBerlin",
         //"Go to Sleep",
         "Exit"};
@@ -80,8 +103,12 @@ menu_item_t m_main_array[] =
         // Descripción                 //Acción             //Siguiente menu      ó     //Función
         //  {menu_main_description[0],    MA_MENU,                BLUETOOTH_MENU,             0},
         {menu_main_description[0], MA_MENU, LED_MODE_MENU, 0},
-        {menu_main_description[1], MA_FUNCTION, NONE, &berlinDance},
-        {menu_main_description[2], MA_FUNCTION, NONE, &menu_exit},
+        {menu_main_description[1], MA_MENU, LED_BRIGHTNESS_MENU, 0},
+#ifdef SCREENSAVER_MENU_ENABLED
+        {menu_main_description[2], MA_MENU, SCREENSAVER_MENU, 0},
+#endif
+        {menu_main_description[3], MA_FUNCTION, NONE, &menu_berlin_dance},
+        {menu_main_description[4], MA_FUNCTION, NONE, &menu_exit},
         {0, MA_END, 0, 0}};
 // ------------------Bluetooth Menu-------------------------------
 // char menu_bt_description[2][MENU_CHAR_NUM] =
@@ -98,13 +125,28 @@ menu_item_t m_main_array[] =
 // };
 
 // ------------------LED modes -------------------------------
-char menu_led_mode[5][MENU_CHAR_NUM] =
+char menu_led_mode[8][MENU_CHAR_NUM] =
     {
         "Off",
         "Pulsating",
         "Progressive",
         "Rainbow",
-        "Solid"};
+        "Solid",
+        "Layer color",
+        "Key colors",
+        "Back"};
+/* Mode number behind each row above, so menu_rgb_mode_current() can map the
+   stored mode back to a row. Kept in the same order, Back excluded. */
+static const uint8_t menu_led_mode_values[] = {
+    RGB_MODE_OFF,
+    RGB_MODE_PULSATING,
+    RGB_MODE_PROGRESSIVE,
+    RGB_MODE_SPARKS,
+    RGB_MODE_SOLID,
+    RGB_MODE_LAYER_COLOR,
+    RGB_MODE_KEY_COLOR,
+};
+
 menu_item_t m_led_array[] =
     {
         // Descripción                 //Acción             //Siguiente menu      ó     //Función
@@ -113,16 +155,89 @@ menu_item_t m_led_array[] =
         {menu_led_mode[2], MA_FUNCTION, NONE, &menu_rgb_mode_2},
         {menu_led_mode[3], MA_FUNCTION, NONE, &menu_rgb_mode_3},
         {menu_led_mode[4], MA_FUNCTION, NONE, &menu_rgb_mode_4},
+        {menu_led_mode[5], MA_FUNCTION, NONE, &menu_rgb_mode_layer_color},
+        {menu_led_mode[6], MA_FUNCTION, NONE, &menu_rgb_mode_key_color},
+        {menu_led_mode[7], MA_FUNCTION, NONE, &menu_goto_main},
         {0, MA_END, 0, 0}};
+
+// ------------------LED brightness -------------------------------
+/* The levels, finest first. Everything below is generated from this one list -
+   the row label, the function behind the row, and the table that maps a stored
+   brightness back to a row - so a label can never drift from the value it
+   sets. Menu items take a menu_ret (*)(void), so each level needs its own
+   function; that is what the X macro is spelling out.
+
+   Fine steps at the bottom because that is where the difference shows: the
+   LEDs are far from linear, and everything above about 50% looks much the
+   same. menu_selection2() scrolls, and menu_brightness_current() opens the
+   menu on the level already set, so the length costs little in practice. */
+#define BRIGHTNESS_LEVELS       \
+    X(1) X(2) X(3) X(4) X(5)    \
+    X(6) X(7) X(8) X(9) X(10)   \
+    X(15) X(20) X(25) X(30)     \
+    X(35) X(40) X(45) X(50)     \
+    X(60) X(70) X(80) X(90)     \
+    X(100)
+
+#define X(pct) static menu_ret menu_brightness_##pct(void);
+BRIGHTNESS_LEVELS
+#undef X
+
+// Same order as the menu items below - menu_brightness_current() maps the
+// stored brightness back to a row using this.
+#define X(pct) pct,
+static const uint8_t menu_brightness_values[] = {BRIGHTNESS_LEVELS};
+#undef X
+
+static uint8_t menu_brightness_current(void);
+
+menu_item_t m_led_brightness_array[] =
+    {
+        // Descripción                 //Acción             //Siguiente menu      ó     //Función
+#define X(pct) {#pct " %", MA_FUNCTION, NONE, &menu_brightness_##pct},
+        BRIGHTNESS_LEVELS
+#undef X
+        {"Back", MA_FUNCTION, NONE, &menu_goto_main},
+        {0, MA_END, 0, 0}};
+
+// ------------------Screensaver timeout -----------------------
+#ifdef SCREENSAVER_MENU_ENABLED
+char menu_screensaver_timeout[6][MENU_CHAR_NUM] =
+    {
+        "Off",
+        "30 sec",
+        "1 min",
+        "10 min",
+        "30 min",
+        "Back"};
+// Same order as the menu items above - menu_screensaver_current() maps the
+// stored timeout back to a row using this.
+static const uint16_t screensaver_menu_seconds[] = {0, 30, 60, 600, 1800};
+
+menu_item_t m_screensaver_array[] =
+    {
+        // Descripción                 //Acción             //Siguiente menu      ó     //Función
+        {menu_screensaver_timeout[0], MA_FUNCTION, NONE, &menu_screensaver_off},
+        {menu_screensaver_timeout[1], MA_FUNCTION, NONE, &menu_screensaver_30sec},
+        {menu_screensaver_timeout[2], MA_FUNCTION, NONE, &menu_screensaver_1min},
+        {menu_screensaver_timeout[3], MA_FUNCTION, NONE, &menu_screensaver_10min},
+        {menu_screensaver_timeout[4], MA_FUNCTION, NONE, &menu_screensaver_30min},
+        {menu_screensaver_timeout[5], MA_FUNCTION, NONE, &menu_goto_main},
+        {0, MA_END, 0, 0}};
+#endif
 
 // ----------------------------------- Menu Array ------------------------------------------
 
 menu_t menu_array[menu_num] =
     {
         // Title                      //Subtitle                      //Item array
-        {menu_titles[MAIN_MENU], menu_subtitles[MAIN_MENU], &m_main_array},
+        {menu_titles[MAIN_MENU], menu_subtitles[MAIN_MENU], m_main_array},
         //{menu_titles[BLUETOOTH_MENU], menu_subtitles[BLUETOOTH_MENU], &m_bluetooth_array},
-        {menu_titles[LED_MODE_MENU], menu_subtitles[LED_MODE_MENU], &m_led_array},
+        {menu_titles[LED_MODE_MENU], menu_subtitles[LED_MODE_MENU], m_led_array, menu_rgb_mode_current},
+        {menu_titles[LED_BRIGHTNESS_MENU], menu_subtitles[LED_BRIGHTNESS_MENU], m_led_brightness_array, menu_brightness_current},
+#ifdef SCREENSAVER_MENU_ENABLED
+        {menu_titles[SCREENSAVER_MENU], menu_subtitles[SCREENSAVER_MENU], m_screensaver_array, menu_screensaver_current},
+#endif
 };
 
 /*
@@ -284,8 +399,12 @@ uint8_t menu_selection2(u8g2_t *u8g2, menu_t current_menu)
   uint8_t title_lines = 2;
   uint8_t display_lines;
 
-  if (start_pos > 0)
-    start_pos--;
+  // A menu that represents a setting opens on that setting. The bounds and
+  // scroll-into-view fixups below already handle an out-of-range start.
+  if (current_menu.current_selection != NULL)
+  {
+    start_pos = current_menu.current_selection();
+  }
 
   if (title_lines > 0)
   {
@@ -470,7 +589,91 @@ menu_ret menu_exit(void)
   return mret_exit;
 }
 
-uint8_t menu_get_goto_sleep(void)
+// berlinDance() returns void, so it cannot sit in a menu_ret(*)(void) slot directly.
+menu_ret menu_berlin_dance(void)
+{
+  berlinDance();
+  return mret_none;
+}
+
+menu_ret menu_goto_main(void) 
+{
+  return mret_goto_main_menu;
+}
+
+// ------------------ Screensaver ------------------------------
+#ifdef SCREENSAVER_MENU_ENABLED
+static menu_ret menu_set_screensaver(uint16_t seconds)
+{
+  esp_err_t error;
+
+  screensaver_set_timeout_sec(seconds);
+
+  error = nvs_save_screensaver_secs(seconds);
+  if (error != ESP_OK)
+  {
+    ESP_LOGE("MENU_SCREENSAVER", "could not save timeout: %s", esp_err_to_name(error));
+  }
+  else
+  {
+    ESP_LOGI("MENU_SCREENSAVER", "timeout set to %d sec", seconds);
+  }
+
+  return mret_goto_main_menu;
+}
+
+/* Row the cursor should land on when the screensaver menu opens. Picks the
+   closest listed value, so a timeout that is not on the list - carried over
+   from the older minutes-based NVS key, say - still highlights sensibly. */
+uint8_t menu_screensaver_current(void)
+{
+  uint16_t current = screensaver_get_timeout_sec();
+  uint8_t best = 0;
+  uint32_t best_delta = 0xFFFFFFFFu;
+  uint8_t i;
+
+  for (i = 0; i < sizeof(screensaver_menu_seconds) / sizeof(screensaver_menu_seconds[0]); i++)
+  {
+    uint32_t delta = (current > screensaver_menu_seconds[i])
+                         ? (uint32_t)(current - screensaver_menu_seconds[i])
+                         : (uint32_t)(screensaver_menu_seconds[i] - current);
+    if (delta < best_delta)
+    {
+      best_delta = delta;
+      best = i;
+    }
+  }
+
+  return best;
+}
+
+menu_ret menu_screensaver_off(void)
+{
+  return menu_set_screensaver(0);
+}
+
+menu_ret menu_screensaver_30sec(void)
+{
+  return menu_set_screensaver(30);
+}
+
+menu_ret menu_screensaver_1min(void)
+{
+  return menu_set_screensaver(60);
+}
+
+menu_ret menu_screensaver_10min(void)
+{
+  return menu_set_screensaver(600);
+}
+
+menu_ret menu_screensaver_30min(void)
+{
+  return menu_set_screensaver(1800);
+}
+#endif /* SCREENSAVER_MENU_ENABLED */
+
+menu_ret menu_get_goto_sleep(void)
 {
   if (goto_sleep)
   {
@@ -481,13 +684,17 @@ uint8_t menu_get_goto_sleep(void)
   return goto_sleep;
 }
 
-uint8_t menu_send_rgb_mode(uint8_t mode)
+menu_ret menu_send_rgb_mode(uint8_t mode)
 {
   rgb_mode_t led_mode;
+
+  /* Defaults first: nvs_load_led_mode() only overwrites the keys that are
+     actually in NVS, so on a device that has never saved them this used to
+     leave most of the struct as whatever was on the stack. */
+  rgb_mode_defaults(&led_mode);
   nvs_load_led_mode(&led_mode);
-  // int mode_t = mode;
+
   led_mode.mode = mode;
-  led_mode.S = 50;
 
   nvs_save_led_mode(led_mode);
   xQueueSend(keyled_q, &led_mode, 0);
@@ -495,28 +702,117 @@ uint8_t menu_send_rgb_mode(uint8_t mode)
   return mret_none;
 }
 
+/* Row the cursor should land on when the LED mode menu opens, so it shows the
+   mode that is actually running. Kept in the same order as m_led_array. */
+uint8_t menu_rgb_mode_current(void)
+{
+  rgb_mode_t led_mode;
+  uint8_t i;
+
+  rgb_mode_defaults(&led_mode);
+  nvs_load_led_mode(&led_mode);
+
+  for (i = 0; i < sizeof(menu_led_mode_values) / sizeof(menu_led_mode_values[0]); i++)
+  {
+    if (menu_led_mode_values[i] == led_mode.mode)
+    {
+      return i;
+    }
+  }
+
+  return 0;
+}
+
+/* ------------------ LED brightness ------------------------------ */
+
+static menu_ret menu_set_brightness(uint8_t percent)
+{
+  rgb_mode_t led_mode;
+
+  rgb_mode_defaults(&led_mode);
+  nvs_load_led_mode(&led_mode);
+
+  led_mode.brightness = percent;
+
+  nvs_save_led_mode(led_mode);
+  xQueueSend(keyled_q, &led_mode, 0);
+
+  ESP_LOGI("MENU_LED", "brightness set to %d%%", percent);
+
+  /* Stay on this menu rather than returning to the top. The LEDs change as
+     soon as the queue is read, so with this many levels the useful thing is to
+     step through them and watch, not to walk back in for each one. "Back"
+     leaves. */
+  return mret_none;
+}
+
+/* Closest listed value, so a brightness set over the API to something that is
+   not on the list still highlights the nearest row. */
+static uint8_t menu_brightness_current(void)
+{
+  rgb_mode_t led_mode;
+  uint8_t best = 0;
+  uint16_t best_delta = 0xFFFFu;
+  uint8_t i;
+
+  rgb_mode_defaults(&led_mode);
+  nvs_load_led_mode(&led_mode);
+
+  for (i = 0; i < sizeof(menu_brightness_values) / sizeof(menu_brightness_values[0]); i++)
+  {
+    uint16_t delta = (led_mode.brightness > menu_brightness_values[i])
+                         ? (uint16_t)(led_mode.brightness - menu_brightness_values[i])
+                         : (uint16_t)(menu_brightness_values[i] - led_mode.brightness);
+    if (delta < best_delta)
+    {
+      best_delta = delta;
+      best = i;
+    }
+  }
+
+  return best;
+}
+
+#define X(pct)                            \
+  static menu_ret menu_brightness_##pct(void) \
+  {                                       \
+    return menu_set_brightness(pct);      \
+  }
+BRIGHTNESS_LEVELS
+#undef X
+
 // ToDo: Optimize this
-uint8_t menu_rgb_mode_0(void)
+menu_ret menu_rgb_mode_0(void)
 {
   return menu_send_rgb_mode(0);
 }
 
-uint8_t menu_rgb_mode_1(void)
+menu_ret menu_rgb_mode_1(void)
 {
   return menu_send_rgb_mode(1);
 }
 
-uint8_t menu_rgb_mode_2(void)
+menu_ret menu_rgb_mode_2(void)
 {
   return menu_send_rgb_mode(2);
 }
 
-uint8_t menu_rgb_mode_3(void)
+menu_ret menu_rgb_mode_3(void)
 {
   return menu_send_rgb_mode(3);
 }
 
-uint8_t menu_rgb_mode_4(void)
+menu_ret menu_rgb_mode_4(void)
 {
   return menu_send_rgb_mode(4);
+}
+
+menu_ret menu_rgb_mode_layer_color(void)
+{
+  return menu_send_rgb_mode(RGB_MODE_LAYER_COLOR);
+}
+
+menu_ret menu_rgb_mode_key_color(void)
+{
+  return menu_send_rgb_mode(RGB_MODE_KEY_COLOR);
 }

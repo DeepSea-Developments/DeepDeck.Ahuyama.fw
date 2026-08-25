@@ -1,4 +1,5 @@
 #include <sys/unistd.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 #include "esp_err.h"
 #include "esp_log.h"
@@ -38,7 +39,7 @@ uint32_t get_file_size_spiffs(const char *file_name)
         {
             fseek(f, 0, SEEK_END);
             file_size = ftell(f);
-            ESP_LOGI(TAG, "File size: %d", file_size);
+            ESP_LOGI(TAG, "File size: %" PRIu32, file_size);
             fclose(f);
         }
     }

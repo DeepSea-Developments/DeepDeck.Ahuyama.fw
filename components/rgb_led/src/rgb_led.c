@@ -24,9 +24,61 @@ static const char *TAG = "RGB_LEDs";
 
 led_strip_t *rgb_key;
 led_strip_t *rgb_notif;
+rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 /// @brief Input queue for sending mouse reports
 QueueHandle_t keyled_q;
+
+/* Current global brightness, as a percentage. Held here rather than read out of
+ * led_mode on every pixel so the animated modes pay for it once. */
+static uint8_t led_brightness = RGB_LED_BRIGHTNESS_DEFAULT;
+
+/**
+ * @brief Scale one colour component by the global brightness
+ */
+static inline uint32_t apply_brightness(uint32_t component)
+{
+    return (component * led_brightness) / 100;
+}
+
+/**
+ * @brief Write one key LED, dimmed to the global brightness
+ *
+ * Every mode goes through here instead of calling set_pixel() directly, which
+ * is what makes the brightness setting apply to the modes that write RGB
+ * values straight through as well as the ones built on hsv2rgb().
+ */
+static esp_err_t key_set_pixel(uint32_t index, uint32_t red, uint32_t green, uint32_t blue)
+{
+    return rgb_key->set_pixel(rgb_key, index,
+                              apply_brightness(red),
+                              apply_brightness(green),
+                              apply_brightness(blue));
+}
+
+/**
+ * @brief Write one notification LED, dimmed to the global brightness
+ */
+static esp_err_t notif_set_pixel(uint32_t index, uint32_t red, uint32_t green, uint32_t blue)
+{
+    return rgb_notif->set_pixel(rgb_notif, index,
+                                apply_brightness(red),
+                                apply_brightness(green),
+                                apply_brightness(blue));
+}
+
+void rgb_mode_defaults(rgb_mode_t *led_mode)
+{
+    led_mode->mode = RGB_MODE_OFF;
+    led_mode->H = 180;
+    led_mode->S = 50;
+    led_mode->V = 100;
+    led_mode->speed = 20;
+    led_mode->rgb[0] = 0;
+    led_mode->rgb[1] = 40;
+    led_mode->rgb[2] = 120;
+    led_mode->brightness = RGB_LED_BRIGHTNESS_DEFAULT;
+}
 /**
  * @brief HSV to RGB conversion
  *
@@ -39,6 +91,14 @@ QueueHandle_t keyled_q;
  */
 void hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b)
 {
+    /* Both are percentages. Values above 100 overflow rgb_max and wrap into
+     * nonsense, and NVS can hold a stale out of range value written before
+     * these were validated, so clamp rather than trust the caller. */
+    if (s > 100)
+        s = 100;
+    if (v > 100)
+        v = 100;
+
     h %= 360; // h -> [0,360]
     uint32_t rgb_max = v * 2.55f;
     uint32_t rgb_min = rgb_max * (100 - s) / 100.0f;
@@ -147,6 +207,89 @@ void rgb_key_led_press(uint8_t row, uint8_t col)
     rgb_key_status[key].v = 100;
 }
 
+/**
+ * @brief Colour to use for one key in RGB_MODE_KEY_COLOR
+ *
+ * An all zero per key colour means "nobody picked one", and falls back to the
+ * layer colour. That way the web UI only has to send the keys somebody
+ * actually chose, and a layer with no per key colours set still lights up.
+ */
+static dd_key_color_t key_color_for(const dd_layer *layer, uint8_t row, uint8_t col)
+{
+    dd_key_color_t color = layer->key_map_colors[row][col];
+
+    if (color.r == 0 && color.g == 0 && color.b == 0)
+    {
+        color = layer->layer_color;
+    }
+
+    return color;
+}
+
+/**
+ * @brief Paint the modes that hold a still image rather than animating
+ *
+ * Modes 1 to 3 redraw on every pass of the loop because they are animations.
+ * These four only change when the settings or the active layer change, so they
+ * are painted on demand instead of every 20ms.
+ *
+ * @param mode      the mode to paint. Anything else is ignored.
+ * @param led_mode  current settings, for the modes that use a fixed colour
+ */
+static void paint_static_mode(uint8_t mode, const rgb_mode_t *led_mode)
+{
+    const dd_layer *layer = &key_layouts[current_layout];
+    uint8_t led = 0;
+
+    if (mode == RGB_MODE_SOLID)
+    {
+        for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
+        {
+            ESP_ERROR_CHECK(key_set_pixel(i, led_mode->rgb[0], led_mode->rgb[1], led_mode->rgb[2]));
+        }
+    }
+    else if (mode == RGB_MODE_SOLID_MAPPED || mode == RGB_MODE_KEY_COLOR ||
+             mode == RGB_MODE_LAYER_COLOR)
+    {
+        for (int row = 0; row < MATRIX_ROWS; row++)
+        {
+            for (int col = 0; col < MATRIX_COLS; col++)
+            {
+                dd_key_color_t color = {0, 0, 0};
+
+                /* A key with nothing mapped to it stays dark in all three of
+                 * these modes, so the lit keys are the ones that do something. */
+                if (layer->key_map[row][col] != 0)
+                {
+                    if (mode == RGB_MODE_SOLID_MAPPED)
+                    {
+                        color.r = led_mode->rgb[0];
+                        color.g = led_mode->rgb[1];
+                        color.b = led_mode->rgb[2];
+                    }
+                    else if (mode == RGB_MODE_KEY_COLOR)
+                    {
+                        color = key_color_for(layer, row, col);
+                    }
+                    else
+                    {
+                        color = layer->layer_color;
+                    }
+                }
+
+                ESP_ERROR_CHECK(key_set_pixel(led, color.r, color.g, color.b));
+                led++;
+            }
+        }
+    }
+    else
+    {
+        return;
+    }
+
+    ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
+}
+
 void key_led_modes(void)
 {
     uint32_t red = 0;
@@ -160,17 +303,23 @@ void key_led_modes(void)
     uint16_t hue2 = 0;
     uint16_t start_rgb = 0;
 
-    uint8_t pulse_speed = 3;
-
-    // For now, pulsating will be only be on lux, not hue. a hue will be set to test.
-    // uint16_t counter = 0;
-    // uint16_t counter_top = 5;
-    // uint8_t current_pulsating_key = 0;
-
-    uint8_t modes = 0;
-    // uint8_t new_mode;
     rgb_mode_t led_mode;
-    int dumy = 0;
+
+    /* Come up in whatever was last saved, so the mode, colour and brightness
+     * survive a reboot instead of sitting dark until something happens to send
+     * a message on keyled_q. */
+    rgb_mode_defaults(&led_mode);
+    nvs_load_led_mode(&led_mode);
+
+    uint8_t modes = led_mode.mode;
+    led_brightness = led_mode.brightness > 100 ? 100 : led_mode.brightness;
+
+    /* The layer dependent modes have to repaint when the active layer changes,
+     * not only when a message lands on keyled_q. layer_adjust() does send one,
+     * but the hold-to-use layer path does not, so track what we last painted
+     * and let that catch every route that moves current_layout. */
+    uint8_t painted_layout = 0xFF;
+    bool repaint = true;
 
     while (true)
     {
@@ -181,8 +330,12 @@ void key_led_modes(void)
         if (xQueueReceive(keyled_q, &(led_mode), 0))
         {
             ESP_LOGI(TAG, "Received message from Q");
-            ESP_LOGW(TAG, "mode = %d saturation = %d, rgb[%d, %d, %d]", led_mode.mode, led_mode.S, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
-            // new_mode = led_mode.mode;
+            ESP_LOGW(TAG, "mode = %d saturation = %d value = %d brightness = %d, rgb[%d, %d, %d]",
+                     led_mode.mode, led_mode.S, led_mode.V, led_mode.brightness,
+                     led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
+
+            led_brightness = led_mode.brightness > 100 ? 100 : led_mode.brightness;
+
             if (led_mode.mode != modes)
             {
                 ESP_ERROR_CHECK(rgb_key->clear(rgb_key, 100));
@@ -190,50 +343,14 @@ void key_led_modes(void)
                 modes = led_mode.mode;
             }
 
-            if (modes == 0)
+            if (modes == RGB_MODE_OFF)
             {
                 ESP_ERROR_CHECK(rgb_notif->clear(rgb_notif, 100));
             }
 
-            if (modes == 4)
-            {
-                for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
-                {
-                    // Write RGB values to strip driver
-                    ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]));
-                    // ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, 255, 2, 60));
-                }
-                // Flush RGB values to LEDs
-                ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-            }
-
-            if (modes == 5)
-            {
-                dumy = 0;
-
-                for (int index = 0; index < MATRIX_ROWS; ++index)
-                {
-                    for (int index_col = 0; index_col < MATRIX_COLS; index_col++)
-                    {
-
-                        if (key_layouts[current_layout].key_map[index][index_col] != 0)
-                        {
-                            // Write RGB values to strip driver
-                            // ESP_LOGE(TAG, "led = %d on {%d, %d, %d}", dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]);
-                            ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, dumy, led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]));
-                        }
-
-                        else
-                        {
-                            // ESP_LOGE(TAG, "led  = %d off", dumy);
-                            ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, dumy, 0, 0, 0));
-                        }
-                        dumy++;
-                    }
-                }
-                // Flush RGB values to LEDs
-                ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
-            }
+            /* A brightness or colour change has to redraw the still modes too,
+             * not just a change of mode. */
+            repaint = true;
 
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
@@ -242,7 +359,19 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
 
-        if (modes == 1) // Pulsating
+        if (painted_layout != current_layout)
+        {
+            painted_layout = current_layout;
+            repaint = true;
+        }
+
+        if (repaint)
+        {
+            paint_static_mode(modes, &led_mode);
+            repaint = false;
+        }
+
+        if (modes == RGB_MODE_PULSATING) // Pulsating
         {
             hue += 1;
             // Check matrix to pulsate the leds
@@ -258,7 +387,7 @@ void key_led_modes(void)
                     }
 
                     hsv2rgb(hue, rgb->s, rgb->v, &red, &green, &blue);
-                    ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+                    ESP_ERROR_CHECK(key_set_pixel(i, red, green, blue));
                 }
             }
             ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
@@ -268,25 +397,22 @@ void key_led_modes(void)
                 vTaskDelay(pdMS_TO_TICKS(led_mode.speed));
         }
 
-        if (modes == 2) // Progresive
+        if (modes == RGB_MODE_PROGRESSIVE) // Progresive
         {
             hue += 1;
             hue2 += 12;
             for (int i = 0; i < RGB_LED_KEYBOARD_NUMBER; i++)
             {
-
-                // Build RGB values
-                // TO DO
-                // Change led_mode.brightness by led_mode.value
-                // add led_mode.hue
-
-                hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
-                hsv2rgb(hue2, led_mode.V, led_mode.S, &red2, &green2, &blue2);
+                /* hsv2rgb() takes (hue, saturation, value). These two calls
+                 * used to pass V where S belongs and vice versa, which is why
+                 * the stored saturation appeared to control brightness. */
+                hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
+                hsv2rgb(hue2, led_mode.S, led_mode.V, &red2, &green2, &blue2);
                 // Write RGB values to strip driver
-                ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, i, red, green, blue));
+                ESP_ERROR_CHECK(key_set_pixel(i, red, green, blue));
             }
-            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 0, red, green, blue));
-            ESP_ERROR_CHECK(rgb_notif->set_pixel(rgb_notif, 1, red, green, blue));
+            ESP_ERROR_CHECK(notif_set_pixel(0, red, green, blue));
+            ESP_ERROR_CHECK(notif_set_pixel(1, red, green, blue));
 
             // Flush RGB values to LEDs
             ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));
@@ -294,7 +420,7 @@ void key_led_modes(void)
             vTaskDelay(pdMS_TO_TICKS(RGB_LED_REFRESH_SPEED));
         }
 
-        if (modes == 3) // Rainbow
+        if (modes == RGB_MODE_SPARKS) // Rainbow
         {
             for (int i = 0; i < 3; i++)
             {
@@ -302,9 +428,9 @@ void key_led_modes(void)
                 {
                     // Build RGB values
                     hue = j * 360 / RGB_LED_KEYBOARD_NUMBER + start_rgb;
-                    hsv2rgb(hue, led_mode.V, led_mode.S, &red, &green, &blue);
+                    hsv2rgb(hue, led_mode.S, led_mode.V, &red, &green, &blue);
                     // Write RGB values to strip driver
-                    ESP_ERROR_CHECK(rgb_key->set_pixel(rgb_key, j, red, green, blue));
+                    ESP_ERROR_CHECK(key_set_pixel(j, red, green, blue));
                 }
                 // Flush RGB values to LEDs
                 ESP_ERROR_CHECK(rgb_key->refresh(rgb_key, 100));

@@ -31,6 +31,7 @@
 #include "plugin_manager.h"
 #include "rgb_led.h"
 #include "gesture_handles.h"
+#include "esp_timer.h"
 
 #define KEY_PRESS_TAG "KEY_PRESS"
 
@@ -200,6 +201,7 @@ void layer_adjust(uint16_t keycode)
 
 #ifdef RGB_LEDS
 			rgb_mode_t led_mode;
+			rgb_mode_defaults(&led_mode);
 			nvs_load_led_mode(&led_mode);
 			xQueueSend(keyled_q, &led_mode, 0);
 

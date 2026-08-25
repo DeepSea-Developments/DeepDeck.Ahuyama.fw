@@ -12,6 +12,8 @@ TaskHandle_t pluginHandle;
 
 int taskFlag = 0;
 int wifiFlag = 0;
+uint8_t pluginEn = 0;
+
 /*
  * @brief start a plugin FreeRTOS task
  */

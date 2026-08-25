@@ -20,6 +20,23 @@
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
 
+/* Device identification, published over BLE in the Device Information Service
+ * as the PnP ID characteristic (0x2A50). This is what a host reads to identify
+ * the device: macOS surfaces it as Vendor ID / Product ID, and tools that bind
+ * input to a particular device - Keyboard Maestro's device triggers, for one -
+ * cannot save a binding when these read as zero.
+ *
+ * 0x1209 is the pid.codes vendor ID for open source hardware. 0x0001 under it
+ * is the RESERVED TEST PID: intended for development, and explicitly not for
+ * shipping firmware. Claim a product ID at https://pid.codes before release
+ * and change DEEPDECK_PID here.
+ */
+#define DEEPDECK_VID_SOURCE 0x02   // 0x01 = Bluetooth SIG, 0x02 = USB-IF
+#define DEEPDECK_VID 0x1209        // pid.codes
+#define DEEPDECK_PID 0x0001        // TEST PID - claim a real one before release
+#define DEEPDECK_PRODUCT_VERSION 0x0100
+#define DEEPDECK_MANUFACTURER "DeepSea Developments"
+
 #define MASTER  // undefine if you are not flashing the main controller
 // #define SPLIT_MASTER	 // undefine if keyboard is not split and master
 //#define SLAVE	 // undefine if keyboard is master
@@ -70,7 +87,7 @@
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
 // every time you make a modification, or uncomment this line.
-// #define LAYER_MODIFICATION_MODE5
+// #define LAYER_MODIFICATION_MODE
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used.
@@ -88,6 +105,11 @@
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
 //#define SLEEP_MINS 50 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
+// Screensaver. Blanks the OLED after this many SECONDS without a key press,
+// knob movement or gesture. This is only the default: the timeout is adjustable
+// from the OLED menu (Screensaver) and stored in NVS, where 0 means "never
+// blank". Comment out to leave the screensaver task out of the build entirely.
+#define SCREENSAVER_SECS 60
 
 
 /*
@@ -155,6 +177,7 @@ extern TaskHandle_t xKeyreportTask;
 
 #define MEM_WIFI_TASK				1024*4
 #define MEM_SLEEP_TASK				1024*4
+#define MEM_SCREENSAVER_TASK		1024*4
 #define	MEM_BATTERY_TASK			1024*4
 #define MEM_KEYBOARD_TASK			1024*8
 #define	MEM_LEDS_TASK				1024*4
@@ -171,6 +194,7 @@ extern TaskHandle_t xKeyreportTask;
 #define PRIOR_ENCODER_TASK			4
 #define PRIOR_OLED_TASK				3
 #define PRIOR_GESTURE_TASK			4
+#define PRIOR_SCREENSAVER_TASK		2
 
 
 #endif

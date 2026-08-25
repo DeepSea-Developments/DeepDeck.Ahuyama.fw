@@ -34,6 +34,32 @@
 #define RGB_LED_KEYBOARD_NUMBER 16
 #define RGB_LED_NOTIFICATION_NUMBER 2
 
+/* Global LED brightness, as a percentage of full output. It is applied where
+ * the colour reaches the strip rather than inside hsv2rgb(), so it dims every
+ * mode - including the solid and per key modes, which write RGB values
+ * straight through and never touch hsv2rgb() at all.
+ *
+ * The default is deliberately not 100: the strips are uncomfortably bright at
+ * full output, which is what upstream PR #11 worked around by hard clamping
+ * them. This is the same observation made adjustable instead. */
+#define RGB_LED_BRIGHTNESS_DEFAULT 50
+
+/* LED mode numbers. These are part of the /api/led contract and are stored in
+ * NVS, so the values are fixed and may only be appended to. 6 and 7 are left
+ * free for the fireball and rainbow effects in upstream PR #49, and 8 matches
+ * the per key colour mode that PR uses, to keep a future merge cheap. */
+enum
+{
+    RGB_MODE_OFF = 0,
+    RGB_MODE_PULSATING = 1,
+    RGB_MODE_PROGRESSIVE = 2,
+    RGB_MODE_SPARKS = 3,
+    RGB_MODE_SOLID = 4,
+    RGB_MODE_SOLID_MAPPED = 5,
+    RGB_MODE_KEY_COLOR = 8,
+    RGB_MODE_LAYER_COLOR = 9,
+};
+
 /** @brief Queue for sending mouse reports
  * @see mouse_command_t */
 extern QueueHandle_t keyled_q;
@@ -69,11 +95,24 @@ typedef struct rgb_mode_t {
         uint8_t V;
         uint8_t speed;
         uint8_t rgb[3];
+        uint8_t brightness;     // 0-100, scales the output of every mode
 
     }rgb_mode_t;
 
+/**
+ * @brief Fill led_mode with the compiled in defaults
+ *
+ * nvs_load_led_mode() only overwrites the fields that are actually present in
+ * NVS, so on a device that has never had them saved it leaves the rest of the
+ * struct untouched. Call this first and every field has a sane value whether
+ * or not NVS has anything to say about it.
+ *
+ * @param led_mode
+ */
+void rgb_mode_defaults(rgb_mode_t *led_mode);
+
 //pulsating keys
-rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
+extern rbg_key rgb_key_status[RGB_LED_KEYBOARD_NUMBER];
 
 
 #endif /* RGB_LED_H_ */
