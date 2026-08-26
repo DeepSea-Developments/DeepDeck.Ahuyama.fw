@@ -14,11 +14,25 @@
 #include "esp_netif.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "lwip/ip_addr.h"
+#include "esp_netif_ip_addr.h"
+/* SPLIT_MASTER is defined here. Without it the conditionals below silently
+ * take the non-split path, which for a split build would re-init an already
+ * started wifi stack and skip the split-specific event handler teardown. */
+#include "keyboard_config.h"
 
 #define FAILED 0
 #define SUCCESS 1
 
-#include "plugins.h"
+/* The access point this plugin path scans for and joins. These used to come
+ * from plugins.h, which is not on this component's include path; the migration
+ * replaced them with the literals "SSID" and "PASS", generic enough that the
+ * scan below could match a real nearby network and try to join it with the
+ * password "PASS". Restored to the original demo values, kept local. */
+#define DEFAULT_SSID "SYNTHRIO"
+#define DEFAULT_PASSWORD "armatostre"
+
+//#include "plugins.h"
 
 nvs_handle wifi_nvs_handle;
 #define WIFI_NAMESPACE "wifi"
@@ -412,8 +426,9 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG,"connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:%s",
-                 ip4addr_ntoa(&event->ip_info.ip));
+ 	char ip_str[16];
+	esp_ip4addr_ntoa(&event->ip_info.ip, ip_str, sizeof(ip_str));
+        ESP_LOGI(TAG, "got ip:%s", ip_str);
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -443,16 +458,20 @@ void wifi_connection_deinit(void){
 // connect to a wifi AP
 uint8_t wifi_connection_init(void){
 
-	uint16_t num_records = 0;
 	wifi_ap_record_t* ap_records;
 	wifi_sta_config_t sta_config;
-	tcpip_adapter_ip_info_t ip_info;
-	;
+	esp_netif_ip_info_t ip_info;
+	uint16_t num_records;
 
 	// if the keyboards does not use esp now we need to init wifi
 #ifndef SPLIT_MASTER
-	tcpip_adapter_init();
+	ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+	/* esp_netif_init() only brings up the netif stack. Without a station netif
+	 * attached to the wifi driver there is no DHCP client, so the device
+	 * associates at L2 and then never gets an address:
+	 * IP_EVENT_STA_GOT_IP never fires and WIFI_CONNECTED_BIT is never set. */
+	esp_netif_create_default_wifi_sta();
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
@@ -532,7 +551,7 @@ uint8_t wifi_connection_init(void){
 								ESP_LOGE(WIFI_TAG, "Error connecting to %s AP: %s", sta_config.ssid, esp_err_to_name(err));
 							}else{
 								ESP_LOGI(WIFI_TAG, "Success connecting to %s AP config",sta_config.ssid);
-								ESP_LOGI(WIFI_TAG, "IP Address: %s ,Subnet mask: %s Subnet mask: %s",ip4addr_ntoa(&ip_info.ip),ip4addr_ntoa(&ip_info.netmask),ip4addr_ntoa(&ip_info.gw));
+								//ESP_LOGI(WIFI_TAG, "IP Address: %s ,Subnet mask: %s Subnet mask: %s",ip4addr_ntoa(&ip_info.ip),ip4addr_ntoa(&ip_info.netmask),ip4addr_ntoa(&ip_info.gw));
 								return SUCCESS;
 							}
 						}
@@ -550,9 +569,16 @@ uint8_t wifi_connection_init(void){
 
 }
 
-void get_ip(void)
-{
-	tcpip_adapter_ip_info_t ip_info;
-	tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA,&ip_info);
-	ESP_LOGI(WIFI_TAG, "IP Address: %s ,Subnet mask: %s Subnet mask: %s",ip4addr_ntoa(&ip_info.ip),ip4addr_ntoa(&ip_info.netmask),ip4addr_ntoa(&ip_info.gw));
+void print_ip_info(void) {
+    esp_netif_ip_info_t ip_info;
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (netif && esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
+       // todo: replace this logging
+	   // ESP_LOGI(WIFI_TAG, "IP Address: %s ,Subnet mask: %s Gateway: %s",
+       //          ip4addr_ntoa(&ip_info.ip),
+       //          ip4addr_ntoa(&ip_info.netmask),
+       //          ip4addr_ntoa(&ip_info.gw));
+    } else {
+        ESP_LOGI(WIFI_TAG, "Failed to get IP info");
+    }
 }

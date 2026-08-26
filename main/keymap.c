@@ -261,6 +261,10 @@ dd_layer layer1 =
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK, KC_MEDIA_NEXT_TRACK},
 		.active = true,
+		// LED colours. key_map_colors is left zeroed, which means every key
+		// inherits layer_color until somebody picks a colour for it.
+		.color_ver = DD_LAYER_COLOR_VER,
+		.layer_color = {0, 40, 120}, // blue
 
 		// .layer_id
 
@@ -292,6 +296,8 @@ dd_layer layer2 =
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_0, KC_1, KC_2, KC_3, KC_4, KC_5},
 		.active = true,
+		.color_ver = DD_LAYER_COLOR_VER,
+		.layer_color = {0, 110, 30}, // green
 };
 
 dd_layer layer3 =
@@ -321,6 +327,8 @@ dd_layer layer3 =
 		// APDS9960 -  {UP, DOWN, LEFT, RIGHT, NEAR, FAR}
 		.gesture_map = {KC_APP_CHROME_CLOSE_TAB, 0, KC_APP_CHROME_NTAB, KC_APP_CHROME_PTAB, 0, 0},
 		.active = true,
+		.color_ver = DD_LAYER_COLOR_VER,
+		.layer_color = {150, 60, 0}, // amber
 };
 
 // dd_layer user_layer[3] = {

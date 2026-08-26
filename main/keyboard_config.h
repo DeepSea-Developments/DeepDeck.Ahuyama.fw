@@ -20,6 +20,23 @@
 #define GATTS_TAG "Ahuyama" // The device's name
 #define MAX_BT_DEVICENAME_LENGTH 40
 
+/* Device identification, published over BLE in the Device Information Service
+ * as the PnP ID characteristic (0x2A50). This is what a host reads to identify
+ * the device: macOS surfaces it as Vendor ID / Product ID, and tools that bind
+ * input to a particular device - Keyboard Maestro's device triggers, for one -
+ * cannot save a binding when these read as zero.
+ *
+ * 0x1209 is the pid.codes vendor ID for open source hardware. 0x0001 under it
+ * is the RESERVED TEST PID: intended for development, and explicitly not for
+ * shipping firmware. Claim a product ID at https://pid.codes before release
+ * and change DEEPDECK_PID here.
+ */
+#define DEEPDECK_VID_SOURCE 0x02   // 0x01 = Bluetooth SIG, 0x02 = USB-IF
+#define DEEPDECK_VID 0x1209        // pid.codes
+#define DEEPDECK_PID 0x0001        // TEST PID - claim a real one before release
+#define DEEPDECK_PRODUCT_VERSION 0x0100
+#define DEEPDECK_MANUFACTURER "DeepSea Developments"
+
 #define MASTER  // undefine if you are not flashing the main controller
 // #define SPLIT_MASTER	 // undefine if keyboard is not split and master
 //#define SLAVE	 // undefine if keyboard is master
@@ -70,7 +87,7 @@
 // Overwrite always Non Volatile Storage. When the memory is stored for the first time, it will not overwrite it from flashing.
 // If yu want to change layers from code, not from the user interface, you have to either, erase flash
 // every time you make a modification, or uncomment this line.
-// #define LAYER_MODIFICATION_MODE5
+// #define LAYER_MODIFICATION_MODE
 
 //OLED Parameters
 #define OLED_ENABLE //undefine if no oled is used.
@@ -88,6 +105,49 @@
 //deep sleep parameters, mind that reconnecting after deep sleep might take a minute or two
 //#define SLEEP_MINS 50 // undefine if you do not need deep sleep, otherwise define number of minutes for deepsleep
 
+// Proximity wake. Reaching toward the pad brings the OLED back without pressing
+// anything. Requires GESTURE_ENABLE, since it uses the same APDS-9960.
+//
+// Sampled ONLY while the screensaver has the panel blanked, which is the only
+// time the answer is useful - so it costs nothing while you are actually using
+// the keyboard, and cannot be confused by a hand resting on the keys.
+//
+// Measured on an Ahuyama: an empty desk reads 0-4 (99th percentile 4), a hand
+// over the sensor reads 41-43. The threshold sits in that gap. Comment out
+// PROXIMITY_WAKE to disable.
+#define PROXIMITY_WAKE
+#define PROXIMITY_WAKE_THRESHOLD 10
+
+// Tuning aid, off by default. Uncomment to log every proximity reading at or
+// above this value while the panel is blanked - which is how the numbers in the
+// comment above were measured. Useful on different hardware, or if the sensor
+// ends up behind a different cover, since the crosstalk floor depends on both.
+// #define PROXIMITY_WAKE_DEBUG 3
+
+// Biased toward false positives: waking when you were not reaching is a shrug,
+// failing to wake when you were is the feature not working. Measured on an
+// Ahuyama, at the driver's default 4x gain and 8 pulses:
+//
+//   empty desk   0-4 typically, 9 at the very worst (2 samples in 611)
+//   hand at the moment it becomes visible   12-25
+//   hand close   42
+//
+// 10 sits above the worst observed noise and below the weakest real detection,
+// and two CONSECUTIVE samples are required on top of that.
+//
+// Raising PGAIN to 8x and the pulse count was tried and REVERTED: it lifted the
+// noise floor from 3 to 12-18 while the hand signal only went 42 -> 104, which
+// halved the signal-to-noise ratio and produced real false wakes. The floor is
+// crosstalk - the sensor seeing its own LED reflected off the cover - so it
+// scales with LED energy just as fast as the signal does. If more range is ever
+// needed, the lever is the POFFSET_UR/POFFSET_DL registers (0x9D/0x9E, both
+// default 0) to cancel that crosstalk first, NOT more gain.
+
+// Screensaver. Blanks the OLED after this many SECONDS without a key press,
+// knob movement or gesture. This is only the default: the timeout is adjustable
+// from the OLED menu (Screensaver) and stored in NVS, where 0 means "never
+// blank". Comment out to leave the screensaver task out of the build entirely.
+#define SCREENSAVER_SECS 60
 
 
 /*
@@ -155,6 +215,7 @@ extern TaskHandle_t xKeyreportTask;
 
 #define MEM_WIFI_TASK				1024*4
 #define MEM_SLEEP_TASK				1024*4
+#define MEM_SCREENSAVER_TASK		1024*4
 #define	MEM_BATTERY_TASK			1024*4
 #define MEM_KEYBOARD_TASK			1024*8
 #define	MEM_LEDS_TASK				1024*4
@@ -171,6 +232,7 @@ extern TaskHandle_t xKeyreportTask;
 #define PRIOR_ENCODER_TASK			4
 #define PRIOR_OLED_TASK				3
 #define PRIOR_GESTURE_TASK			4
+#define PRIOR_SCREENSAVER_TASK		2
 
 
 #endif

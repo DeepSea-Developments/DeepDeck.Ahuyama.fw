@@ -1,4 +1,5 @@
 #include <string.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include "nvs.h"
 #include "server.h"
@@ -33,7 +34,7 @@
 
 static const char *REST_TAG = "portal-api";
 static const char *TAG = "webserver";
-extern xSemaphoreHandle Wifi_initSemaphore;
+extern SemaphoreHandle_t Wifi_initSemaphore;
 
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
 	do                                                                                 \
@@ -52,6 +53,109 @@ typedef struct rest_server_context
 	char base_path[ESP_VFS_PATH_MAX + 1];
 	char scratch[SCRATCH_BUFSIZE];
 } rest_server_context_t;
+
+/* Colours cross the API as "#rrggbb". That is what <input type="color"> in the
+ * web UI produces and consumes, so neither side has to convert. */
+#define COLOR_HEX_LEN 8 // "#rrggbb" plus the terminator
+
+static void color_to_hex(dd_key_color_t color, char *out)
+{
+	snprintf(out, COLOR_HEX_LEN, "#%02x%02x%02x", color.r, color.g, color.b);
+}
+
+static int hex_digit(char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	return -1;
+}
+
+/**
+ * @brief Parse "#rrggbb" or "rrggbb" into a colour
+ *
+ * @return true if the whole string was a valid colour, false otherwise. On
+ *         false the colour is left alone, so a caller can seed it with the
+ *         current value and simply ignore a malformed or absent field.
+ */
+static bool hex_to_color(const char *hex, dd_key_color_t *color)
+{
+	uint8_t out[3] = {0, 0, 0};
+
+	if (hex == NULL)
+		return false;
+	if (*hex == '#')
+		hex++;
+
+	for (int i = 0; i < 6; i++)
+	{
+		int digit = hex_digit(hex[i]);
+
+		if (digit < 0)
+			return false;
+
+		if (i & 1)
+			out[i / 2] |= digit;
+		else
+			out[i / 2] = digit << 4;
+	}
+
+	if (hex[6] != '\0')
+		return false;
+
+	color->r = out[0];
+	color->g = out[1];
+	color->b = out[2];
+	return true;
+}
+
+/**
+ * @brief Read the colours for one layer out of a request payload
+ *
+ * Both fields are optional: a client that does not know about colours leaves
+ * whatever the layer already had. "layer_color" is a top level "#rrggbb", and
+ * each key in row0..row3 may carry its own "color".
+ */
+static void fill_layer_colors(cJSON *payload, dd_layer *layer)
+{
+	cJSON *layer_color = cJSON_GetObjectItem(payload, "layer_color");
+
+	if (cJSON_IsString(layer_color))
+	{
+		hex_to_color(layer_color->valuestring, &layer->layer_color);
+	}
+
+	for (int row = 0; row < ROWS; row++)
+	{
+		char row_name[6];
+		cJSON *row_array;
+		cJSON *key;
+		int col = 0;
+
+		snprintf(row_name, sizeof(row_name), "row%d", row);
+		row_array = cJSON_GetObjectItemCaseSensitive(payload, row_name);
+
+		cJSON_ArrayForEach(key, row_array)
+		{
+			cJSON *color;
+
+			if (col >= COLS)
+				break;
+
+			color = cJSON_GetObjectItem(key, "color");
+			if (cJSON_IsString(color))
+			{
+				hex_to_color(color->valuestring, &layer->key_map_colors[row][col]);
+			}
+			col++;
+		}
+	}
+
+	layer->color_ver = DD_LAYER_COLOR_VER;
+}
 
 void *json_malloc(size_t size)
 {
@@ -219,7 +323,7 @@ esp_err_t config_url_handler(httpd_req_t *req)
  */
 esp_err_t get_macros_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 
 	ESP_LOGI(TAG, "HTTP GET MACROS INFO --> /api/macros");
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -340,7 +444,6 @@ esp_err_t create_macro_url_handler(httpd_req_t *req)
 		{
 			ESP_LOGE(TAG, "Error parsing json before %s", err);
 			cJSON_Delete(payload);
-			free(buf);
 			free(buf);
 			httpd_resp_set_status(req, "500");
 			return -1;
@@ -553,7 +656,7 @@ esp_err_t restore_default_macro_url_handler(httpd_req_t *req)
  */
 esp_err_t get_layer_url_handler(httpd_req_t *req)
 {
-	ESP_LOGW("", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGW("", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "HTTP GET LAYER INFO --> /api/layers");
 
 	ESP_ERROR_CHECK(httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*"));
@@ -636,6 +739,11 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 
 	cJSON_AddItemToObject(layer_object, "active", is_active);
 
+	char color_hex[COLOR_HEX_LEN];
+
+	color_to_hex(key_layouts[pos].layer_color, color_hex);
+	cJSON_AddStringToObject(layer_object, "layer_color", color_hex);
+
 	for (index = 0; index < MATRIX_ROWS; ++index)
 	{
 		char key_name[7] = {'\0'};
@@ -650,6 +758,8 @@ esp_err_t get_layer_url_handler(httpd_req_t *req)
 			cJSON *key = cJSON_CreateObject();
 			cJSON_AddStringToObject(key, "name", key_layouts[pos].key_map_names[index][index_col]);
 			cJSON_AddNumberToObject(key, "key_code", key_layouts[pos].key_map[index][index_col]);
+			color_to_hex(key_layouts[pos].key_map_colors[index][index_col], color_hex);
+			cJSON_AddStringToObject(key, "color", color_hex);
 			cJSON_AddItemToArray(row, key);
 		}
 	}
@@ -1070,6 +1180,13 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	// 	httpd_resp_send(req, NULL, 0);
 	// 	return ESP_OK;
 	// }
+	/* Start from the layer as it is stored. nvs_write_layer() below persists the
+	 * whole struct, so every field the payload does not carry has to already
+	 * hold the right value - this used to be an uninitialised stack struct,
+	 * which meant anything the web UI did not send was written back as
+	 * whatever happened to be on the stack. */
+	temp_layout = key_layouts[pos];
+
 	strcpy(temp_layout.uuid_str, layer_uuid->valuestring);
 
 	cJSON *new_layer_name = cJSON_GetObjectItem(payload, "name");
@@ -1157,6 +1274,9 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 	{
 		temp_layout.active = false;
 	}
+
+	fill_layer_colors(payload, &temp_layout);
+
 	cJSON_Delete(payload);
 	free(buf);
 	nvs_write_layer(temp_layout, pos);
@@ -1174,6 +1294,7 @@ esp_err_t update_layer_url_handler(httpd_req_t *req)
 
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
 #endif
@@ -1211,7 +1332,11 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 	buf = malloc(buf_len);
 	httpd_req_recv(req, buf, req->content_len);
 
+	/* Zeroed rather than left on the stack, so any field the payload does not
+	 * carry is written to NVS as 0 instead of as stack garbage. */
 	dd_layer new_layer;
+	memset(&new_layer, 0, sizeof(new_layer));
+
 	esp_err_t res;
 	cJSON *payload = cJSON_Parse(buf);
 
@@ -1341,12 +1466,18 @@ esp_err_t create_layer_url_handler(httpd_req_t *req)
 		i++;
 	}
 
+	/* Give the layer a colour before reading the payload, so a client that does
+	 * not send colours still gets a visible layer rather than a black one. */
+	dd_layer_set_default_colors(&new_layer, nvs_read_num_layers());
+	fill_layer_colors(payload, &new_layer);
+
 	cJSON_Delete(payload);
 	free(buf);
 	current_layout = 0;
 	res = nvs_create_new_layer(new_layer);
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 #endif
 
@@ -1430,9 +1561,236 @@ esp_err_t restore_default_layer_url_handler(httpd_req_t *req)
 
 #ifdef RGB_LEDS
 	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
 	nvs_load_led_mode(&led_mode);
 	xQueueSend(keyled_q, &led_mode, 0);
 #endif
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Report the proximity wake settings
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t get_proximity_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET PROXIMITY --> /api/proximity");
+
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	bool enabled = false;
+	uint8_t threshold = 0;
+
+#ifdef PROXIMITY_WAKE
+	proximity_wake_get(&enabled, &threshold);
+#endif
+
+	cJSON *root = cJSON_CreateObject();
+	if (root == NULL)
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+#ifdef PROXIMITY_WAKE
+	cJSON_AddBoolToObject(root, "supported", true);
+#else
+	cJSON_AddBoolToObject(root, "supported", false);
+#endif
+	cJSON_AddBoolToObject(root, "enabled", enabled);
+	cJSON_AddNumberToObject(root, "threshold", threshold);
+
+	/* Reference points measured on the hardware, so a client can label its
+	 * control sensibly instead of guessing at the useful range. */
+	cJSON_AddNumberToObject(root, "min", 5);
+	cJSON_AddNumberToObject(root, "max", 40);
+	cJSON_AddNumberToObject(root, "noise_floor", 9);
+	cJSON_AddNumberToObject(root, "hand_near", 12);
+
+	char *string = cJSON_Print(root);
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	cJSON_Delete(root);
+	free(string);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Change the proximity wake settings
+ *
+ * Accepts either or both of "enabled" and "threshold"; anything absent keeps
+ * its current value.
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t set_proximity_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP POST PROXIMITY --> /api/proximity");
+
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	/* Cap the body so a bogus content_len cannot exhaust the heap, and check
+	 * what actually arrived rather than assuming - neither of which the older
+	 * handlers in this file do. */
+	if (req->content_len > 256)
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	char *buf = malloc(req->content_len + 1);
+	if (buf == NULL)
+	{
+		httpd_resp_set_status(req, "500 Internal Server Error");
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	int received = httpd_req_recv(req, buf, req->content_len);
+	if (received <= 0)
+	{
+		free(buf);
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+	buf[received] = '\0';
+
+	cJSON *payload = cJSON_Parse(buf);
+	free(buf);
+
+	if (payload == NULL)
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	bool enabled = false;
+	uint8_t threshold = 0;
+
+#ifdef PROXIMITY_WAKE
+	proximity_wake_get(&enabled, &threshold);
+
+	cJSON *json_enabled = cJSON_GetObjectItem(payload, "enabled");
+	if (cJSON_IsBool(json_enabled))
+	{
+		enabled = cJSON_IsTrue(json_enabled);
+	}
+
+	cJSON *json_threshold = cJSON_GetObjectItem(payload, "threshold");
+	if (cJSON_IsNumber(json_threshold))
+	{
+		int value = json_threshold->valueint;
+
+		if (value < 1)
+		{
+			value = 1;
+		}
+		if (value > 255)
+		{
+			value = 255;
+		}
+		threshold = (uint8_t)value;
+	}
+
+	proximity_wake_set(enabled, threshold);
+	nvs_save_proximity_wake(enabled, threshold);
+#endif
+
+	cJSON_Delete(payload);
+
+	cJSON *root = cJSON_CreateObject();
+	if (root != NULL)
+	{
+		cJSON_AddBoolToObject(root, "enabled", enabled);
+		cJSON_AddNumberToObject(root, "threshold", threshold);
+
+		char *string = cJSON_Print(root);
+		httpd_resp_set_type(req, "application/json");
+		httpd_resp_sendstr(req, string);
+		cJSON_Delete(root);
+		free(string);
+	}
+
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	return ESP_OK;
+}
+
+/**
+ * @brief Report the current LED settings
+ *
+ * Without this a client has no way to find out the current mode, brightness or
+ * colour, so its controls would start from whatever it guessed and the first
+ * save would overwrite settings made on the device itself.
+ *
+ * @param req
+ * @return esp_err_t
+ */
+esp_err_t get_keyboard_led_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "HTTP GET LED SETTINGS --> /api/led");
+
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+
+	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
+	nvs_load_led_mode(&led_mode);
+
+	cJSON *led_object = cJSON_CreateObject();
+	if (led_object == NULL)
+	{
+		httpd_resp_set_status(req, HTTPD_400);
+		httpd_resp_send(req, NULL, 0);
+		return ESP_OK;
+	}
+
+	cJSON_AddNumberToObject(led_object, "mode", led_mode.mode);
+	cJSON_AddNumberToObject(led_object, "H", led_mode.H);
+	cJSON_AddNumberToObject(led_object, "S", led_mode.S);
+	cJSON_AddNumberToObject(led_object, "V", led_mode.V);
+	cJSON_AddNumberToObject(led_object, "speed", led_mode.speed);
+	cJSON_AddNumberToObject(led_object, "brightness", led_mode.brightness);
+
+	cJSON *rgb = cJSON_CreateArray();
+	for (int i = 0; i < 3; i++)
+	{
+		cJSON_AddItemToArray(rgb, cJSON_CreateNumber(led_mode.rgb[i]));
+	}
+	cJSON_AddItemToObject(led_object, "rgb", rgb);
+
+	/* Same "#rrggbb" spelling the layer colours use, so a colour input can bind
+	 * to it directly. */
+	char color_hex[COLOR_HEX_LEN];
+	dd_key_color_t solid = {led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]};
+	color_to_hex(solid, color_hex);
+	cJSON_AddStringToObject(led_object, "color", color_hex);
+
+	char *string = cJSON_Print(led_object);
+
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_sendstr(req, string);
+	httpd_resp_set_status(req, HTTPD_200);
+	httpd_resp_send(req, NULL, 0);
+
+	cJSON_Delete(led_object);
+	free(string);
 
 	return ESP_OK;
 }
@@ -1449,7 +1807,13 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 	httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-	rgb_mode_t led_mode = {0};
+	/* Start from what is already stored rather than from zero. The web UI's LED
+	 * control posts only {"mode": n}, so a zeroed struct meant that changing
+	 * mode also wrote saturation, value, speed and brightness back as 0 - which
+	 * left the animated modes black and stopped the pulsating mode decaying. */
+	rgb_mode_t led_mode;
+	rgb_mode_defaults(&led_mode);
+	nvs_load_led_mode(&led_mode);
 
 	// Read the URI line and get the host
 	char *buf;
@@ -1481,7 +1845,7 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 		led_mode.H = hue->valueint;
 	}
 	cJSON *saturation = cJSON_GetObjectItem(payload, "S");
-	if (cJSON_IsNumber(hue))
+	if (cJSON_IsNumber(saturation))
 	{
 		led_mode.S = saturation->valueint;
 	}
@@ -1497,30 +1861,50 @@ esp_err_t change_keyboard_led_handler(httpd_req_t *req)
 		led_mode.speed = speed->valueint;
 	}
 
-	if ((led_mode.mode == 4) || (led_mode.mode == 5))
+	/* Global dimming, 0 to 100 percent. Applies to every mode. */
+	cJSON *brightness = cJSON_GetObjectItem(payload, "brightness");
+	if (cJSON_IsNumber(brightness))
 	{
-		cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
-		if (cJSON_IsArray(rgb_color))
+		int level = brightness->valueint;
+
+		if (level < 0)
+			level = 0;
+		if (level > 100)
+			level = 100;
+
+		led_mode.brightness = level;
+	}
+
+	/* Read the colour whenever it is offered, rather than only for the two
+	 * modes that use it, so setting a colour and the mode that shows it can be
+	 * done in either order. Anything not sent keeps its stored value. */
+	cJSON *rgb_color = cJSON_GetObjectItem(payload, "rgb");
+	if (cJSON_IsArray(rgb_color))
+	{
+		for (int i = 0; i < 3; i++)
 		{
-			for (int i = 0; i < 3; i++)
+			cJSON *item = cJSON_GetArrayItem(rgb_color, i);
+
+			if (cJSON_IsNumber(item))
 			{
-				cJSON *item = cJSON_GetArrayItem(rgb_color, i);
-				if (cJSON_IsNumber(item))
-				{
-					led_mode.rgb[i] = item->valueint;
-					// ESP_LOGE("+", "led_mode[%d] = %d", (i + 2), led_mode.rgb[i]);
-				}
-				else
-				{
-					httpd_resp_set_status(req, HTTPD_400);
-					httpd_resp_send(req, NULL, 0);
-				}
+				led_mode.rgb[i] = item->valueint;
 			}
 		}
 	}
-	else
+
+	/* "#rrggbb" is accepted too, so a colour input can post what it holds
+	 * without the caller taking it apart first. */
+	cJSON *hex_color = cJSON_GetObjectItem(payload, "color");
+	if (cJSON_IsString(hex_color))
 	{
-		nvs_load_rgb_color(&led_mode);
+		dd_key_color_t solid = {led_mode.rgb[0], led_mode.rgb[1], led_mode.rgb[2]};
+
+		if (hex_to_color(hex_color->valuestring, &solid))
+		{
+			led_mode.rgb[0] = solid.r;
+			led_mode.rgb[1] = solid.g;
+			led_mode.rgb[2] = solid.b;
+		}
 	}
 
 	json_response(string);
@@ -1692,7 +2076,10 @@ httpd_handle_t start_webserver(const char *base_path)
 
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-	config.max_uri_handlers = 20;
+	/* Was exactly 20 with all 20 slots used, and httpd_register_uri_handler's
+	 * return value is checked nowhere - so a 21st handler failed silently with
+	 * ESP_ERR_HTTPD_HANDLERS_FULL and the endpoint simply 404'd. */
+	config.max_uri_handlers = 24;
 	config.stack_size = 1024 * 10;
 	config.uri_match_fn = httpd_uri_match_wildcard;
 
@@ -1709,6 +2096,9 @@ httpd_handle_t start_webserver(const char *base_path)
 	httpd_register_uri_handler(server, &get_config_url);
 
 	////////LED
+	httpd_uri_t get_led_color_url = {.uri = "/api/led", .method = HTTP_GET, .handler = get_keyboard_led_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_led_color_url);
+
 	httpd_uri_t change_led_color_url = {.uri = "/api/led", .method = HTTP_POST, .handler = change_keyboard_led_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &change_led_color_url);
 	httpd_uri_t change_led_color_url__ = {.uri = "/api/led", .method = HTTP_OPTIONS, .handler = change_keyboard_led_handler, .user_ctx = NULL};
@@ -1748,6 +2138,17 @@ httpd_handle_t start_webserver(const char *base_path)
 	httpd_register_uri_handler(server, &option_macros_url);
 	httpd_uri_t restore_all_macro_url = {.uri = "/api/macros/restore", .method = HTTP_POST, .handler = restore_default_macro_url_handler, .user_ctx = NULL};
 	httpd_register_uri_handler(server, &restore_all_macro_url);
+
+	/* Must be registered before the wildcard catch-all below, which is matched
+	 * with httpd_uri_match_wildcard and would otherwise shadow any new GET
+	 * subpath. That is why /api/layers/layer_names works and a later-registered
+	 * GET would not. */
+	httpd_uri_t get_proximity_url = {.uri = "/api/proximity", .method = HTTP_GET, .handler = get_proximity_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &get_proximity_url);
+	httpd_uri_t set_proximity_url = {.uri = "/api/proximity", .method = HTTP_POST, .handler = set_proximity_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &set_proximity_url);
+	httpd_uri_t option_proximity_url = {.uri = "/api/proximity", .method = HTTP_OPTIONS, .handler = options_handler, .user_ctx = NULL};
+	httpd_register_uri_handler(server, &option_proximity_url);
 
 	/* URI handler for getting web server files */
 	httpd_uri_t common_get_uri = {

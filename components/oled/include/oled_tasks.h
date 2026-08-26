@@ -50,6 +50,12 @@ void ble_connected_oled(void);
  */
 void wifi_connected_oled(char *ip_char);
 
+/**
+ * @brief True once if the wifi status shown on screen has changed since the
+ *        last call. Consumed by oled_task, which owns all drawing.
+ */
+bool oled_wifi_status_changed(void);
+
 /** @brief running oled task
  * */
 void update_oled(void);

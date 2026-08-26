@@ -27,12 +27,14 @@
 #include "hal_ble.h"
 #include "keypress_handles.h"
 #include "keyboard_config.h"
+#include "deepdeck_tasks.h"
+#include "nvs_funcs.h"
 
 TaskHandle_t xGesture;
 
 i2c_bus_handle_t i2c_bus = NULL;
 apds9960_handle_t apds9960 = NULL;
-xTimerHandle xTimer;
+TimerHandle_t xTimer;
 int timerID = 1;
 bool flag = false;
 
@@ -97,6 +99,11 @@ void apds9960_init(i2c_bus_handle_t *i2cbus)
 	apds9960 = apds9960_create(i2c_bus, APDS9960_I2C_ADDRESS);
 
 	apds9960_gesture_init(apds9960);
+
+#ifdef PROXIMITY_WAKE
+	/* A saved value overrides the compiled-in default. */
+	proximity_wake_load();
+#endif
 }
 
 void apds9960_deinit()
@@ -110,6 +117,123 @@ void apds9960_free()
 	apds9960_gesture_init(apds9960);
 }
 
+/* The per-read gesture traces below are ESP_LOGD, so they are off at the
+ * default log level but still compiled in. Turn them on at runtime with:
+ *     esp_log_level_set("Gesture", ESP_LOG_DEBUG);
+ * They fire on every poll, including when nothing was detected, so at INFO or
+ * above they swamp the console. */
+#ifdef PROXIMITY_WAKE
+/* Runtime settings. Seeded from keyboard_config.h, overridden by NVS at startup,
+ * and adjustable over the API - the useful threshold depends on the sensor's
+ * crosstalk, which varies with the cover it sits behind, so it is not something
+ * a compiled-in constant can get right for every unit. */
+static bool proximity_enabled = true;
+static uint8_t proximity_threshold = PROXIMITY_WAKE_THRESHOLD;
+
+void proximity_wake_set(bool enabled, uint8_t threshold)
+{
+	proximity_enabled = enabled;
+
+	/* 0 would wake on the noise floor and never let the panel blank at all. */
+	if (threshold > 0)
+	{
+		proximity_threshold = threshold;
+	}
+
+	ESP_LOGI("Proximity", "wake %s, threshold %u",
+			 proximity_enabled ? "on" : "off", proximity_threshold);
+}
+
+void proximity_wake_get(bool *enabled, uint8_t *threshold)
+{
+	if (enabled != NULL)
+	{
+		*enabled = proximity_enabled;
+	}
+	if (threshold != NULL)
+	{
+		*threshold = proximity_threshold;
+	}
+}
+
+void proximity_wake_load(void)
+{
+	nvs_load_proximity_wake(&proximity_enabled, &proximity_threshold);
+	ESP_LOGI("Proximity", "wake %s, threshold %u",
+			 proximity_enabled ? "on" : "off", proximity_threshold);
+}
+
+void gesture_proximity_wake_check(void)
+{
+	/* Not armed until proximity has been seen BELOW the threshold at least once
+	 * since the panel blanked. Without this, anything already sitting in front
+	 * of the sensor when the screensaver kicks in - a hand still resting there,
+	 * a mug, a stack of paper - would wake the screen again immediately and go
+	 * on doing it forever, so the screensaver could never take effect.
+	 *
+	 * It also means no baseline tracking is needed: something parked in front of
+	 * the sensor simply never arms, and is ignored until it moves away. */
+	static bool armed = false;
+	static uint8_t consecutive = 0;
+
+	if (!proximity_enabled)
+	{
+		return;
+	}
+
+	if (!screensaver_is_blanked())
+	{
+		/* Awake: nothing to do, and nothing sampled. Reset so the next blank
+		 * starts from a known state. */
+		armed = false;
+		consecutive = 0;
+		return;
+	}
+
+	if (apds9960 == NULL)
+	{
+		return;
+	}
+
+	uint8_t proximity = apds9960_read_proximity(apds9960);
+
+#ifdef PROXIMITY_WAKE_DEBUG
+	/* TEMPORARY. Quiet on an empty desk, since idle sits at 0-2. */
+	if (proximity >= PROXIMITY_WAKE_DEBUG)
+	{
+		ESP_LOGI("Proximity", "ramp %u (threshold %u, armed %d)",
+				 proximity, proximity_threshold, (int)armed);
+	}
+#endif
+
+	if (proximity < proximity_threshold)
+	{
+		armed = true;
+		consecutive = 0;
+		return;
+	}
+
+	if (!armed)
+	{
+		return;
+	}
+
+	/* Two consecutive samples, so a single noisy reading cannot wake the panel. */
+	if (++consecutive < 2)
+	{
+		return;
+	}
+
+	ESP_LOGI("Proximity", "proximity %u, waking the screen", proximity);
+	armed = false;
+	consecutive = 0;
+
+	/* Note this deliberately does NOT run gesture_command() - approaching is not
+	 * input, it just means "look alive". Nothing is typed. */
+	screensaver_wake();
+}
+#endif /* PROXIMITY_WAKE */
+
 void read_gesture()
 {
 	uint8_t gesture = 0;
@@ -118,36 +242,41 @@ void read_gesture()
 		gesture = apds9960_read_gesture(apds9960);
 		if (gesture != APDS9960_NONE)
 		{
+			// A recognised gesture is deliberate input - it is about to fire a
+			// keystroke - so it counts as activity and wakes the screen, the
+			// same way a key press or knob movement does.
+			screensaver_wake();
+
 			if (gesture == APDS9960_DOWN)
 			{
-				ESP_LOGE("Gesture", "_DOWN");
+				ESP_LOGD("Gesture", "_DOWN");
 			}
 			else if (gesture == APDS9960_UP)
 			{
-				ESP_LOGE("Gesture", "_UP");
+				ESP_LOGD("Gesture", "_UP");
 			}
 			else if (gesture == APDS9960_LEFT)
 			{
-				ESP_LOGE("Gesture", "_LEFT");
+				ESP_LOGD("Gesture", "_LEFT");
 			}
 			else if (gesture == APDS9960_RIGHT)
 			{
-				ESP_LOGE("Gesture", "_RIGHT");
+				ESP_LOGD("Gesture", "_RIGHT");
 			}
 			else if (gesture == APDS9960_FAR)
 			{
-				ESP_LOGE("Gesture", "_FAR");
+				ESP_LOGD("Gesture", "_FAR");
 			}
 			else if (gesture == APDS9960_NEAR)
 			{
-				ESP_LOGE("Gesture", "_NEAR");
+				ESP_LOGD("Gesture", "_NEAR");
 			}
 			gesture_command(gesture,
 							key_layouts[current_layout].gesture_map);
 		}
 		else
 		{
-			ESP_LOGE("Gesture", "_NONE");
+			ESP_LOGD("Gesture", "_NONE");
 		}
 
 }

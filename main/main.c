@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -78,6 +79,7 @@
 #include "wifi_handles.h"
 #include "server.h"
 #include "spiffs.h"
+#include "u8g2_esp32_hal.h"
 
 
 // plugin functions
@@ -145,6 +147,14 @@ void app_main()
 	halBLEInit(1, 1, 1, 0);
 	ESP_LOGI("HIDD", "MAIN finished...");
 
+	// Serialise the OLED and the gesture sensor on the shared I2C bus. Must be
+	// created before either is brought up, because gesture_task starts running
+	// before init_oled() below.
+	if (i2c_user_lock_init() != ESP_OK)
+	{
+		ESP_LOGE("MAIN", "could not create the i2c lock");
+	}
+
 	// init i2c
 	int i2c_master_port = I2C_MASTER_NUM;
 	i2c_config_t conf = {
@@ -188,10 +198,9 @@ void app_main()
 #ifdef RGB_LEDS
 	xTaskCreate(rgb_leds_task, "rgb_leds_task", MEM_LEDS_TASK, NULL, PRIOR_LEDS_TASK	, NULL);
 	ESP_LOGI("rgb_leds_task", "initialized");
-	rgb_mode_t mode;
-	nvs_load_led_mode(&mode);
-	xQueueSend(keyled_q, &mode, 0);
-
+	/* The task loads the stored settings itself now. Sending them from here as
+	 * well meant posting an uninitialised struct - and the queue is created
+	 * inside the task, so this also relied on it being scheduled first. */
 #endif
 
 	// Start the keyboard Tasks
@@ -213,6 +222,11 @@ void app_main()
 	ESP_LOGI("Sleep", "initialized");
 #endif
 
+#if defined(SCREENSAVER_SECS) && defined(OLED_ENABLE)
+	xTaskCreate(screensaver, "screensaver task", MEM_SCREENSAVER_TASK, NULL, PRIOR_SCREENSAVER_TASK, NULL);
+	ESP_LOGI("Screensaver", "initialized");
+#endif
+
 #ifdef WIFI_ENABLE
 	// spiffs_init();
 	esp_log_level_set("Wifi", ESP_LOG_DEBUG);
@@ -223,7 +237,7 @@ void app_main()
 #endif
 
 	ESP_LOGI("Main", "Main sequence done!");
-	ESP_LOGI("Main", "Size of the dd_layer: %d bytes", sizeof(dd_layer));
-	ESP_LOGI("Main", "Size of the dd_macros: %d bytes", sizeof(dd_macros));
-	ESP_LOGW("Main", "Free memory: %d bytes", esp_get_free_heap_size());
+	ESP_LOGI("Main", "Size of the dd_layer: %zu bytes", sizeof(dd_layer));
+	ESP_LOGI("Main", "Size of the dd_macros: %zu bytes", sizeof(dd_macros));
+	ESP_LOGW("Main", "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
 }

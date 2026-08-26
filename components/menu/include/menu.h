@@ -28,7 +28,8 @@
  */
 typedef enum {
 	S_NORMAL = 0,
-    S_SETTINGS
+    S_SETTINGS,
+    S_SCREENSAVER
 	
 } deepdeck_status_t;
 
@@ -74,11 +75,15 @@ struct menu_str_t{
     char * title;
     char * subtitle;
 	menu_item_t * menu_item_array;
+	/* Optional. Returns the index the cursor should start on, so a menu that
+	   represents a setting opens on its current value instead of at the top.
+	   NULL (the default for menus that omit it) keeps the old behaviour. */
+	uint8_t (*current_selection)(void);
 };
 
 
 
-deepdeck_status_t deepdeck_status;
+extern deepdeck_status_t deepdeck_status;
 
 uint8_t menu_selection(u8g2_t *u8g2, const char *title, uint8_t start_pos, const char *sl);
 
@@ -96,16 +101,32 @@ void menu_init(void);
 
 menu_ret menu_goto_sleep(void);
 menu_ret menu_exit(void);
+menu_ret menu_goto_main(void);
+menu_ret menu_berlin_dance(void);
 
-uint8_t menu_get_goto_sleep(void);
-uint8_t menu_send_rgb_mode(uint8_t mode);
-uint8_t menu_rgb_mode_0(void);
-uint8_t menu_rgb_mode_1(void);
-uint8_t menu_rgb_mode_2(void);
-uint8_t menu_rgb_mode_3(void);
-uint8_t menu_rgb_mode_4(void);
+menu_ret menu_screensaver_off(void);
+menu_ret menu_screensaver_30sec(void);
+menu_ret menu_screensaver_1min(void);
+menu_ret menu_screensaver_10min(void);
+menu_ret menu_screensaver_30min(void);
+uint8_t menu_screensaver_current(void);
 
-menu_t menu_main; 
+menu_ret menu_get_goto_sleep(void);
+menu_ret menu_send_rgb_mode(uint8_t mode);
+menu_ret menu_rgb_mode_0(void);
+menu_ret menu_rgb_mode_1(void);
+menu_ret menu_rgb_mode_2(void);
+menu_ret menu_rgb_mode_3(void);
+menu_ret menu_rgb_mode_4(void);
+menu_ret menu_rgb_mode_layer_color(void);
+menu_ret menu_rgb_mode_key_color(void);
+uint8_t menu_rgb_mode_current(void);
+
+/* The per level brightness setters and menu_brightness_current() are generated
+   from one list in menu.c and used only there, so they are static rather than
+   declared here. */
+
+extern menu_t menu_main; 
 extern menu_item_t m_main_array[];
 
 extern menu_t menu_bluetooth; 
